@@ -16,6 +16,6 @@ include CHANGELOG.rst
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
-
+include Pipfile
 
 global-exclude *.py[cod] __pycache__/* *.so *.dylib

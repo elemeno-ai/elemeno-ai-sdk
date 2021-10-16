@@ -4,10 +4,11 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-google-cloud-bigquery = "2.28.1"
-google-auth = "2.3.0"
-pandas-gbq = "0.15.0"
+google-cloud-bigquery = "==2.28.1"
+google-auth = "==2.3.0"
+pandas-gbq = "==0.15.0"
 omegaconf = "==2.1"
+toml = "*"
 
 [dev-packages]
 

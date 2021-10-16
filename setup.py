@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import io
 import re
+import toml
 from glob import glob
 from os.path import basename
 from os.path import dirname
@@ -14,6 +15,25 @@ from os.path import splitext
 from setuptools import find_packages
 from setuptools import setup
 
+
+def get_install_requirements():
+    try:
+        # read my pipfile
+        with open ('Pipfile', 'r') as fh:
+            pipfile = fh.read()
+        # parse the toml
+        pipfile_toml = toml.loads(pipfile)
+    except FileNotFoundError:
+        return []
+    # if the package's key isn't there then just return an empty list
+    try:
+        required_packages = pipfile_toml['packages'].items()
+    except KeyError:
+        return []
+     # If a version/range is specified in the Pipfile honor it
+     # otherwise just list the package
+    return ["{0}{1}".format(pkg,ver) if ver != "*" 
+            else pkg for pkg,ver in required_packages]
 
 def read(*names, **kwargs):
     with io.open(
@@ -72,9 +92,7 @@ setup(
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*',
-    install_requires=[
-        # eg: 'aspectlib==1.1.1', 'six>=1.7',
-    ],
+    install_requires=get_install_requirements(),
     extras_require={
         # eg:
         #   'rst': ['docutils>=0.11'],
