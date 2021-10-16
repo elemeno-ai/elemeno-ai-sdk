@@ -1,0 +1,71 @@
+# This file exists so you can easily regenerate your project.
+#
+# `cookiepatcher` is a convenient shim around `cookiecutter`
+# for regenerating projects (it will generate a .cookiecutterrc
+# automatically for any template). To use it:
+#
+#    pip install cookiepatcher
+#    cookiepatcher gh:ionelmc/cookiecutter-pylibrary python-elemeno-ai-sdk
+#
+# See:
+#    https://pypi.org/project/cookiepatcher
+#
+# Alternatively, you can run:
+#
+#    cookiecutter --overwrite-if-exists --config-file=python-elemeno-ai-sdk/.cookiecutterrc gh:ionelmc/cookiecutter-pylibrary
+
+default_context:
+
+    _extensions:               ['jinja2_time.TimeExtension']
+    _template:                 'gh:ionelmc/cookiecutter-pylibrary'
+    allow_tests_inside_package: 'no'
+    appveyor:                  'no'
+    c_extension_function:      'longest'
+    c_extension_module:        '_elemeno_ai_sdk'
+    c_extension_optional:      'no'
+    c_extension_support:       'no'
+    c_extension_test_pypi:     'no'
+    c_extension_test_pypi_username: 'elemeno-ai'
+    codacy:                    'no'
+    codacy_projectid:          '[Get ID from https://app.codacy.com/gh/elemeno-ai/python-elemeno-ai-sdk/settings]'
+    codeclimate:               'no'
+    codecov:                   'yes'
+    command_line_interface:    'argparse'
+    command_line_interface_bin_name: 'elemeno'
+    coveralls:                 'no'
+    coveralls_token:           '[Required for Appveyor, take it from https://coveralls.io/github/elemeno-ai/python-elemeno-ai-sdk]'
+    distribution_name:         'elemeno-ai-sdk'
+    email:                     'developer@elemeno.ai'
+    full_name:                 'Lucas Bonatto Miguel'
+    legacy_python:             'yes'
+    license:                   'Apache Software License 2.0'
+    linter:                    'flake8'
+    package_name:              'elemeno_ai_sdk'
+    pre_commit:                'yes'
+    project_name:              'elemeno-ai-sdk'
+    project_short_description: 'A set of glue code and utilities to make using elemeno AI platform a smooth experience'
+    pypi_badge:                'yes'
+    pypi_disable_upload:       'no'
+    release_date:              'today'
+    repo_hosting:              'gitlab.com'
+    repo_hosting_domain:       'gitlab.com'
+    repo_name:                 'python-elemeno-ai-sdk'
+    repo_username:             'elemeno-ai'
+    requiresio:                'yes'
+    scrutinizer:               'no'
+    setup_py_uses_setuptools_scm: 'no'
+    setup_py_uses_test_runner: 'no'
+    sphinx_docs:               'yes'
+    sphinx_docs_hosting:       'elemeno-ai-sdk.readthedocs.io'
+    sphinx_doctest:            'no'
+    sphinx_theme:              'sphinx-py3doc-enhanced-theme'
+    test_matrix_configurator:  'no'
+    test_matrix_separate_coverage: 'no'
+    test_runner:               'pytest'
+    travis:                    'no'
+    travis_osx:                'no'
+    version:                   '0.0.1'
+    version_manager:           'bump2version'
+    website:                   'https://www.elemeno.ai'
+    year_from:                 '2021'
+    year_to:                   '2021'

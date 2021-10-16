@@ -1,0 +1,13 @@
+# This file contains the base configuration for the sdk to function properly
+# Elemeno-AI
+
+app:
+  mode: ${oc.env:ELEMENO_MODE,development}
+gcp:
+  sa:
+    file: /tmp/gcp-credentials.json
+  appflow:
+    client_secret:
+      file: /tmp/client_secrets.json
+    scopes:
+      - https://www.googleapis.com/auth/bigquery
