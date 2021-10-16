@@ -1,13 +1,5 @@
-import abc
 import elemeno_ai_sdk
 from elemeno_ai_sdk.config import Configs
-
-class BaseAuthenticator(metaclass=abc.ABCMeta):
-    
-    @classmethod
-    def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'authenticate') and
-                callable(subclass.authenticate))
 
 config = Configs().props
 class Authenticator:
