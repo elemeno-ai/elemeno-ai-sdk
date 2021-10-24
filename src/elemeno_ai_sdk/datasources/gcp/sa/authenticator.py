@@ -3,7 +3,7 @@ from elemeno_ai_sdk.datasources.base_authenticator import BaseAuthenticator
 from elemeno_ai_sdk.config import Configs
 
 
-config = Configs().props
+config = Configs.instance()
 
 BaseAuthenticator.register
 class Authenticator:

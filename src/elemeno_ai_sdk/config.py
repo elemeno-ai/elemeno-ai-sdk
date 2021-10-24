@@ -12,7 +12,7 @@ class Configs:
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
             cls._props = OmegaConf.load('elemeno.yaml')
-        return cls._instance
+        return cls._instance.props
 
     @property
     def props(self):

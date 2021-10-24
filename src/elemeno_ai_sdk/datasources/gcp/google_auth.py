@@ -1,7 +1,7 @@
 import elemeno_ai_sdk
 from elemeno_ai_sdk.config import Configs
 
-config = Configs().props
+config = Configs.instance()
 class Authenticator:
 
     def get_credentials(self):
