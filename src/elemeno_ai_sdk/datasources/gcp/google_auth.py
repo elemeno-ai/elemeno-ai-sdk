@@ -1,11 +1,17 @@
 import elemeno_ai_sdk
 from elemeno_ai_sdk.config import Configs
 
-config = Configs.instance()
 class Authenticator:
 
+    def __init__(self):
+        self.config = Configs.instance()
+
+    @property
+    def config(self):
+        return self.config
+
     def get_credentials(self):
-        mode = config.app.mode
+        mode = self.config.app.mode
         auth = None
         if mode == "production":
             auth = elemeno_ai_sdk.datasources.gcp.sa.authenticator.Authenticator()
