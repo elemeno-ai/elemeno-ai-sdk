@@ -1,6 +1,6 @@
 import typing
 import feast
-from elemeno_ai_sdk.features.feast_elm  import Feast as FeastElemeno
+from elemeno_ai_sdk.features.feature_store  import FeatureStore
 
 class BigQueryDataSource:
     def __init__(self, project: str, dataset: str):
@@ -10,7 +10,7 @@ class BigQueryDataSource:
 class FeatureTableDefinition:
 
     def __init__(self, name: str, event_column: str,
-            batch_source: BigQueryDataSource, feast_elm: FeastElemeno,
+            batch_source: BigQueryDataSource, feature_store: FeatureStore,
             entities: typing.List[feast.Entity] = None,
             features: typing.List[feast.Feature] = None):
         self.name = name
@@ -18,7 +18,7 @@ class FeatureTableDefinition:
         self.batch_source = batch_source
         self.entities: typing.List[feast.Entity] = [] if entities is None else entities
         self.features = [] if features is None else features
-        self._feast_elm = feast_elm
+        self._feast_elm = feature_store
 
     def register_entities(self, *entities: feast.Entity) -> None:
         self.entities.extend(list(entities))

@@ -2,7 +2,7 @@ import typing
 import logging
 import feast
 
-class Feast: 
+class FeatureStore: 
     def __init__(self, options:typing.Dict=None) -> None:
         o = {
             "CORE_URL": "feast-feast-core.feast:6565",
