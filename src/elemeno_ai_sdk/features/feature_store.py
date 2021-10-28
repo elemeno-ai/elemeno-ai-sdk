@@ -30,7 +30,8 @@ class FeatureStore:
         msg = "Client is not connected, call connect"
         if throw and not is_connected:
             raise ValueError(msg)
-        logging.warn("Client is not connected, it should call method connect first")
+        if not is_connected:
+            logging.warn("Client is not connected, it should call method connect first")
         return is_connected
     
     def connect(self) -> None:
