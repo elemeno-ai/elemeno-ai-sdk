@@ -1,6 +1,7 @@
 import typing
 import logging
 import feast
+import pandas as pd
 
 class FeatureStore: 
     def __init__(self, options:typing.Dict=None) -> None:
@@ -47,4 +48,8 @@ class FeatureStore:
             projects: str = None) -> None:
         self._check_connected(throw=True)
         self.client.apply(to_apply, projects)
+        
+    def get_historical_features(self, feature_refs: typing.List[str], entity_source: pd.DataFrame):
+        self._check_connected(throw=True)
+        return self.client.get_historical_features(feature_refs, entity_source)
         

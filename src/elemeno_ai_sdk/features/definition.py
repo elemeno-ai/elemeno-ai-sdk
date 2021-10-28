@@ -16,9 +16,26 @@ class FeatureTableDefinition:
         self.name = name
         self.evt_col = event_column
         self.batch_source = batch_source
-        self.entities: typing.List[feast.Entity] = [] if entities is None else entities
-        self.features = [] if features is None else features
+        self._entities = [] if entities is None else entities
+        self._features = [] if features is None else features
         self._feast_elm = feature_store
+        
+    
+    @property
+    def entities(self):
+        return self._entities
+    
+    @entities.setter
+    def entities(self, value):
+        self._entities = value
+    
+    @property
+    def features(self):
+        return self._features
+    
+    @features.setter
+    def features(self, value):
+        self._features = value
 
     def register_entities(self, *entities: feast.Entity) -> None:
         self.entities.extend(list(entities))
