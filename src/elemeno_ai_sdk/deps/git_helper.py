@@ -13,5 +13,5 @@ class GitHelper:
         git_ssh_cmd = 'ssh -i %s' % git_ssh_identity_file
         with Git().custom_environment(GIT_SSH_COMMAND=git_ssh_cmd):
             project_name = repository_url.split("/")[-1][:-4]
-            Repo.clone_from(repository_url, project_name, branch=branch)
+            Repo.clone_from(repository_url, project_name, branch=branch, env=dict(GIT_SSH_COMMAND=git_ssh_cmd))
             logging.info("Finished cloning project")
