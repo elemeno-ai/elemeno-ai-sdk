@@ -67,8 +67,8 @@ setup(
         'Topic :: Utilities',
     ],
     project_urls={
-        'Documentation': 'elemeno-ai-sdk.readthedocs.io',
-        'Changelog': 'elemeno-ai-sdk.readthedocs.ioen/latest/changelog.html',
+        #'Documentation': 'elemeno-ai-sdk.readthedocs.io',
+        #'Changelog': 'elemeno-ai-sdk.readthedocs.ioen/latest/changelog.html',
         'Issue Tracker': 'https://gitlab.com/elemeno-ai/python-elemeno-ai-sdk/issues',
     },
     keywords=[
