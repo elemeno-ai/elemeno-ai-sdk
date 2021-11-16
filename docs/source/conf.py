@@ -17,7 +17,6 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import os
 import sphinx_rtd_theme
-from recommonmark.transform import AutoStructify
 
 # -- Project information -----------------------------------------------------
 
@@ -28,14 +27,16 @@ author = 'elemeno.ai'
 _version_py = os.path.join('..', '..', 'src', 'elemeno_ai_sdk', '__init__.py')
 version_ns = {}
 
-with open(_version_py, mode='r') as version_file:
-    exec(version_file.read(), version_ns)
+#with open(_version_py, mode='r') as version_file:
+#    exec(version_file.read(), version_ns)
 
 # The short X.Y version.
-version = version_ns['__version__'][:6]
+#version = version_ns['__version__'][:6]
+version = ''
 
 # The full version, including alpha/beta/rc tags.
-release = version_ns['__version__']
+#release = version_ns['__version__']
+release = ''
 
 
 # -- General configuration ---------------------------------------------------
