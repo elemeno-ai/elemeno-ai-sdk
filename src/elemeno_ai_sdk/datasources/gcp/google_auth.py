@@ -4,11 +4,15 @@ from elemeno_ai_sdk.config import Configs
 class Authenticator:
 
     def __init__(self):
-        self.config = Configs.instance()
+        self._config = Configs.instance()
 
     @property
     def config(self):
-        return self.config
+        return self._config
+    
+    @config.setter
+    def set_config(self, config):
+        self._config = config
 
     def get_credentials(self):
         mode = self.config.app.mode

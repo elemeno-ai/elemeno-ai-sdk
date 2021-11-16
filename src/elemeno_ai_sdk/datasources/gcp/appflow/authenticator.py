@@ -14,7 +14,7 @@ class Authenticator:
             file_path = config.gcp.appflow.client_secret.file
         if not scopes:
             scopes = config.gcp.appflow.scopes
-        appflow = flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file=file_path, scopes=scopes)
+        appflow = flow.InstalledAppFlow.from_client_secrets_file(client_secrets_file=file_path, scopes=list(scopes))
         appflow.run_console()
         return appflow.credentials
 

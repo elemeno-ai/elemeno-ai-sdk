@@ -1,11 +1,14 @@
-.PHONY: clean pip-testpypi
+.PHONY: clean pip-testpypi wheel
 
 clean:
 	rm -rf dist
 
-_pip-testpypi:
+wheel:
+	python setup.py bdist_wheel
+
+_pip-testpypi: clean
 	python setup.py sdist bdist_wheel
-	twine upload --repository testpypi dist/elemeno_ai_sdk-0.0.1-py2.py3-none-any.whl
+	twine upload --repository testpypi dist/*.whl
 
 pip-testpypi: clean _pip-testpypi
 
