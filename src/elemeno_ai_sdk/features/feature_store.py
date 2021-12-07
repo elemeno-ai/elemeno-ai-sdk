@@ -48,6 +48,9 @@ class FeatureStore:
             projects: str = None) -> None:
         self._check_connected(throw=True)
         self.client.apply(to_apply, projects)
+
+    def ingest(self, ft: feast.FeatureTable, df: pd.DataFrame):
+        self.client.ingest(ft, df)
         
     def get_historical_features(self, feature_refs: typing.List[str], entity_source: pd.DataFrame):
         self._check_connected(throw=True)

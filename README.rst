@@ -48,3 +48,8 @@ Note, to combine the coverage data from all the tox environments run:
       - ::
 
             PYTEST_ADDOPTS=--cov-append tox
+
+Versioning
+==========
+
+Bumping version is as simple as running `python -m bumpversion --new-version 0.0.5 patch`
