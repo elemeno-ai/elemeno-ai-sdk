@@ -27,11 +27,11 @@ author = 'elemeno.ai'
 _version_py = os.path.join('..', '..', 'src', 'elemeno_ai_sdk', '__init__.py')
 version_ns = {}
 
-#with open(_version_py, mode='r') as version_file:
-#    exec(version_file.read(), version_ns)
+with open(_version_py, mode='r') as version_file:
+    exec(version_file.read(), version_ns)
 
 # The short X.Y version.
-#version = version_ns['__version__'][:6]
+version = version_ns['__version__'][:6]
 version = ''
 
 # The full version, including alpha/beta/rc tags.
