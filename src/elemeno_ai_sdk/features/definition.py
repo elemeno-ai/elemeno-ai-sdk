@@ -1,5 +1,6 @@
 import typing
 import feast
+import pandas as pd
 from elemeno_ai_sdk.features.feature_store  import FeatureStore
 
 class BigQueryDataSource:
@@ -48,6 +49,10 @@ class FeatureTableDefinition:
 
     def register_feature(self, feature: feast.Feature) -> None:
         self.features.append(feature)
+
+    def ingest(self, dataframe: pd.DataFrame):
+        self._feast_elm.ingest(self._get_ft(), dataframe)
+
 
     def _get_ft(self, broker=None):
         bq = self.batch_source
