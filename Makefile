@@ -10,5 +10,12 @@ _pip-testpypi: clean
 	python setup.py sdist bdist_wheel
 	twine upload --repository testpypi dist/*.whl
 
+_pip-pypi: clean
+	python setup.py sdist bdist_wheel
+	twine upload dist/*.whl
+
+
 pip-testpypi: clean _pip-testpypi
+
+pip-pypi: clean _pip-pypi
 

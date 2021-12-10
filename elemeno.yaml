@@ -3,6 +3,10 @@
 
 app:
   mode: ${oc.env:ELEMENO_MODE,development}
+cos:
+  host: "minio.ai.b2w.io"
+  key_id: "minio"
+  secret: "minio123"
 gcp:
   sa:
     file: /tmp/gcp-credentials.json

@@ -43,3 +43,4 @@ gcsfs~=2021.8.1
 feast==0.9.3
 gitpython==2.1.1
 gitdb2~=2.0.6
+minio==7.1.2
