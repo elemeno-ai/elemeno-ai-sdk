@@ -14,8 +14,9 @@ _pip-pypi: clean
 	python setup.py sdist bdist_wheel
 	twine upload dist/*.whl
 
-
 pip-testpypi: clean _pip-testpypi
 
 pip-pypi: clean _pip-pypi
 
+bump:
+	python -m bumpversion --new-version 0.0.6 patch --verbose
