@@ -8,6 +8,8 @@ cos:
   key_id: minio
   secret: minio123
   use_ssl: False
+registry:
+  tracking_url: http://mlflow.ai.b2w.io:80
 gcp:
   sa:
     file: /tmp/gcp-credentials.json
