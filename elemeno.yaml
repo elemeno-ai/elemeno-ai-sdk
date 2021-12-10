@@ -4,7 +4,7 @@
 app:
   mode: ${oc.env:ELEMENO_MODE,development}
 cos:
-  host: localhost:9000
+  host: minio.ai.b2w.io:80
   key_id: minio
   secret: minio123
   use_ssl: False
