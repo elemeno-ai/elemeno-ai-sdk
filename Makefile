@@ -19,4 +19,4 @@ pip-testpypi: clean _pip-testpypi
 pip-pypi: clean _pip-pypi
 
 bump:
-	python -m bumpversion --new-version 0.0.12 patch --verbose
+	python -m bumpversion --new-version 0.0.13 patch --verbose
