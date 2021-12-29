@@ -19,4 +19,4 @@ pip-testpypi: clean _pip-testpypi
 pip-pypi: clean _pip-pypi
 
 bump:
-	python -m bumpversion --new-version 0.0.10 patch --verbose
+	python -m bumpversion --new-version 0.0.11 patch --verbose
