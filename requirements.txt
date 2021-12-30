@@ -45,3 +45,5 @@ gitpython==2.1.1
 gitdb2~=2.0.6
 minio==7.1.2
 mlflow==1.20.2
+onnx>=1.10.2
+onnxruntime>=1.10.0
