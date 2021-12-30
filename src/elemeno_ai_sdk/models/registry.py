@@ -34,7 +34,7 @@ class ModelRegistry:
 
         return model
 
-    def get_latest_model_onnx(self, model_name: str, device: str):
+    def get_latest_model_onnx(self, model_name: str):
         """Loads the most recent model registered and in stage Production
         from the model registry. Returns an mlflow model object.
 
