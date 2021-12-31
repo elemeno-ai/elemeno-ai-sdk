@@ -6,9 +6,9 @@ import pandas as pd
 class FeatureStore: 
     def __init__(self, options:typing.Dict=None) -> None:
         o = {
-            "CORE_URL": "feast-feast-core.feast:6565",
-            "SERVING_URL":"feast-feast-online-serving.feast:6566",
-            "JOB_SERVICE_URL": "feast-feast-jobservice.feast:6568",
+            "CORE_URL": "feast-release-feast-core.feast:6565",
+            "SERVING_URL":"feast-release-feast-online-serving.feast:6566",
+            "JOB_SERVICE_URL": "feast-release-feast-jobservice.feast:6568",
             "SPARK_LAUNCHER": "standalone",
             "SPARK_HOME":"/opt/spark",
             "SPARK_STAGING_LOCATION":"/tmp/elabs-spark-staging",
