@@ -2,6 +2,7 @@ import os
 import torch
 import mlflow
 import mlflow.pyfunc
+import onnx
 from elemeno_ai_sdk.config import Configs
 
 class ModelRegistry:
@@ -36,7 +37,7 @@ class ModelRegistry:
 
     def get_latest_model_onnx(self, model_name: str):
         """Loads the most recent model registered and in stage Production
-        from the model registry. Returns an mlflow model object.
+        from the model registry. Returns an onnx model object.
 
         Keyword arguments:
         model_name -- the name of the model in the registry
@@ -46,6 +47,8 @@ class ModelRegistry:
         model = mlflow.onnx.load_model(
             model_uri=f"models:/{model_name}/{stage}"
         )
+        # saves the file to disk
+        onnx.save(model, 'model.onnx')
 
         return model
 
