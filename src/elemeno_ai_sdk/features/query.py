@@ -1,19 +1,20 @@
 import typing
-import gcsfs
+from feast.protos.feast.types.EntityKey_pb2 import EntityKeyProto
+from feast.protos.feast.types.Value_pb2 import Value as ValueProto
+from feast.type_map import feast_value_type_to_python_type
 import pandas as pd
-from urllib.parse import urlparse
-from pyarrow.parquet import ParquetDataset
-from elemeno_ai_sdk.features.feature_store import FeatureStore
-from elemeno_ai_sdk.features.definition import FeatureTableDefinition
+from datetime import datetime
+from elemeno_ai_sdk.features.feature_store import BaseFeatureStore
+from elemeno_ai_sdk.features.feature_table import FeatureTableDefinition
 
 class Query:
     
-    def __init__(self, feature_store: FeatureStore, 
+    def __init__(self, feature_store: BaseFeatureStore, 
                  definition: FeatureTableDefinition):
         self._feature_store = feature_store
         self._definition = definition
         
-    def get_historical_features(self, entities_where: pd.DataFrame):
+    def get_historical_features(self, entities_where: pd.DataFrame) -> pd.DataFrame:
         ft = self._definition
         entities = ft.entities
         cols = [p.name for p in entities]
@@ -27,34 +28,16 @@ class Query:
             raise ValueError("Missing the event timestamp column in input")
         source_entity[ft.evt_col] = entities_where[ft.evt_col]
         features = [f"{ft.name}:{fd.name}" for fd in ft.features]
-        return self._feature_store.get_historical_features(feature_refs=features, entity_source=source_entity)
+        job = self._feature_store.get_historical_features(feature_refs=features, entity_source=source_entity)
+        return job.to_df()
     
-    def to_results_df(self, job):
-        return self._read_parquet(job.get_output_file_uri())
-    
-    def _read_parquet(self, uri):
-        parsed_uri = urlparse(uri)
-        if parsed_uri.scheme == "file":
-            return pd.read_parquet(parsed_uri.path)
-        elif parsed_uri.scheme == "gs":
-            fs = gcsfs.GCSFileSystem()
-            files = ["gs://" + path for path in fs.glob(uri + '/part-*')]
-            ds = ParquetDataset(files, filesystem=fs)
-            return ds.read().to_pandas()
-        elif parsed_uri.scheme == 's3':
-            import s3fs
-            fs = s3fs.S3FileSystem()
-            files = ["s3://" + path for path in fs.glob(uri + '/part-*')]
-            ds = ParquetDataset(files, filesystem=fs)
-            return ds.read().to_pandas()
-        elif parsed_uri.scheme == 'wasbs':
-            import adlfs
-            fs = adlfs.AzureBlobFileSystem(
-                account_name=os.getenv('FEAST_AZURE_BLOB_ACCOUNT_NAME'), account_key=os.getenv('FEAST_AZURE_BLOB_ACCOUNT_ACCESS_KEY')
-            )
-            uripath = parsed_uri.username + parsed_uri.path
-            files = fs.glob(uripath + '/part-*')
-            ds = ParquetDataset(files, filesystem=fs)
-            return ds.read().to_pandas()
-        else:
-            raise ValueError(f"Unsupported URL scheme {uri}")
+    def get_online_features(self, entity_keys: typing.List[typing.Any], features_requested: typing.Optional[typing.List[str]]=None) \
+        -> typing.List[typing.Tuple[typing.Optional[datetime], typing.Optional[typing.Dict[str, ValueProto]]]]:
+        k = EntityKeyProto()
+        entity_keys_vals = [
+            {
+                k: feast_value_type_to_python_type(v)
+            }
+            for v in entity_keys
+        ]
+        return self._feature_store.get_online_features(self._definition.get_view(), entity_keys_vals, features_requested)

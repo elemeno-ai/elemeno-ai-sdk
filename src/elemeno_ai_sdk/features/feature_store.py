@@ -1,58 +1,74 @@
+import abc
 import typing
-import logging
 import feast
+from feast.infra.offline_stores.bigquery import BigQueryOfflineStore, BigQueryOfflineStoreConfig
+from feast.infra.offline_stores.offline_store import RetrievalJob
+from feast.infra.online_stores.redis import RedisOnlineStore, RedisOnlineStoreConfig
+from feast.protos.feast.types.EntityKey_pb2 import EntityKey as EntityKeyProto
+from feast.protos.feast.types.Value_pb2 import Value as ValueProto
+from feast.repo_config import RepoConfig
 import pandas as pd
+from datetime import datetime
 
-class FeatureStore: 
-    def __init__(self, options:typing.Dict=None) -> None:
-        o = {
-            "CORE_URL": "feast-release-feast-core.feast:6565",
-            "SERVING_URL":"feast-release-feast-online-serving.feast:6566",
-            "JOB_SERVICE_URL": "feast-release-feast-jobservice.feast:6568",
-            "SPARK_LAUNCHER": "standalone",
-            "SPARK_HOME":"/opt/spark",
-            "SPARK_STAGING_LOCATION":"/tmp/elabs-spark-staging",
-            "HISTORICAL_FEATURE_OUTPUT_LOCATION":"gs://demo-spark-results",
-            "GRPC_CONNECTION_TIMEOUT_DEFAULT": 5000,
-            "BATCH_FEATURE_REQUEST_WAIT_S": "800"
-        }
-        if options is not None:
-            o = o.update(options)
-        self.options = o
-        self.client = None
+class BaseFeatureStore(metaclass=abc.ABCMeta):
 
-    @property
-    def raw_client(self):
-        self._check_connected()
-        return self.client
-
-    def _check_connected(self, throw=False) -> bool:
-        is_connected = self.client is not None
-        msg = "Client is not connected, call connect"
-        if throw and not is_connected:
-            raise ValueError(msg)
-        if not is_connected:
-            logging.warn("Client is not connected, it should call method connect first")
-        return is_connected
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        return (hasattr(subclass, 'ingest') and
+            callable(subclass.ingest) and
+            hasattr(subclass, 'get_historical_features') and
+            callable(subclass.get_historical_features) and
+            hasattr(subclass, 'get_online_features') and
+            callable(subclass.get_online_features))
     
-    def connect(self) -> None:
-        if self.client is None:
-            self.client = feast.Client(self.options)
-            return
-        logging.info("The instance was already created, no-op")
+    def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
+        pass
 
-    def apply(self, 
-            to_apply: typing.Union[typing.List[
-                typing.Union[feast.Entity, feast.FeatureTable]], 
-                feast.Entity, feast.FeatureTable],
-            projects: str = None) -> None:
-        self._check_connected(throw=True)
-        self.client.apply(to_apply, projects)
+    def get_historical_features(self, feature_views: typing.List[feast.FeatureView], 
+            feature_refs: typing.List[str], entity_source: pd.DataFrame) -> RetrievalJob:
+        pass
+    
+    def get_online_features(self, feature_view: feast.FeatureView,
+        entity_keys: typing.List[EntityKeyProto], requested_features: typing.Optional[typing.List[str]]=None) \
+            -> typing.List[typing.Tuple[typing.Optional[datetime], typing.Optional[typing.Dict[str, ValueProto]]]]:
+        pass
 
-    def ingest(self, ft: feast.FeatureTable, df: pd.DataFrame):
-        self.client.ingest(ft, df)
+BaseFeatureStore.register
+class FeatureStoreBQ: 
+    def __init__(self, 
+        bigquery_offline: BigQueryOfflineStore,
+        config: BigQueryOfflineStoreConfig,
+        registry: feast.Registry,
+        redis_online: typing.Optional[RedisOnlineStore]=None,
+        redis_online_config: typing.Optional[RedisOnlineStoreConfig]=None) -> None:
+        """
+        FeatureStore is a BigQuery compatible Feature Store implementation
+        """
+        self.store = bigquery_offline
+        self.config = config
+        self.registry = registry
+        self.online_store = redis_online
+        self.online_config = redis_online_config
+    
+    def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
+        project_id = self.config.project_id
+        dataset = self.config.dataset
+        location = self.config.location
+        df.to_gbq(destination_table=f"{dataset}.{ft.name}", 
+            project_id=project_id, if_exists="append", location=location)
         
-    def get_historical_features(self, feature_refs: typing.List[str], entity_source: pd.DataFrame):
-        self._check_connected(throw=True)
-        return self.client.get_historical_features(feature_refs, entity_source)
+    def get_historical_features(self, feature_views: typing.List[feast.FeatureView], 
+            feature_refs: typing.List[str], entity_source: pd.DataFrame) -> RetrievalJob:
+        return self.store.get_historical_features(self.config, feature_views,
+            feature_refs, entity_source, self.registry, project=self.config.project_id)
+    
+    def get_online_features(self, feature_view: feast.FeatureView,
+        entity_keys: typing.List[EntityKeyProto], requested_features: typing.Optional[typing.List[str]]=None) \
+            -> typing.List[typing.Tuple[typing.Optional[datetime], typing.Optional[typing.Dict[str, ValueProto]]]]:
+        if self.online_store == None:
+            raise ValueError("Online store is not configure, make sure to inform redis_online parameter to this class")
+        return self.online_store.online_read(self.online_config, feature_view, 
+            entity_keys, requested_features)
+
+        
         
