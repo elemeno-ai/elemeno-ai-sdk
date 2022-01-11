@@ -86,7 +86,7 @@ class FeatureTableDefinition:
         return feast.FeatureView(
             name = self.name,
             entities=self._entities,
-            ttl=Duration(self._duration * 1),
+            ttl=Duration(seconds=self._duration * 1),
             features=self._features,
             online=self._online,
             batch_source=ft_source,
