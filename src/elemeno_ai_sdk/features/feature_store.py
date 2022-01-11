@@ -1,6 +1,7 @@
 import abc
 import typing
 import feast
+from feast.registry import Registry
 from feast.infra.offline_stores.bigquery import BigQueryOfflineStore, BigQueryOfflineStoreConfig
 from feast.infra.offline_stores.offline_store import RetrievalJob
 from feast.infra.online_stores.redis import RedisOnlineStore, RedisOnlineStoreConfig
@@ -38,7 +39,7 @@ class FeatureStoreBQ:
     def __init__(self, 
         bigquery_offline: BigQueryOfflineStore,
         config: BigQueryOfflineStoreConfig,
-        registry: feast.Registry,
+        registry: Registry,
         redis_online: typing.Optional[RedisOnlineStore]=None,
         redis_online_config: typing.Optional[RedisOnlineStoreConfig]=None) -> None:
         """
