@@ -34,12 +34,12 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
         pass
 
 BaseFeatureStore.register
-class FeatureStoreBQ: 
-    def __init__(self, feast_fs: feast.FeatureStore) -> None:
+class FeatureStore: 
+    def __init__(self) -> None:
         """
         FeatureStore is a BigQuery compatible Feature Store implementation
         """
-        self.fs = feast_fs
+        self.fs = feast.FeatureStore(repo_path=".")
     
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         project_id = self.fs.config.offline_store.project_id
