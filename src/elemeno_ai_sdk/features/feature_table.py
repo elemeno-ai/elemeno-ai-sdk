@@ -1,19 +1,19 @@
 import typing
 import feast
+import json
 from google.protobuf.duration_pb2 import Duration
 import pandas as pd
 from elemeno_ai_sdk.features.feature_store  import BaseFeatureStore
+from elemeno_ai_sdk.features.types import FeatureType
 
 class FeatureTableDefinition:
 
-    def __init__(self, name: str, event_column: str,
-            feature_store: BaseFeatureStore,
+    def __init__(self, name: str, feature_store: BaseFeatureStore,
             entities: typing.List[feast.Entity] = None,
             features: typing.List[feast.Feature] = None,
             duration_seconds=86400,
             online=False):
         self.name = name
-        self.evt_col = event_column
         self._entities = [] if entities is None else entities
         self._features = [] if features is None else features
         self._feast_elm = feature_store
@@ -28,6 +28,28 @@ class FeatureTableDefinition:
     @entities.setter
     def entities(self, value):
         self._entities = value
+
+    def ingest_schema(self, schema_file_path: str) -> None:
+        """
+        This method should be called if you want to use a jsonschema file to create the feature table
+        If other entities/features were registered, this method will append the ones in the jsonschema to them
+
+        Arguments:
+        schema_file_path: str - The local path to the file containing the jsonschema definition
+
+        """
+        with open(schema_file_path, mode="r") as schema_file:
+            jschema = json.loads(schema_file.read())
+            table_schema = []
+            for name, prop in jschema["properties"].items():
+                fmt = prop["format"] if "format" in prop else None
+                table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
+                if "isKey" in prop and prop["isKey"] == "true":
+                    self.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
+                else:
+                    if "format" in prop and prop["format"] == "date-time":
+                        continue
+                    self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
     
     @property
     def features(self):
