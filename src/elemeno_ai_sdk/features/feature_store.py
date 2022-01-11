@@ -25,51 +25,37 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         pass
 
-    def get_historical_features(self, feature_views: typing.List[feast.FeatureView], 
-            feature_refs: typing.List[str], entity_source: pd.DataFrame) -> RetrievalJob:
+    def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
         pass
     
-    def get_online_features(self, feature_view: feast.FeatureView,
-        entity_keys: typing.List[EntityKeyProto], requested_features: typing.Optional[typing.List[str]]=None) \
-            -> typing.List[typing.Tuple[typing.Optional[datetime], typing.Optional[typing.Dict[str, ValueProto]]]]:
+    def get_online_features(self, entities: typing.List[typing.Dict[str, typing.Any]], 
+            requested_features: typing.Optional[typing.List[str]]=None) \
+            -> feast.online_response.OnlineResponse:
         pass
 
 BaseFeatureStore.register
 class FeatureStoreBQ: 
-    def __init__(self, 
-        bigquery_offline: BigQueryOfflineStore,
-        config: BigQueryOfflineStoreConfig,
-        registry: Registry,
-        redis_online: typing.Optional[RedisOnlineStore]=None,
-        redis_online_config: typing.Optional[RedisOnlineStoreConfig]=None) -> None:
+    def __init__(self, feast_fs: feast.FeatureStore) -> None:
         """
         FeatureStore is a BigQuery compatible Feature Store implementation
         """
-        self.store = bigquery_offline
-        self.config = config
-        self.registry = registry
-        self.online_store = redis_online
-        self.online_config = redis_online_config
+        self.fs = feast_fs
     
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
-        project_id = self.config.project_id
-        dataset = self.config.dataset
-        location = self.config.location
+        project_id = self.fs.config.offline_store.project_id
+        dataset = self.fs.config.offline_store.dataset
+        location = self.fs.config.offline_store.location
         df.to_gbq(destination_table=f"{dataset}.{ft.name}", 
             project_id=project_id, if_exists="append", location=location)
         
-    def get_historical_features(self, feature_views: typing.List[feast.FeatureView], 
-            feature_refs: typing.List[str], entity_source: pd.DataFrame) -> RetrievalJob:
-        return self.store.get_historical_features(self.config, feature_views,
-            feature_refs, entity_source, self.registry, project=self.config.project_id)
+    def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
+        return self.fs.get_historical_features(entity_source, feature_refs)
     
-    def get_online_features(self, feature_view: feast.FeatureView,
-        entity_keys: typing.List[EntityKeyProto], requested_features: typing.Optional[typing.List[str]]=None) \
-            -> typing.List[typing.Tuple[typing.Optional[datetime], typing.Optional[typing.Dict[str, ValueProto]]]]:
-        if self.online_store == None:
-            raise ValueError("Online store is not configure, make sure to inform redis_online parameter to this class")
-        return self.online_store.online_read(self.online_config, feature_view, 
-            entity_keys, requested_features)
-
+    def get_online_features(self, entities: typing.List[typing.Dict[str, typing.Any]], 
+            requested_features: typing.Optional[typing.List[str]]=None) \
+            -> feast.online_response.OnlineResponse:
+        if self.fs.config.online_store == None:
+            raise ValueError("Online store is not configure, make sure to configure the property online_store in the config yaml")
+        return self.fs.get_online_features(features=requested_features, entity_rows=entities)
         
         

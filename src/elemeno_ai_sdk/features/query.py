@@ -28,16 +28,21 @@ class Query:
             raise ValueError("Missing the event timestamp column in input")
         source_entity[ft.evt_col] = entities_where[ft.evt_col]
         features = [f"{ft.name}:{fd.name}" for fd in ft.features]
-        job = self._feature_store.get_historical_features(feature_refs=features, entity_source=source_entity)
+        job = self._feature_store.get_historical_features(entity_source=source_entity, feature_refs=features)
         return job.to_df()
     
-    def get_online_features(self, entity_keys: typing.List[typing.Any], features_requested: typing.Optional[typing.List[str]]=None) \
-        -> typing.List[typing.Tuple[typing.Optional[datetime], typing.Optional[typing.Dict[str, ValueProto]]]]:
-        k = EntityKeyProto()
-        entity_keys_vals = [
-            {
-                k: feast_value_type_to_python_type(v)
-            }
-            for v in entity_keys
-        ]
-        return self._feature_store.get_online_features(self._definition.get_view(), entity_keys_vals, features_requested)
+    def get_online_features(self, entity_keys: typing.List[typing.Dict[str, typing.Any]]) \
+        -> pd.DataFrame:
+        ft_name = self._definition.name
+        features_requested = []
+        for f in self._definition.features:
+            features_requested.append(f"{ft_name}:{f}")
+        
+        ents = [e.name for e in self._definition.entities]
+
+        for t in entity_keys:
+            for k, _ in t.items():
+                if k not in ents:
+                    raise ValueError(f"The key {k} is invalid, it's not part of the entities in the feature table definition")
+
+        return self._feature_store.get_online_features(requested_features=features_requested, entities=entity_keys)
