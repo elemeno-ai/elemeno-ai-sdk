@@ -1,9 +1,5 @@
 import typing
-from feast.protos.feast.types.EntityKey_pb2 import EntityKeyProto
-from feast.protos.feast.types.Value_pb2 import Value as ValueProto
-from feast.type_map import feast_value_type_to_python_type
 import pandas as pd
-from datetime import datetime
 from elemeno_ai_sdk.features.feature_store import BaseFeatureStore
 from elemeno_ai_sdk.features.feature_table import FeatureTableDefinition
 
