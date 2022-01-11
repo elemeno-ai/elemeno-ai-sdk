@@ -12,18 +12,29 @@ class FeatureTableDefinition:
             entities: typing.List[feast.Entity] = None,
             features: typing.List[feast.Feature] = None,
             duration_seconds=86400,
-            online=False):
+            online=False, event_column: str = "event_timestamp", 
+            created_column: str = "created_timestamp"):
         self.name = name
         self._entities = [] if entities is None else entities
         self._features = [] if features is None else features
         self._feast_elm = feature_store
         self._duration = duration_seconds
         self._online = online
+        self._evt_col = event_column
+        self._created_col = created_column
         
     
     @property
     def entities(self):
         return self._entities
+
+    @property
+    def evt_col(self):
+        return self._evt_col
+
+    @property
+    def created_col(self):
+        return self._created_col
     
     @entities.setter
     def entities(self, value):
@@ -79,8 +90,8 @@ class FeatureTableDefinition:
 
         ft_source = feast.BigQuerySource(
             table_ref=self.name,
-            event_timestamp_column="event_timestamp",
-            created_timestamp_column="created_timestamp"
+            event_timestamp_column=self.evt_col,
+            created_timestamp_column=self.created_col
         )
 
         return feast.FeatureView(
