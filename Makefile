@@ -13,10 +13,16 @@ _pip-testpypi: clean
 _pip-pypi: clean
 	python setup.py sdist bdist_wheel
 	twine upload dist/*.whl
+	twine upload --repository elemeno dist/*.whl
+
+_pip-pypi-elemeno: clean
+	python setup.py sdist bdist_wheel
 
 pip-testpypi: clean _pip-testpypi
 
 pip-pypi: clean _pip-pypi
+
+pip-pypi-elemeno: clean _pip-pypi-elemeno
 
 bump:
 	python -m bumpversion --new-version $(version) patch --verbose
