@@ -95,7 +95,7 @@ class FeatureTableDefinition:
 
         fv = feast.FeatureView(
             name = self.name,
-            entities=self._entities,
+            entities=[e.name for e in self._entities],
             ttl=Duration(seconds=self._duration * 1),
             features=self._features,
             online=self._online,
