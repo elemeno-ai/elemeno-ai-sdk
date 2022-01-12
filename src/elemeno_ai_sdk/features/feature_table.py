@@ -104,6 +104,8 @@ class FeatureTableDefinition:
         )
         self._feast_elm.apply(objects=self.entities)
         self._feast_elm.apply(objects=fv)
+
+        return fv
         
     
     def get_view(self) -> feast.FeatureView:
