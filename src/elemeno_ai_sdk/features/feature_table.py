@@ -102,7 +102,9 @@ class FeatureTableDefinition:
             batch_source=ft_source,
             tags={}
         )
-        self._feast_elm.apply(objects=[fv].extend(self.entities))
+        self._feast_elm.apply(objects=self.entities)
+        self._feast_elm.apply(objects=fv)
+        
     
     def get_view(self) -> feast.FeatureView:
         f = self._get_ft()
