@@ -87,8 +87,9 @@ class FeatureTableDefinition:
 
 
     def _get_ft(self):
+        dataset = self._feast_elm.config.offline_store.dataset
         ft_source = feast.BigQuerySource(
-            table_ref=self.name,
+            table_ref=f"{dataset}.{self.name}",
             event_timestamp_column=self.evt_col,
             created_timestamp_column=self.created_col
         )
