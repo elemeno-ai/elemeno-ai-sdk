@@ -22,7 +22,8 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
             hasattr(subclass, 'get_online_features') and
             callable(subclass.get_online_features) and 
             hasattr(subclass, 'apply') and
-            callable(subclass.apply))
+            callable(subclass.apply) and
+            hasattr(subclass, 'config'))
     
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         pass
@@ -48,6 +49,7 @@ class FeatureStore:
         FeatureStore is a BigQuery compatible Feature Store implementation
         """
         self.fs = feast.FeatureStore(repo_path=".")
+        self.config = self.fs.config
     
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         project_id = self.fs.config.offline_store.project_id
