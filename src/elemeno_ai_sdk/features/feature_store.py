@@ -20,7 +20,9 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
             hasattr(subclass, 'get_historical_features') and
             callable(subclass.get_historical_features) and
             hasattr(subclass, 'get_online_features') and
-            callable(subclass.get_online_features))
+            callable(subclass.get_online_features) and 
+            hasattr(subclass, 'apply') and
+            callable(subclass.apply))
     
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         pass
@@ -31,6 +33,12 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     def get_online_features(self, entities: typing.List[typing.Dict[str, typing.Any]], 
             requested_features: typing.Optional[typing.List[str]]=None) \
             -> feast.online_response.OnlineResponse:
+        pass
+
+    def apply(self, objects: typing.Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService, 
+        typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]], 
+            objects_to_delete: typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None, 
+            partial: bool = True) -> None:
         pass
 
 BaseFeatureStore.register
@@ -57,5 +65,11 @@ class FeatureStore:
         if self.fs.config.online_store == None:
             raise ValueError("Online store is not configure, make sure to configure the property online_store in the config yaml")
         return self.fs.get_online_features(features=requested_features, entity_rows=entities)
+    
+    def apply(self, objects: typing.Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService, 
+        typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]], 
+            objects_to_delete: typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None, 
+            partial: bool = True):
+        self.fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
         
         

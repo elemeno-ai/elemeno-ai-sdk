@@ -93,7 +93,7 @@ class FeatureTableDefinition:
             created_timestamp_column=self.created_col
         )
 
-        return feast.FeatureView(
+        fv = feast.FeatureView(
             name = self.name,
             entities=self._entities,
             ttl=Duration(seconds=self._duration * 1),
@@ -102,6 +102,7 @@ class FeatureTableDefinition:
             batch_source=ft_source,
             tags={}
         )
+        self._feast_elm.apply(objects=[fv].extend(self.entities))
     
     def get_view(self) -> feast.FeatureView:
         f = self._get_ft()
