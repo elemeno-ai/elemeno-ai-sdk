@@ -12,6 +12,7 @@ registry:
   tracking_url: http://mlflow.ai.b2w.io:80
 feature_store:
   registry: gs://elemeno-feature-store/generic_registry
+  provider: gcp
   gcp:
     project_id: b2w-bee-ai-platform
 
