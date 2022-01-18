@@ -22,6 +22,7 @@ class FeatureTableDefinition:
         self._online = online
         self._evt_col = event_column
         self._created_col = created_column
+        self._table_schema = None
         
     
     @property
@@ -35,6 +36,10 @@ class FeatureTableDefinition:
     @property
     def created_col(self):
         return self._created_col
+    
+    @property
+    def table_schema(self):
+        return self._table_schema
     
     @entities.setter
     def entities(self, value):
@@ -61,6 +66,9 @@ class FeatureTableDefinition:
                     if "format" in prop and prop["format"] == "date-time":
                         continue
                     self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
+            table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+            table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+            self._table_schema = table_schema
     
     @property
     def features(self):
