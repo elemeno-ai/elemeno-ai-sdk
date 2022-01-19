@@ -32,7 +32,7 @@ class Query:
         ft_name = self._definition.name
         features_requested = []
         for f in self._definition.features:
-            features_requested.append(f"{ft_name}:{f}")
+            features_requested.append(f"{ft_name}:{f.name}")
         
         ents = [e.name for e in self._definition.entities]
 
