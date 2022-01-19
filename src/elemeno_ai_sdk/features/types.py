@@ -54,7 +54,7 @@ class FeatureType:
             return np.float64
         elif type_in_str == "string":
             if format != None and format == "date-time":
-                return np.datetime64
+                return np.datetime64('2002-02-03T13:56:03.172')
             return np.unicode_
         elif type_in_str == "array":
             return np.ndarray
