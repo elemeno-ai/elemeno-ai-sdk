@@ -8,7 +8,7 @@ class BqType(enum.Enum):
     BigQuery enum types. Used when dealing with types in any big query operation.
     """
 
-    FLOAT64 = 0
+    FLOAT = 0
     STRING = 1
     DATETIME = 2
     TIMESTAMP = 3
@@ -29,7 +29,7 @@ class FeatureType:
         type_in_str -- the type name (JSONSchema)
         """
         if type_in_str == "number":
-            return BqType.FLOAT64
+            return BqType.FLOAT
         elif type_in_str == "string":
             if format != None and format == "date-time":
                 return BqType.TIMESTAMP
