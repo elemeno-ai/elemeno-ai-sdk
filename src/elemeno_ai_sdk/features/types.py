@@ -15,6 +15,7 @@ class BqType(enum.Enum):
     ARRAY = 4
     BOOL = 5
     STRUCT = 6
+    INTEGER = 7
 class FeatureType:
     """
     Feature value type. Used to define data types in Feature Tables.
@@ -40,6 +41,8 @@ class FeatureType:
             return BqType.STRUCT
         elif type_in_str == "boolean":
             return BqType.BOOL
+        elif type_in_str == "integer":
+            return BqType.INTEGER
         else:
             raise ValueError("Unsupported type in bigquery")
 
@@ -62,6 +65,8 @@ class FeatureType:
             return np.bytes_
         elif type_in_str == "boolean":
             return np.bool_
+        elif type_in_str == "integer":
+            return np.int32
         else:
             raise ValueError("Unsupported type in pandas")
 
@@ -80,5 +85,7 @@ class FeatureType:
             return feast.ValueType.BYTES
         elif type_in_str == "boolean":
             return feast.ValueType.BOOL
+        elif type_in_str == "integer":
+            return feast.ValueType.INT32
         else:
             return feast.ValueType.UNKNOWN
