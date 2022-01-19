@@ -1,6 +1,7 @@
 __version__ = '0.0.42'
 
 import logging
+import os
 
 LOGLEVEL = os.environ.get('LOGLEVEL', 'WARNING').upper()
 logger = logging.getLogger()
