@@ -51,12 +51,12 @@ class FeatureStore:
         self.fs = feast.FeatureStore(repo_path=".")
         self.config = self.fs.config
     
-    def ingest(self, ft: feast.FeatureView, df: pd.DataFrame, schema: typing.List[typing.Dict] = None):
+    def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         project_id = self.fs.config.offline_store.project_id
         dataset = self.fs.config.offline_store.dataset
         location = self.fs.config.offline_store.location
         df.to_gbq(destination_table=f"{dataset}.{ft.name}", 
-            project_id=project_id, if_exists="append", location=location, table_schema=schema)
+            project_id=project_id, if_exists="append", location=location)
         
     def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
         return self.fs.get_historical_features(entity_source, feature_refs)
