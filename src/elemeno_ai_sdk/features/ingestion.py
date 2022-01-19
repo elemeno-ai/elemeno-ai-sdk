@@ -27,7 +27,7 @@ class FeatureIngestion:
             if len(expected_columns) > 0:
                 raise ValueError(f"""There are missing columns in the dataframe trying to be ingested. 
                     Check the schema of the feature_table. Missing are {expected_columns} """)
-            self._feature_store.ingest(self._feature_table.get_view(), to_ingest)
+            self._feature_store.ingest(self._feature_table.get_view(), to_ingest, schema=self._feature_table.table_schema)
         except e:
             logger.error("There's some column in the df trying to be ingest not available in the features", e)
             raise e
