@@ -1,6 +1,7 @@
 import typing
 import feast
 import json
+import logging
 from google.protobuf.duration_pb2 import Duration
 import pandas as pd
 import pandas_gbq
@@ -73,8 +74,10 @@ class FeatureTableDefinition:
             pd_schema[self.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
             table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
             pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
-            
+
+            logging.debug(f"FT bq types schema: {table_schema}")
             self._table_schema = table_schema
+            logging.debug(f"Pandas types schema: {pd_schema}")
             df = pd.DataFrame(pd_schema)
             project_id = self._feast_elm.config.offline_store.project_id
             dataset = self._feast_elm.config.offline_store.dataset
