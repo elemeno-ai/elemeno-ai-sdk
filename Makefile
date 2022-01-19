@@ -1,7 +1,7 @@
 .PHONY: clean pip-testpypi wheel
 
 clean:
-	rm -rf dist
+	rm -rf dist build
 
 wheel:
 	python setup.py bdist_wheel
