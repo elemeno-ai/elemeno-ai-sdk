@@ -28,7 +28,7 @@ def parse_requirements(filename):
 
 setup(
     name='elemeno-ai-sdk',
-    version='0.0.43',
+    version='0.0.44',
     license='Apache-2.0',
     description='A set of glue code and utilities to make using elemeno AI platform a smooth experience',
     long_description='%s\n%s' % (
