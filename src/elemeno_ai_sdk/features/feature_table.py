@@ -3,6 +3,7 @@ import feast
 import json
 from google.protobuf.duration_pb2 import Duration
 import pandas as pd
+import pandas_gbq
 from elemeno_ai_sdk.features.feature_store  import BaseFeatureStore
 from elemeno_ai_sdk.features.types import FeatureType
 
@@ -57,9 +58,11 @@ class FeatureTableDefinition:
         with open(schema_file_path, mode="r") as schema_file:
             jschema = json.loads(schema_file.read())
             table_schema = []
+            pd_schema = {}
             for name, prop in jschema["properties"].items():
                 fmt = prop["format"] if "format" in prop else None
                 table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
+                pd_schema[name] = FeatureType.from_str_to_pd_type(prop["type"], format=fmt)
                 if "isKey" in prop and prop["isKey"] == "true":
                     self.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
                 else:
@@ -67,8 +70,16 @@ class FeatureTableDefinition:
                         continue
                     self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
             table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+            pd_schema[self.created_col] = FeatureType.from_str_to_pd_type("string", format="date-time")
             table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+            pd_schema[self.evt_col] = FeatureType.from_str_to_pd_type("string", format="date-time")
             self._table_schema = table_schema
+            df = pd.DataFrame(pd_schema)
+            project_id = self._feast_elm.config.offline_store.project_id
+            dataset = self._feast_elm.config.offline_store.dataset
+            location = self._feast_elm.config.offline_store.location
+            df.to_gbq(destination_table=f"{dataset}.{self.name}", 
+                project_id=project_id, if_exists="append", location=location)
     
     @property
     def features(self):

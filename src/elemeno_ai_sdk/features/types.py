@@ -1,5 +1,6 @@
 import enum
 from typing import Optional
+import numpy as np
 import feast
 
 class BqType(enum.Enum):
@@ -41,6 +42,28 @@ class FeatureType:
             return BqType.BOOL
         else:
             raise ValueError("Unsupported type in bigquery")
+
+    def from_str_to_pd_type(type_in_str: str, format: Optional[str] = None) -> np.dtype:
+        """Converts the string containing the type (JSONSchema types are supported)
+        to a pandas equivalent type. Returns a np.dtype
+
+        Keyword arguments:
+        type_in_str -- the type name (JSONSchema)
+        """
+        if type_in_str == "number":
+            return np.float64
+        elif type_in_str == "string":
+            if format != None and format == "date-time":
+                return np.datetime64
+            return np.unicode_
+        elif type_in_str == "array":
+            return np.ndarray
+        elif type_in_str == "object":
+            return np.bytes_
+        elif type_in_str == "boolean":
+            return np.bool_
+        else:
+            raise ValueError("Unsupported type in pandas")
 
     def from_str_to_feature_type(type_in_str: str) -> feast.ValueType:
         """Converts the string containing the type (JSONSchema types are supported)
