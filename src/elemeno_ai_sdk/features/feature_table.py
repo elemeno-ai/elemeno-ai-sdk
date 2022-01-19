@@ -70,10 +70,13 @@ class FeatureTableDefinition:
                     if "format" in prop and prop["format"] == "date-time":
                         continue
                     self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
-            table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
-            pd_schema[self.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
-            table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
-            pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
+            
+            if len(filter(lambda x: x["name"] == self.created_col, table_schema)) == 0:
+                table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+                pd_schema[self.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
+            if len(filter(lambda x: x["name"] == self.evt_col, table_schema)) == 0:
+                table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+                pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
 
             logging.debug(f"FT bq types schema: {table_schema}")
             self._table_schema = table_schema
