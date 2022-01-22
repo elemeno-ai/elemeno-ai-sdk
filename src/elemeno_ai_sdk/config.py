@@ -1,4 +1,5 @@
 from omegaconf import OmegaConf
+import os
 
 class Configs:
     _instance = None
@@ -9,9 +10,10 @@ class Configs:
 
     @classmethod
     def instance(cls):
+        cfg_path = os.getenv('ELEMENO_CFG_PATH', 'elemeno.yaml')
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
-            cls._props = OmegaConf.load('elemeno.yaml')
+            cls._props = OmegaConf.load(cfg_path)
         return cls._instance.props
 
     @property
