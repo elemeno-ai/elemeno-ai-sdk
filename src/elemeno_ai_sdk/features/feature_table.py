@@ -13,20 +13,20 @@ class FeatureTableDefinition:
     def __init__(self, name: str, feature_store: BaseFeatureStore,
             entities: typing.List[feast.Entity] = None,
             features: typing.List[feast.Feature] = None,
-            duration_seconds=86400,
-            online=False, event_column: str = "event_timestamp", 
+            ttl_duration_weeks=52,
+            online=False, event_column: str = "event_timestamp",
             created_column: str = "created_timestamp"):
         self.name = name
         self._entities = [] if entities is None else entities
         self._features = [] if features is None else features
         self._feast_elm = feature_store
-        self._duration = duration_seconds
+        self._duration = ttl_duration_weeks
         self._online = online
         self._evt_col = event_column
         self._created_col = created_column
         self._table_schema = None
-        
-    
+
+
     @property
     def entities(self):
         return self._entities
@@ -38,11 +38,11 @@ class FeatureTableDefinition:
     @property
     def created_col(self):
         return self._created_col
-    
+
     @property
     def table_schema(self):
         return self._table_schema
-    
+
     @entities.setter
     def entities(self, value):
         self._entities = value
@@ -70,7 +70,7 @@ class FeatureTableDefinition:
                     if "format" in prop and prop["format"] == "date-time":
                         continue
                     self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
-            
+
             if len(list(filter(lambda x: x["name"] == self.created_col, table_schema))) == 0:
                 table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
                 pd_schema[self.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
@@ -85,13 +85,13 @@ class FeatureTableDefinition:
             project_id = self._feast_elm.config.offline_store.project_id
             dataset = self._feast_elm.config.offline_store.dataset
             location = self._feast_elm.config.offline_store.location
-            df.to_gbq(destination_table=f"{dataset}.{self.name}", 
+            df.to_gbq(destination_table=f"{dataset}.{self.name}",
                 project_id=project_id, if_exists="append", location=location)
-    
+
     @property
     def features(self):
         return self._features
-    
+
     @features.setter
     def features(self, value):
         self._features = value
@@ -123,7 +123,7 @@ class FeatureTableDefinition:
         fv = feast.FeatureView(
             name = self.name,
             entities=[e.name for e in self._entities],
-            ttl=Duration(seconds=self._duration * 1),
+            ttl=Duration(seconds=self._duration * 604800),
             features=self._features,
             online=self._online,
             batch_source=ft_source,
@@ -133,8 +133,8 @@ class FeatureTableDefinition:
         self._feast_elm.apply(objects=fv)
 
         return fv
-        
-    
+
+
     def get_view(self) -> feast.FeatureView:
         f = self._get_ft()
         return f
