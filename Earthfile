@@ -1,5 +1,5 @@
 VERSION 0.6
-FROM amancevice/pandas:1.4.0
+FROM continuumio/anaconda3:2021.05
 
 build:
     ARG version
