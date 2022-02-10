@@ -1,22 +1,20 @@
 
 from typing import Any
-from elemeno_ai_sdk.models.conversion.converter import ConverterABC
+from elemeno_ai_sdk.models.conversion.converter_abc import ConverterABC
 import pickle
-#from onnx import save_model
 import skl2onnx
+from skl2onnx.common.data_types import FloatTensorType
 
 ConverterABC.register
+
+
 class SklearnConverter:
 
-    def transform(self, file: str) -> Any:
-        # Load the model
-        model = pickle.load(open(file, 'rb'))
-        # Convert the model
-        onnx_model = skl2onnx.convert_sklearn(model, 'model')
-        # Save as protobuf
-        #save_model(onnx_model, 'model.onnx')
-        return onnx_model
-
-if __name__ == '__main__':
-    s = SklearnConverter()
-    s.transform('sklearn_classifier.pickle')
+    def transform(self, path: str) -> Any:
+        onnx_path = path + ".onnx"
+        with open(path, 'rb') as file:
+            model = pickle.load(file)
+            initial_type = [('float_input', FloatTensorType([1, 4]))]
+            onx = skl2onnx.convert_sklearn(model, initial_types=initial_type)
+            with open(onnx_path, "wb") as f:
+                f.write(onx.SerializeToString())
