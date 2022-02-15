@@ -121,9 +121,9 @@ class FeatureTableDefinition:
           table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
           pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
 
-        logging.debug(f"FT bq types schema: {table_schema}")
+        logging.info(f"FT bq types schema: {table_schema}")
         self._table_schema = table_schema
-        logging.debug(f"Pandas types schema: {pd_schema}")
+        logging.info(f"Pandas types schema: {pd_schema}")
         df = pd.DataFrame(pd_schema)
         # project_id = self._feast_elm.config.offline_store.project_id
         # dataset = self._feast_elm.config.offline_store.dataset
@@ -153,6 +153,9 @@ class FeatureTableDefinition:
 
     def ingest(self, dataframe: pd.DataFrame):
         self._feast_elm.ingest(self._get_ft(), dataframe)
+
+    def ingest_from_query(self, query: str):
+      self._feast_elm.ingest_from_query(self._get_ft(), query)
 
     def ingest_rs(self, dataframe: pd.DataFrame, conn_str: str):
       self._feast_elm.ingest_rs(self._get_ft_rs(), dataframe, conn_str)
