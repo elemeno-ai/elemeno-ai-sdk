@@ -2,6 +2,9 @@ import typing
 import pandas as pd
 from elemeno_ai_sdk.features.feature_store import BaseFeatureStore
 from elemeno_ai_sdk.features.feature_table import FeatureTableDefinition
+import logging
+
+logger = logging.getLogger("FeatureQuery")
 
 class Query:
 
@@ -14,7 +17,7 @@ class Query:
                                 entities_where: pd.DataFrame,
                                 features_selected: typing.List[str] = None) -> pd.DataFrame:
         ft = self._definition
-        print(ft.name)
+        logging.info(ft.name)
         entities = ft.entities
         cols = [p.name for p in entities]
         source_entity = pd.DataFrame(columns=cols)

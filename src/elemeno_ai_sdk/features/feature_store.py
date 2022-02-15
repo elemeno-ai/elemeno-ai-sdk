@@ -73,18 +73,15 @@ class FeatureStore:
         df.to_gbq(destination_table=f"{dataset}.{ft.name}",
             project_id=project_id, if_exists="append", location=location, table_schema=schema)
 
-    def ingest_from_query(self, ft: feast.FeatureView, query: str, schema: typing.List[typing.Dict] = None):
+    def ingest_from_query(self, ft: feast.FeatureView, query: str):
       project_id = self.fs.config.offline_store.project_id
       dataset = self.fs.config.offline_store.dataset
       client = bigquery.Client(project=project_id)
       phrases = query.split(";")
-      phrases.insert(len(phrases) - 1, f"INSERT INTO {dataset}.{ft.name}")
+      phrases.insert(len(phrases) - 1, f"INSERT INTO {project_id}.{dataset}.{ft.name}")
       query_with_insert = '\n'.join(phrases)
-      # table_ref = client.dataset(dataset).table(ft.name)
-      # table = bigquery.Table(table_ref, schema=schema)
-      # client.create_table(table)
       logging.info("Will perform query: {}".format(query_with_insert))
-      client.query(query_with_insert)
+      client.query(query_with_insert).result()
 
     def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
       conn = create_engine(conn_str)
