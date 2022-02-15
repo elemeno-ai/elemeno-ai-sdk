@@ -11,6 +11,8 @@ from feast.repo_config import RepoConfig
 import pandas as pd
 from datetime import datetime
 from sqlalchemy import create_engine
+from google.cloud import bigquery
+import logging
 
 class BaseFeatureStore(metaclass=abc.ABCMeta):
 
@@ -18,6 +20,10 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, 'ingest') and
             callable(subclass.ingest) and
+            hasattr(subclass, 'ingest_from_query') and
+            callable(subclass.ingest_rs) and
+            hasattr(subclass, 'ingest_rs') and
+            callable(subclass.ingest_from_query) and
             hasattr(subclass, 'get_historical_features') and
             callable(subclass.get_historical_features) and
             hasattr(subclass, 'get_online_features') and
@@ -27,6 +33,12 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
             hasattr(subclass, 'config'))
 
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
+        pass
+
+    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
+        pass
+
+    def ingest_from_query(self, ft: feast.FeatureView, query: str):
         pass
 
     def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
@@ -49,6 +61,8 @@ class FeatureStore:
         """
         FeatureStore is a BigQuery compatible Feature Store implementation
         """
+        logging.basicConfig()
+        logging.getLogger().setLevel("INFO")
         self.fs = feast.FeatureStore(repo_path=".")
         self.config = self.fs.config
 
@@ -58,6 +72,19 @@ class FeatureStore:
         location = self.fs.config.offline_store.location
         df.to_gbq(destination_table=f"{dataset}.{ft.name}",
             project_id=project_id, if_exists="append", location=location, table_schema=schema)
+
+    def ingest_from_query(self, ft: feast.FeatureView, query: str, schema: typing.List[typing.Dict] = None):
+      project_id = self.fs.config.offline_store.project_id
+      dataset = self.fs.config.offline_store.dataset
+      client = bigquery.Client(project=project_id)
+      phrases = query.split(";")
+      phrases.insert(len(phrases) - 1, f"INSERT INTO {dataset}.{ft.name}")
+      query_with_insert = '\n'.join(phrases)
+      # table_ref = client.dataset(dataset).table(ft.name)
+      # table = bigquery.Table(table_ref, schema=schema)
+      # client.create_table(table)
+      logging.info("Will perform query: {}".format(query_with_insert))
+      client.query(query_with_insert)
 
     def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
       conn = create_engine(conn_str)
@@ -79,5 +106,7 @@ class FeatureStore:
             objects_to_delete: typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,
             partial: bool = True):
         self.fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
+
+
 
 

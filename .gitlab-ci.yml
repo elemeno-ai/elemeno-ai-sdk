@@ -30,7 +30,6 @@ bump-and-publish:
     - git config --global user.email "hoffmann@elemeno.ai"
     - git config --global user.name "Hoffmann"
     - make version=$CI_COMMIT_TAG bump
-    - cat setup.py
     - make pip-pypi-elemeno
   only:
     - tags
