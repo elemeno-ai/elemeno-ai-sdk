@@ -14,6 +14,7 @@ class Query:
                                 entities_where: pd.DataFrame,
                                 features_selected: typing.List[str] = None) -> pd.DataFrame:
         ft = self._definition
+        print(ft.name)
         entities = ft.entities
         cols = [p.name for p in entities]
         source_entity = pd.DataFrame(columns=cols)
@@ -25,14 +26,16 @@ class Query:
         if not ft.evt_col in input_cols:
             raise ValueError("Missing the event timestamp column in input")
         source_entity[ft.evt_col] = entities_where[ft.evt_col]
-        features = []
+        # features = []
         if features_selected is None:
           features = [f"{ft.name}:{fd.name}" for fd in ft.features]
         else:
           for f_selected in features_selected:
             if f_selected not in ft.features:
               raise ValueError(f"Invalid input. The selected {f_selected} is not present in the Feature View.")
-            features = [f"{ft.name}:{fcustom}" for fcustom in features_selected]
+            else:
+              print(f"{f_selected} is OK!")
+          features = [f"{ft.name}:{fcustom}" for fcustom in features_selected]
         job = self._feature_store.get_historical_features(entity_source=source_entity, feature_refs=features)
         return job.to_df()
 
