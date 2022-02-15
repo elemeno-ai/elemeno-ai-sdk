@@ -129,7 +129,8 @@ class FeatureTableDefinition:
         # dataset = self._feast_elm.config.offline_store.dataset
         # location = self._feast_elm.config.offline_store.location
         df.to_sql(f"{self.name}",
-                  conn, index=False, if_exists='replace')
+                  conn, index=False, if_exists='replace', 
+                  method='multi', chunksize=2000)
 
     @property
     def features(self):
