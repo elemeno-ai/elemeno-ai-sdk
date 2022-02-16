@@ -86,7 +86,7 @@ class FeatureStore:
       conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
       try:
         df.to_sql(f"{ft.name}",
-                conn, index=False, if_exists='replace', method='multi', chunksize=2000)
+                conn, index=False, if_exists='append', method='multi', chunksize=2000)
       finally:
         conn.dispose()
 
