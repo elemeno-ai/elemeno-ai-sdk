@@ -84,8 +84,11 @@ class FeatureStore:
 
     def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
       conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
-      df.to_sql(f"{ft.name}",
-                conn, index=False, if_exists='replace')
+      try:
+        df.to_sql(f"{ft.name}",
+                conn, index=False, if_exists='replace', method='multi', chunksize=2000)
+      finally:
+        conn.dispose()
 
 
     def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
