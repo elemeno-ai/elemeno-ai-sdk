@@ -90,7 +90,6 @@ class FeatureTableDefinition:
                 project_id=project_id, if_exists="append", location=location)
 
     def ingest_schema_rs(self, schema_file_path: str, conn_str: str) -> None:
-      conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
       """
       This method should be called if you want to use a jsonschema file to create the feature table
       If other entities/features were registered, this method will append the ones in the jsonschema to them
@@ -99,37 +98,40 @@ class FeatureTableDefinition:
       schema_file_path: str - The local path to the file containing the jsonschema definition
 
       """
-      with open(schema_file_path, mode="r") as schema_file:
-        jschema = json.loads(schema_file.read())
-        table_schema = []
-        pd_schema = {}
-        for name, prop in jschema["properties"].items():
-          fmt = prop["format"] if "format" in prop else None
-          table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
-          pd_schema[name] = pd.Series(dtype=FeatureType.from_str_to_pd_type(prop["type"], format=fmt))
-          if "isKey" in prop and prop["isKey"] == "true":
-            self.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
-          else:
-            if "format" in prop and prop["format"] == "date-time":
-              continue
-            self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
+      conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
+      try:
+        with open(schema_file_path, mode="r") as schema_file:
+          jschema = json.loads(schema_file.read())
+          table_schema = []
+          pd_schema = {}
+          for name, prop in jschema["properties"].items():
+            fmt = prop["format"] if "format" in prop else None
+            table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
+            pd_schema[name] = pd.Series(dtype=FeatureType.from_str_to_pd_type(prop["type"], format=fmt))
+            if "isKey" in prop and prop["isKey"] == "true":
+              self.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
+            else:
+              if "format" in prop and prop["format"] == "date-time":
+                continue
+              self.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
 
-        if len(list(filter(lambda x: x["name"] == self.created_col, table_schema))) == 0:
-          table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
-          pd_schema[self.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
-        if len(list(filter(lambda x: x["name"] == self.evt_col, table_schema))) == 0:
-          table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
-          pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
+          if len(list(filter(lambda x: x["name"] == self.created_col, table_schema))) == 0:
+            table_schema.append({"name": self.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+            pd_schema[self.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
+          if len(list(filter(lambda x: x["name"] == self.evt_col, table_schema))) == 0:
+            table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+            pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
 
-        logging.info(f"FT bq types schema: {table_schema}")
-        self._table_schema = table_schema
-        logging.info(f"Pandas types schema: {pd_schema}")
-        df = pd.DataFrame(pd_schema)
-        # project_id = self._feast_elm.config.offline_store.project_id
-        # dataset = self._feast_elm.config.offline_store.dataset
-        # location = self._feast_elm.config.offline_store.location
-        df.to_sql(f"{self.name}",
-                  conn, index=False, if_exists='replace')
+          logging.info(f"FT bq types schema: {table_schema}")
+          self._table_schema = table_schema
+          logging.info(f"Pandas types schema: {pd_schema}")
+          df = pd.DataFrame(pd_schema)
+          # project_id = self._feast_elm.config.offline_store.project_id
+          # dataset = self._feast_elm.config.offline_store.dataset
+          # location = self._feast_elm.config.offline_store.location
+          df.to_sql(f"{self.name}",
+                    conn, index=False, if_exists='append')
+      finally:
         conn.dispose()
 
     @property
