@@ -90,7 +90,7 @@ class FeatureTableDefinition:
                 project_id=project_id, if_exists="append", location=location)
 
     def ingest_schema_rs(self, schema_file_path: str, conn_str: str) -> None:
-      conn = create_engine(conn_str)
+      conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
       """
       This method should be called if you want to use a jsonschema file to create the feature table
       If other entities/features were registered, this method will append the ones in the jsonschema to them
@@ -129,8 +129,8 @@ class FeatureTableDefinition:
         # dataset = self._feast_elm.config.offline_store.dataset
         # location = self._feast_elm.config.offline_store.location
         df.to_sql(f"{self.name}",
-                  conn, index=False, if_exists='replace', 
-                  method='multi', chunksize=2000)
+                  conn, index=False, if_exists='replace')
+        conn.dispose()
 
     @property
     def features(self):
