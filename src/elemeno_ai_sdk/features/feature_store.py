@@ -14,6 +14,7 @@ from sqlalchemy import create_engine
 from google.cloud import bigquery
 import logging
 from elemeno_ai_sdk.features.utils import create_insert_into
+from elemeno_ai_sdk.config import Configs
 
 class BaseFeatureStore(metaclass=abc.ABCMeta):
 
@@ -64,7 +65,8 @@ class FeatureStore:
         """
         logging.basicConfig()
         logging.getLogger().setLevel("INFO")
-        self.fs = feast.FeatureStore(repo_path=".")
+        self._elm_config = Configs.instance()
+        self.fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path)
         self.config = self.fs.config
 
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame, schema: typing.List[typing.Dict] = None):
