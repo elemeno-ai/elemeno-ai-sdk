@@ -13,7 +13,7 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from google.cloud import bigquery
 import logging
-from utils import create_insert_into
+from elemeno_ai_sdk.features.utils import create_insert_into
 
 class BaseFeatureStore(metaclass=abc.ABCMeta):
 
