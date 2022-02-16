@@ -78,7 +78,7 @@ class FeatureStore:
       project_id = self.fs.config.offline_store.project_id
       dataset = self.fs.config.offline_store.dataset
       client = bigquery.Client(project=project_id)
-      final_query = create_insert_into(query, f"{project_id}.{dataset}.{ft.name}")
+      final_query = create_insert_into(f"{project_id}.{dataset}.{ft.name}", query)
       logging.info("Will perform query: {}".format(final_query))
       client.query(final_query).result()
 
