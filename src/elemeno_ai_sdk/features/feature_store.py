@@ -13,6 +13,7 @@ from datetime import datetime
 from sqlalchemy import create_engine
 from google.cloud import bigquery
 import logging
+from utils import create_insert_into
 
 class BaseFeatureStore(metaclass=abc.ABCMeta):
 
@@ -77,11 +78,9 @@ class FeatureStore:
       project_id = self.fs.config.offline_store.project_id
       dataset = self.fs.config.offline_store.dataset
       client = bigquery.Client(project=project_id)
-      phrases = query.split(";")
-      phrases.insert(len(phrases) - 1, f"INSERT INTO {project_id}.{dataset}.{ft.name}")
-      query_with_insert = '\n'.join(phrases)
-      logging.info("Will perform query: {}".format(query_with_insert))
-      client.query(query_with_insert).result()
+      final_query = create_insert_into(query, f"{project_id}.{dataset}.{ft.name}")
+      logging.info("Will perform query: {}".format(final_query))
+      client.query(final_query).result()
 
     def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
       conn = create_engine(conn_str)
