@@ -1,4 +1,4 @@
-feast[redis,gcp,aws]==0.17.0
+feast[redis,gcp,aws]==0.18.1
 GitPython==3.1.26
 google_auth_oauthlib==0.4.6
 Jinja2==3.0.3
