@@ -23,6 +23,7 @@ class FeatureIngestion:
             expected_columns.append(f)
 
         try:
+            to_ingest = to_ingest.filter(expected_columns, axis=1)
             for tv in to_ingest.columns:
                 expected_columns.remove(tv)
             if len(expected_columns) > 0:
