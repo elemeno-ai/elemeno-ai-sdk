@@ -3,4 +3,5 @@
 - [ ] Add smart schema with primary keys and partitioning
 - [ ] Implement schema by provider (csv, aws, gcp)
 - [ ] Add spark methods
-= [ ] Merge master
+- [ ] Merge master
+- [ ] Warning is being set globally, what is overriding client apps logging level
