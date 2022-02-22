@@ -16,11 +16,7 @@ class FeatureIngestion:
         self._feature_table = feature_table
 
     def ingest(self, to_ingest: pd.DataFrame) -> None:
-        expected_columns = []
-        for e in self._feature_table.entities:
-            expected_columns.append(e.name)
-        for f in self._feature_table.features:
-            expected_columns.append(f)
+        expected_columns = self._feature_table.all_columns()
 
         try:
             to_ingest = to_ingest.filter(expected_columns, axis=1)

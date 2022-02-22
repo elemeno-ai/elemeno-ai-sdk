@@ -161,7 +161,16 @@ class FeatureTableDefinition:
       self._feast_elm.ingest_from_query(self._get_ft(), query)
 
     def ingest_rs(self, dataframe: pd.DataFrame, conn_str: str):
-      self._feast_elm.ingest_rs(self._get_ft_rs(), dataframe, conn_str)
+      expected_columns = self.all_columns()
+      self._feast_elm.ingest_rs(self._get_ft_rs(), dataframe, conn_str, expected_columns)
+    
+    def all_columns(self) -> typing.List[str]:
+        cols = []
+        for e in self._entities:
+            cols.append(e.name)
+        for f in self._features:
+            cols.append(f)
+        return cols
 
     def _get_ft(self):
         dataset = self._feast_elm.config.offline_store.dataset

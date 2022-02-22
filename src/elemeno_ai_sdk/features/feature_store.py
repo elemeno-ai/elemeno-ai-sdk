@@ -37,7 +37,7 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         pass
 
-    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
+    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, expected_columns: typing.List[str]):
         pass
 
     def ingest_from_query(self, ft: feast.FeatureView, query: str):
@@ -84,7 +84,8 @@ class FeatureStore:
       logging.info("Will perform query: {}".format(final_query))
       client.query(final_query).result()
 
-    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str):
+    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, expected_columns: typing.List[str]):
+      to_ingest = to_ingest.filter(expected_columns, axis=1)
       conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
       try:
         df.to_sql(f"{ft.name}",
