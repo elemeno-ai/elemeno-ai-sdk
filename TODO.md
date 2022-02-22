@@ -5,3 +5,4 @@
 - [ ] Add spark methods
 - [ ] Merge master
 - [ ] Warning is being set globally, what is overriding client apps logging level
+- [ ] Create own modeling instead of feast native formats
