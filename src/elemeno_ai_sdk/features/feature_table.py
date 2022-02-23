@@ -169,7 +169,7 @@ class FeatureTableDefinition:
         for e in self._entities:
             cols.append(e.name)
         for f in self._features:
-            cols.append(f)
+            cols.append(f.name)
         return cols
 
     def _get_ft(self):
