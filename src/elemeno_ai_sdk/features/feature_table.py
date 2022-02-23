@@ -155,14 +155,14 @@ class FeatureTableDefinition:
         self.features.append(feature)
 
     def ingest(self, dataframe: pd.DataFrame):
-        self._feast_elm.ingest(self, dataframe)
+        self._feast_elm.ingest(self._get_ft(), dataframe)
 
     def ingest_from_query(self, query: str):
-      self._feast_elm.ingest_from_query(self, query)
+      self._feast_elm.ingest_from_query(self._get_ft(), query)
 
     def ingest_rs(self, dataframe: pd.DataFrame, conn_str: str):
       expected_columns = self.all_columns()
-      self._feast_elm.ingest_rs(self, dataframe, conn_str, expected_columns, self._created_col)
+      self._feast_elm.ingest_rs(self._get_ft(), dataframe, conn_str, expected_columns, self._created_col)
     
     def all_columns(self) -> typing.List[str]:
         cols = []
