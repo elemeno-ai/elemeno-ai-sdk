@@ -162,7 +162,7 @@ class FeatureTableDefinition:
 
     def ingest_rs(self, dataframe: pd.DataFrame, conn_str: str):
       expected_columns = self.all_columns()
-      self._feast_elm.ingest_rs(self._get_ft(), dataframe, conn_str, expected_columns, self._created_col)
+      self._feast_elm.ingest_rs(self._get_ft_rs(), dataframe, conn_str, expected_columns, self._created_col)
     
     def all_columns(self) -> typing.List[str]:
         cols = []
