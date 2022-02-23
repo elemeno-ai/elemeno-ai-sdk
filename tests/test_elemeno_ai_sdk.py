@@ -1,5 +1,6 @@
 
 from elemeno_ai_sdk.cli import main
+from .features.feature_store import *
 
 
 def test_main():

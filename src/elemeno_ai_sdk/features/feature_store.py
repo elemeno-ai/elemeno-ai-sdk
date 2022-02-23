@@ -32,7 +32,8 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
             callable(subclass.get_online_features) and
             hasattr(subclass, 'apply') and
             callable(subclass.apply) and
-            hasattr(subclass, 'config'))
+            hasattr(subclass, 'config') and
+            hasattr(subclass, 'fs'))
 
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         pass
@@ -57,6 +58,8 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
             partial: bool = True) -> None:
         pass
 
+    fs: feast.FeatureStore
+
 BaseFeatureStore.register
 class FeatureStore:
     def __init__(self) -> None:
@@ -66,26 +69,30 @@ class FeatureStore:
         logging.basicConfig()
         logging.getLogger().setLevel("INFO")
         self._elm_config = Configs.instance()
-        self.fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path)
-        self.config = self.fs.config
+        self._fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path)
+        self.config = self._fs.config
+
+    @property
+    def fs(self) -> feast.FeatureStore:
+        return self._fs
 
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame, schema: typing.List[typing.Dict] = None):
-        project_id = self.fs.config.offline_store.project_id
-        dataset = self.fs.config.offline_store.dataset
-        location = self.fs.config.offline_store.location
+        project_id = self._fs.config.offline_store.project_id
+        dataset = self._fs.config.offline_store.dataset
+        location = self._fs.config.offline_store.location
         df.to_gbq(destination_table=f"{dataset}.{ft.name}",
             project_id=project_id, if_exists="append", location=location, table_schema=schema)
 
     def ingest_from_query(self, ft: feast.FeatureView, query: str):
-      project_id = self.fs.config.offline_store.project_id
-      dataset = self.fs.config.offline_store.dataset
+      project_id = self._fs.config.offline_store.project_id
+      dataset = self._fs.config.offline_store.dataset
       client = bigquery.Client(project=project_id)
       final_query = create_insert_into(f"{project_id}.{dataset}.{ft.name}", query)
       logging.info("Will perform query: {}".format(final_query))
       client.query(final_query).result()
 
     def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, expected_columns: typing.List[str]):
-      to_ingest = to_ingest.filter(expected_columns, axis=1)
+      df = df.filter(expected_columns, axis=1)
       conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
       try:
         df.to_sql(f"{ft.name}",
@@ -95,20 +102,20 @@ class FeatureStore:
 
 
     def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
-        return self.fs.get_historical_features(entity_source, feature_refs)
+        return self._fs.get_historical_features(entity_source, feature_refs)
 
     def get_online_features(self, entities: typing.List[typing.Dict[str, typing.Any]],
             requested_features: typing.Optional[typing.List[str]]=None) \
             -> feast.online_response.OnlineResponse:
-        if self.fs.config.online_store == None:
+        if self._fs.config.online_store == None:
             raise ValueError("Online store is not configure, make sure to configure the property online_store in the config yaml")
-        return self.fs.get_online_features(features=requested_features, entity_rows=entities)
+        return self._fs.get_online_features(features=requested_features, entity_rows=entities)
 
     def apply(self, objects: typing.Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
         typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
             objects_to_delete: typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,
             partial: bool = True):
-        self.fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
+        self._fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
 
 
 

@@ -215,8 +215,37 @@ class FeatureTableDefinition:
 
       return fv
 
-    def get_view(self) -> feast.FeatureView:
-        f = self._get_ft()
-        return f
+    def _get_ft_file(self):
+      ft_source = feast.FileSource(
+        path=f"data/{self.name}",
+        event_timestamp_column=self.evt_col,
+        created_timestamp_column=self.created_col
+      )
 
+      fv = feast.FeatureView(
+        name = self.name,
+        entities=[e.name for e in self._entities],
+        ttl=Duration(seconds=self._duration * 604800),
+        features=self._features,
+        online=self._online,
+        batch_source=ft_source,
+        tags={}
+      )
+      self._feast_elm.apply(objects=self.entities)
+      self._feast_elm.apply(objects=fv)
+
+      return fv
+
+    def get_view(self) -> feast.FeatureView:
+        offline_store_type = type(self._feast_elm.fs.config.offline_store).__name__
+        if (offline_store_type == "BigQueryOfflineStoreConfig"):
+            f = self._get_ft()
+        elif (offline_store_type == "RedshiftOfflineStoreConfig"):
+            f = self._get_ft_rs()
+        elif (offline_store_type == "FileOfflineStoreConfig"):
+            f = self._get_ft_file()
+        else:
+            print(offline_store_type)
+            raise ValueError("Unsupported offline store type")
+        return f
 
