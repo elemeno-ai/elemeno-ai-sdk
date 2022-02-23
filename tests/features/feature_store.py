@@ -23,7 +23,9 @@ def test_ingest_rs():
   data_path =  os.path.abspath(f"data/{ft.name}.db")
   if os.path.exists(data_path):
     os.remove(data_path)
-  fs.ingest_rs(ft.get_view(), df, f"sqlite:///{data_path}?mode=rwc", ["entity_id", "feature_float", "feature_int"])
+  fs.ingest_rs(ft.get_view(), df, 
+    f"sqlite:///{data_path}?mode=rwc", ["entity_id", "feature_float", "feature_int"],
+    created_timestamp_name="created_timestamp")
   """
   " assert data was properly inserted on sqlite
   """

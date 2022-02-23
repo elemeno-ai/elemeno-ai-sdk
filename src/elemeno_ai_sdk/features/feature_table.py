@@ -6,12 +6,12 @@ from google.protobuf.duration_pb2 import Duration
 import pandas as pd
 from sqlalchemy import create_engine
 import pandas_gbq
-from elemeno_ai_sdk.features.feature_store  import BaseFeatureStore
+from elemeno_ai_sdk.features.feature_store  import FeatureStore
 from elemeno_ai_sdk.features.types import FeatureType
 
 class FeatureTableDefinition:
 
-    def __init__(self, name: str, feature_store: BaseFeatureStore,
+    def __init__(self, name: str, feature_store: FeatureStore,
             entities: typing.List[feast.Entity] = None,
             features: typing.List[feast.Feature] = None,
             ttl_duration_weeks=52,
@@ -155,14 +155,14 @@ class FeatureTableDefinition:
         self.features.append(feature)
 
     def ingest(self, dataframe: pd.DataFrame):
-        self._feast_elm.ingest(self._get_ft(), dataframe)
+        self._feast_elm.ingest(self, dataframe)
 
     def ingest_from_query(self, query: str):
-      self._feast_elm.ingest_from_query(self._get_ft(), query)
+      self._feast_elm.ingest_from_query(self, query)
 
     def ingest_rs(self, dataframe: pd.DataFrame, conn_str: str):
       expected_columns = self.all_columns()
-      self._feast_elm.ingest_rs(self._get_ft_rs(), dataframe, conn_str, expected_columns)
+      self._feast_elm.ingest_rs(self, dataframe, conn_str, expected_columns, self._created_col)
     
     def all_columns(self) -> typing.List[str]:
         cols = []
@@ -170,6 +170,8 @@ class FeatureTableDefinition:
             cols.append(e.name)
         for f in self._features:
             cols.append(f.name)
+        cols.append(self._evt_col)
+        cols.append(self._created_col)
         return cols
 
     def _get_ft(self):

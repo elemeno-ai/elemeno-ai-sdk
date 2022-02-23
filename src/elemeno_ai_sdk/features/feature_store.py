@@ -38,7 +38,8 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
         pass
 
-    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, expected_columns: typing.List[str]):
+    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, 
+        expected_columns: typing.List[str], created_timestamp_name: str):
         pass
 
     def ingest_from_query(self, ft: feast.FeatureView, query: str):
@@ -91,7 +92,10 @@ class FeatureStore:
       logging.info("Will perform query: {}".format(final_query))
       client.query(final_query).result()
 
-    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, expected_columns: typing.List[str]):
+    def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, 
+        conn_str: str, expected_columns: typing.List[str],
+        created_timestamp_name: str):
+      df = self._with_ts_if_not_present(ft, df, created_timestamp_name)
       df = df.filter(expected_columns, axis=1)
       conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
       try:
@@ -100,6 +104,11 @@ class FeatureStore:
       finally:
         conn.dispose()
 
+
+    def _with_ts_if_not_present(self, ftb: feast.FeatureView, df: pd.DataFrame, created_timestamp: str) -> pd.DataFrame:
+        if (not created_timestamp in df or len(df[created_timestamp].isna()) == len(df)):
+            df[created_timestamp] = pd.to_datetime('now', utc=True)
+        return df
 
     def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
         return self._fs.get_historical_features(entity_source, feature_refs)
