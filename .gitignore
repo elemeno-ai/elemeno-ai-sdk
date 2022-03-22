@@ -82,3 +82,5 @@ cpr
 
 # other
 data
+
+tests/**/*.onnx

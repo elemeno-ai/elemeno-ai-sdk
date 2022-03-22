@@ -76,19 +76,28 @@ class FeatureStore:
     @property
     def fs(self) -> feast.FeatureStore:
         return self._fs
+    
+    def _parse_table_name_from_offline_config(self, offline_store, name) -> str:
+        table_name = ""
+        if hasattr(self._fs.config.offline_store, 'project_id'):
+            table_name += f"{self._fs.config.offline_store.project_id}."
+        if hasattr(self._fs.config.offline_store, 'dataset'):
+            table_name += f"{self._fs.config.offline_store.dataset}."
+        table_name += name
+        return table_name
 
     def ingest(self, ft: feast.FeatureView, df: pd.DataFrame, schema: typing.List[typing.Dict] = None):
+        table_name = self._parse_table_name_from_offline_config(self._fs.config.offline_store, ft.name)
         project_id = self._fs.config.offline_store.project_id
-        dataset = self._fs.config.offline_store.dataset
         location = self._fs.config.offline_store.location
-        df.to_gbq(destination_table=f"{dataset}.{ft.name}",
+        df.to_gbq(destination_table=table_name,
             project_id=project_id, if_exists="append", location=location, table_schema=schema)
 
     def ingest_from_query(self, ft: feast.FeatureView, query: str):
+      table_name = self._parse_table_name_from_offline_config(self._fs.config.offline_store, ft.name)
       project_id = self._fs.config.offline_store.project_id
-      dataset = self._fs.config.offline_store.dataset
       client = bigquery.Client(project=project_id)
-      final_query = create_insert_into(f"{project_id}.{dataset}.{ft.name}", query)
+      final_query = create_insert_into(table_name, query)
       logging.info("Will perform query: {}".format(final_query))
       client.query(final_query).result()
 
