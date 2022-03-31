@@ -13,7 +13,8 @@ protobuf==3.19.4
 setuptools==53.0.0
 sphinx_rtd_theme==1.0.0
 tf2onnx==1.9.3
-onnxruntime>=1.8.2.dev20210816004
+onnxruntime>=1.8.1
+#pip install -i https://test.pypi.org/simple/ onnxruntime==1.8.2.dev20210816004 # do when using mac arm64
 #torch==1.10.2
 # for 3.10 install 1.11
 
