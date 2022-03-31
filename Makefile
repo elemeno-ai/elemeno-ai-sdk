@@ -25,4 +25,4 @@ pip-pypi: clean _pip-pypi
 pip-pypi-elemeno: clean _pip-pypi-elemeno
 
 bump:
-	python -m bumpversion --new-version $(version) patch --verbose
+	bumpversion --new-version $(version) patch --verbose
