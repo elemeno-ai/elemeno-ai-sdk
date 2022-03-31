@@ -84,3 +84,5 @@ cpr
 data
 
 tests/**/*.onnx
+
+.python-version

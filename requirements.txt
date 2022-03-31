@@ -13,7 +13,7 @@ protobuf==3.19.4
 setuptools==53.0.0
 sphinx_rtd_theme==1.0.0
 tf2onnx==1.9.3
-onnxruntime==1.10.0
+onnxruntime>=1.8.2.dev20210816004
 #torch==1.10.2
 # for 3.10 install 1.11
 
