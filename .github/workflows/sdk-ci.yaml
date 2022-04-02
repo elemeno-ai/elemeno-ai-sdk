@@ -6,6 +6,7 @@ on:
 jobs:
   publish:
     if: ${{ !contains(github.ref_name, '-') }}
+    environment: PROD_BUILD
     runs-on: ubuntu-latest
     name: Python 3.8
     steps:
