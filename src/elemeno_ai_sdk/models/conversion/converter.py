@@ -1,4 +1,5 @@
 
+import logging
 from typing import Optional, Tuple
 from .tflite import TFLiteConverter
 from .sklearn import SklearnConverter
@@ -18,6 +19,9 @@ class ModelConverter:
     """
 
     file_extension = self.model_path.split('.')[-1]
+    if file_extension == 'onnx':
+      logging.info('Nohting to do, model is already onnx')
+      return
     converters = {
       'h5': TensorflowConverter(),
       'pkl': SklearnConverter(),
