@@ -3,7 +3,7 @@ on:
   push:
     tags:
       - '*'
-jobs:
+steps:
   runs-on: ubuntu-latest
   name: Python 3.8
   steps:
