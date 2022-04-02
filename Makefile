@@ -24,8 +24,25 @@ pip-pypi: clean _pip-pypi
 
 pip-pypi-elemeno: clean _pip-pypi-elemeno
 
-bump:
+bump-custom:
 	bumpversion --new-version $(version) patch --verbose
 
-tag:
-	git tag -a v$$(python setup.py --version) -m '$(description)'
+bump-patch:
+	bumpversion patch --tag --verbose
+	@echo "New version: v$$(python setup.py --version)"
+	@echo "Make sure to push the new tag to GitHub"
+
+bump-minor:
+	bumpversion minor --tag --verbose
+	@echo "New version: v$$(python setup.py --version)"
+	@echo "Make sure to push the new tag to GitHub"
+
+bump-major:
+	bumpversion major --tag --verbose
+	@echo "New version: v$$(python setup.py --version)"
+	@echo "Make sure to push the new tag to GitHub"
+
+bump-dev:
+	bumpversion build --tag --verbose
+	@echo "New version: v$$(python setup.py --version)"
+	@echo "Make sure to push the new tag to GitHub"
