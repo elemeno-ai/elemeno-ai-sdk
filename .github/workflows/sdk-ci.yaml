@@ -1,0 +1,17 @@
+name: GitHub Actions Demo
+on: [tag]
+jobs:
+  runs-on: ubuntu-latest
+  name: Python 3.8
+  steps:
+    - uses: actions/checkout@v3
+    #TODO add a step for running unit tests
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+    - name: Build and bump version
+      uses: actions/setup-python@v3
+      with:
+        python-version: 3.8
+        architecture: x64
+    - run: make version=${{ steps.get_version.outputs.VERSION }} bump
