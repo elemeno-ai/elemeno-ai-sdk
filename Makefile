@@ -12,7 +12,7 @@ _pip-testpypi: clean
 
 _pip-pypi: clean
 	python setup.py sdist bdist_wheel
-	twine upload dist/*.whl
+	twine upload --non-interactive dist/*.whl
 
 _pip-pypi-elemeno: clean
 	python setup.py sdist bdist_wheel
