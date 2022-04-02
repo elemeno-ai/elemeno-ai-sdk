@@ -26,3 +26,6 @@ pip-pypi-elemeno: clean _pip-pypi-elemeno
 
 bump:
 	bumpversion --new-version $(version) patch --verbose
+
+tag:
+	git tag -a v$$(python setup.py --version) -m '$(description)'
