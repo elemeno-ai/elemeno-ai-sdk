@@ -1,5 +1,8 @@
 name: GitHub Actions Demo
-on: [tag]
+on:
+  push:
+    tags:
+      - '*'
 jobs:
   runs-on: ubuntu-latest
   name: Python 3.8
