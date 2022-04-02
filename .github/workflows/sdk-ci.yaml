@@ -19,4 +19,5 @@ jobs:
         with:
           python-version: 3.8
           architecture: x64
+      - run: pip install -r requirements-dev.txt
       - run: make pip-pypi
