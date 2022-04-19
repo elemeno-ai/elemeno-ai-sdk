@@ -1,6 +1,5 @@
 #-e git+http://github.com/pytorch/pytorch@5a78725#egg=torch
--e git+https://github.com/elemeno-ai/feast.git@elemeno/v0.18.1#egg=feast&subdirectory=sdk/python
-feast[redis,gcp,aws]==0.18.1
+elemeno-ai-feast[redis,gcp,aws]==0.18.2
 GitPython==3.1.26
 google_auth_oauthlib==0.4.6
 Jinja2==3.0.3
