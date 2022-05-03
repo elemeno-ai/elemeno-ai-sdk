@@ -86,3 +86,4 @@ data
 tests/**/*.onnx
 
 .python-version
+.other
