@@ -27,9 +27,9 @@ class MinioClient:
             raise ValueError("The specified bucket doesn't exist")
         self.client.fget_object(bucket_name, object_path, destination_path)
 
-    def put_object(self, bucket_name: str, destination_path: str, object_stream: Any, length: Any):
+    def put_object(self, bucket_name: str, destination_path: str, object_stream: Any, length: Any = -1):
         found = self.client.bucket_exists(bucket_name)
         if not found:
             raise ValueError("The specified bucket doesn't exist")
-        self.client.put_object(bucket_name, destination_path, object_stream, length)
+        self.client.put_object(bucket_name, destination_path, object_stream, length, part_size=5242880)
 

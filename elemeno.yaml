@@ -4,9 +4,9 @@
 app:
   mode: ${oc.env:ELEMENO_MODE,development}
 cos:
-  host: sensitive
-  key_id: sensitive
-  secret: sensitive
+  host: localhost:9005
+  key_id: elemeno
+  secret: minio123
   use_ssl: False
 registry:
   tracking_url: http://mlflow.tracking.url:80
@@ -16,11 +16,11 @@ feature_store:
   provider: gcp
   gcp:
     project_id: your-google-project-id
-  additional:
+  binary_source:
     elastic:
-      host: sensitive
-      user: sensitive
-      password: sensitive
+      host: https://<host:port>
+      user: elastic
+      password: <elastic-password>
 gcp:
   sa:
     file: /tmp/gcp-credentials.json
