@@ -1,4 +1,5 @@
 import asyncio
+from asyncio.log import logger
 from typing import Optional
 import aiohttp
 from elemeno_ai_sdk.ml.inference.input_space import InputSpace, InputSpaceBuilder
@@ -11,13 +12,19 @@ class InferenceClient:
       self.port = port
       self.protocol = protocol
       self.endpoint = endpoint
-      base_url = f'{protocol}://{host}:{port}'
-      self.session = session if session != None else aiohttp.ClientSession(base_url, headers={'Content-Type': 'application/json'})
+      self.base_url = f'{protocol}://{host}:{port}'
+      self.session = session
 
     async def infer(self, input_data: InputSpace):
-      async with self.session.post(f'{self.endpoint}', json=input_data.entities) as response:
-        try:
-          return await response.json()
-        except Exception as e:
-          print("error:", e)
-          return await response.text()
+      try:
+        session = aiohttp.ClientSession(self.base_url, headers={'Content-Type': 'application/json'}) if self.session is None else self.session
+        async with session.post(f'{self.endpoint}', json=input_data.entities) as response:
+          try:
+            return await response.json()
+          except Exception as e:
+            print("error:", e)
+            return await response.text()
+      except:
+        logger.error("Error connecting to server")
+      finally:
+        await session.close()
