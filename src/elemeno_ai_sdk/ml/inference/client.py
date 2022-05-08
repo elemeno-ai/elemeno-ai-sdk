@@ -1,6 +1,7 @@
+import asyncio
 from typing import Optional
 import aiohttp
-from elemeno_ai_sdk.ml.inference.input_space import InputSpace
+from elemeno_ai_sdk.ml.inference.input_space import InputSpace, InputSpaceBuilder
 
 class InferenceClient:
 
@@ -15,4 +16,8 @@ class InferenceClient:
 
     async def infer(self, input_data: InputSpace):
       async with self.session.post(f'{self.endpoint}', json=input_data.entities) as response:
-        return await response.json()
+        try:
+          return await response.json()
+        except Exception as e:
+          print("error:", e)
+          return await response.text()

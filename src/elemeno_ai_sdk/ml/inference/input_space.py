@@ -25,31 +25,26 @@ class FeatureMeaning(enum.Enum):
       return FeatureMeaning.BODY_FEATURE
 
 class InputSpace:
-  def __init__(self, entities: List[Dict[str, Any]]):
+  def __init__(self, entities: Dict[str, Any]):
     self._entities = entities
     pass
 
   @property
-  def entities(self) -> List[Dict[str, Any]]:
+  def entities(self) -> Dict[str, Any]:
     return self._entities
   
   @entities.setter
-  def set_entities(self, entities: List[Dict[str, Any]]):
+  def entities(self, entities: Dict[str, Any]) -> None:
     self._entities = entities
-    pass
   
 class InputSpaceBuilder:
 
   def __init__(self):
-    self._entities = []
+    self._entities = {}
     pass
   
-  def with_entities(self, entities: List[Dict[str, Any]]) -> "InputSpaceBuilder":
+  def with_entities(self, entities: Dict[str, Any]) -> "InputSpaceBuilder":
     self._entities = entities
-    return self
-  
-  def with_entity(self, entity: Dict[str, Any]) -> "InputSpaceBuilder":
-    self._entities.append(entity)
     return self
   
   def build(self) -> InputSpace:
