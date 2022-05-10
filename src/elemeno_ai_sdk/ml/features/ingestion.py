@@ -1,7 +1,7 @@
 import pandas as pd
 import logging
-from elemeno_ai_sdk.features.feature_store import BaseFeatureStore
-from elemeno_ai_sdk.features.feature_table import FeatureTableDefinition
+from elemeno_ai_sdk.ml.features.feature_store import BaseFeatureStore
+from elemeno_ai_sdk.ml.features.feature_table import FeatureTableDefinition
 from sql_metadata import Parser
 
 logger = logging.getLogger("FeatureIngestion")
@@ -26,7 +26,7 @@ class FeatureIngestion:
                 raise ValueError(f"""There are missing columns in the dataframe trying to be ingested.
                     Check the schema of the feature_table. Missing are {expected_columns} """)
             self._feature_store.ingest(self._feature_table.get_view(), to_ingest, schema=self._feature_table.table_schema)
-        except e:
+        except Exception as e:
             logger.error("There's some column in the df trying to be ingest not available in the features", e)
             raise e
 

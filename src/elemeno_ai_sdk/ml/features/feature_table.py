@@ -6,8 +6,8 @@ from google.protobuf.duration_pb2 import Duration
 import pandas as pd
 from sqlalchemy import create_engine
 import pandas_gbq
-from elemeno_ai_sdk.features.feature_store  import FeatureStore
-from elemeno_ai_sdk.features.types import FeatureType
+from elemeno_ai_sdk.ml.features.feature_store  import FeatureStore
+from elemeno_ai_sdk.ml.features.types import FeatureType
 
 class FeatureTableDefinition:
 

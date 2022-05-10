@@ -29,7 +29,7 @@ class BaseOps:
   # def pipeline(self) -> :
   
   @property
-  def change_shape(self) -> ChangeShapeFn:
+  def change_shape(self) -> "ChangeShapeFn":
     return ChangeShapeFn.parse_from_yaml(self._change_shape)
   
   def set_change_shape(self, change_shape: Dict) -> None:
