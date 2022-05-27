@@ -18,7 +18,7 @@ class Configs:
                 cls._props = OmegaConf.load(cfg_path)
             return cls._instance.props
         except:
-            logging.info("Couldn't find a config file at %s, will continue without loading it", cfg_path)
+            logging.warn("Couldn't find a config file at %s, will continue without loading it", cfg_path)
             return None
 
     @property

@@ -1,7 +1,7 @@
 import typing
 import pandas as pd
 from elemeno_ai_sdk.ml.features.feature_store import BaseFeatureStore
-from elemeno_ai_sdk.ml.features.feature_table import FeatureTableDefinition
+from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 import logging
 
 logger = logging.getLogger("FeatureQuery")
@@ -9,7 +9,7 @@ logger = logging.getLogger("FeatureQuery")
 class Query:
 
     def __init__(self, feature_store: BaseFeatureStore,
-                 definition: FeatureTableDefinition):
+                 definition: FeatureTable):
         self._feature_store = feature_store
         self._definition = definition
 
