@@ -19,7 +19,7 @@ class ElasticIngestion(BaseSource):
     all_results = []
     pages = count // max_per_page + 1
     for page in range(1, pages):
-      res = self._es.search(index=index, query=query, size=max_per_page, from_=page*max_per_page)
+      res = self._es.search(index=index, query=query, size=100, from_=page*100)
       if 'hits' in res and 'hits' in res['hits']:
         all_results.extend(res['hits']['hits'])
     return pd.DataFrame(all_results)
