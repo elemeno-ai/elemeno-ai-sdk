@@ -2,7 +2,7 @@ import typing
 from sqlalchemy import create_engine
 import pandas as pd
 
-from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
+from elemeno_ai_sdk.ml.features.feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk import logger
 
@@ -10,7 +10,7 @@ from .base_ingestion import Ingestion
 
 class RedshiftIngestion(Ingestion):
 
-  def __init__(self, fs: FeatureStore, connection_string: str):
+  def __init__(self, fs: BaseFeatureStore, connection_string: str):
     super().__init__(fs)
     self._conn_str = connection_string
 

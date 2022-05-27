@@ -3,14 +3,14 @@ import typing
 import pandas as pd
 from google.cloud import bigquery
 from elemeno_ai_sdk import logger
-from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
+from elemeno_ai_sdk.ml.features.feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.utils import create_insert_into
 from .base_ingestion import Ingestion
 
 class BigQueryIngestion(Ingestion):
 
-  def __init__(self, fs: FeatureStore):
+  def __init__(self, fs: BaseFeatureStore):
     super().__init__(fs)
     self._fs = fs
 
