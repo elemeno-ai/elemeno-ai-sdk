@@ -66,7 +66,7 @@ class FeatureStore(BaseFeatureStore):
     elif sink_type == IngestionSinkType.REDSHIFT:
       self._sink = IngestionSinkBuilder().build_redshift(self._fs, kwargs['connection_string'])
     else:
-      raise Exception("Unsupported sink type {}".format(sink_type))
+      raise Exception("Unsupported sink type %s", sink_type)
     self.config = self._fs.config
 
   @property
@@ -83,7 +83,7 @@ class FeatureStore(BaseFeatureStore):
 
   def ingest_from_elastic(self, feature_view: feast.FeatureView, index: str,
       query: str, host: str, username: str, password: str):
-    elastic_source = ElasticIngestion(fs=self._fs, host=host, username=username, password=password)
+    elastic_source = ElasticIngestion(host=host, username=username, password=password)
     to_insert = elastic_source.read(index=index, query=query)
     all_columns = to_insert.columns.tolist()
     self._sink.ingest(feature_view, to_insert, all_columns)

@@ -11,7 +11,7 @@ from .base_ingestion import Ingestion
 class RedshiftIngestion(Ingestion):
 
   def __init__(self, fs: FeatureStore, connection_string: str):
-    super().__init__(self)
+    super().__init__(fs)
     self._conn_str = connection_string
 
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, expected_columns: typing.List[str] = []) -> None:

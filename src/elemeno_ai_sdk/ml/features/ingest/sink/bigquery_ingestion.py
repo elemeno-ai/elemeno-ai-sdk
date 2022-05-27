@@ -11,7 +11,7 @@ from .base_ingestion import Ingestion
 class BigQueryIngestion(Ingestion):
 
   def __init__(self, fs: FeatureStore):
-    super().__init__(self)
+    super().__init__(fs)
     self._fs = fs
 
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, expected_columns: typing.List[str] = [], schema: typing.List[typing.Dict] = None) -> None:
@@ -45,4 +45,3 @@ class BigQueryIngestion(Ingestion):
       table_name += f"{self._fs.config.offline_store.dataset}."
     table_name += name
     return table_name
-    

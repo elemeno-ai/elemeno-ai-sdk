@@ -7,7 +7,7 @@ from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 
 class Ingestion(abc.ABC):
 
-  def __init__(self, fs: FeatureStore, **kwargs):
+  def __init__(self, **kwargs):
     self.ingestion_type = type(self).__name__
 
   @abc.abstractmethod
