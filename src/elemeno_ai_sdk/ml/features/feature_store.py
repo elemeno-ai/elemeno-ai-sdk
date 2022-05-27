@@ -1,4 +1,5 @@
 
+
 import typing
 import pandas as pd
 import feast
@@ -31,7 +32,7 @@ class FeatureStore(BaseFeatureStore):
   def ingest(self, feature_view: feast.FeatureView, 
       to_ingest: pd.DataFrame, schema: typing.List[typing.Dict] = None):
     all_columns = to_ingest.columns.to_list()
-    self._sink.ingest(to_ingest, feature_view, all_columns, schema)
+    self._sink.ingest(to_ingest, feature_view, all_columns)
 
   def ingest_from_query(self, ft: feast.FeatureView, query: str):
     self._sink.ingest_from_query(query, ft)
