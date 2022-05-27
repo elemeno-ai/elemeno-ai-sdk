@@ -5,12 +5,11 @@ import pandas as pd
 from sqlalchemy import create_engine
 import feast
 from elemeno_ai_sdk import logger
-from elemeno_ai_sdk.ml.features.feature_store  import FeatureStore
 from elemeno_ai_sdk.ml.features.types import FeatureType
 
 class FeatureTable:
 
-  def __init__(self, name: str, feature_store: FeatureStore,
+  def __init__(self, name: str, feature_store: feast.FeatureStore,
           entities: typing.List[feast.Entity] = None,
           features: typing.List[feast.Feature] = None,
           ttl_duration_weeks=52,
