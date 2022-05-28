@@ -28,7 +28,7 @@ class RedshiftIngestion(Ingestion):
           astype(str) == "<class 'list'>")\
         .any(0)
       # we then typecast the lists to be super in redshift
-      list_cols = z[z is True].index.to_list()
+      list_cols = z[z == True].index.to_list()
       dtypes = {col: "SUPER" for col in list_cols}
       to_ingest.to_sql(f"{ft.name}",
               conn, index=False, if_exists='append', method='multi', chunksize=2000, dtype=dtypes)
