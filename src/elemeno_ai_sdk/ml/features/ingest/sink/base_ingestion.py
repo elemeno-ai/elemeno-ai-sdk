@@ -1,5 +1,5 @@
 import abc
-import typing
+from typing import Dict, Optional, Any
 import pandas as pd
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 
@@ -9,11 +9,11 @@ class Ingestion(abc.ABC):
     self.ingestion_type = type(self).__name__
 
   @abc.abstractmethod
-  def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, **kwargs) -> None:
+  def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: Optional[Dict[str, str]], **kwargs) -> None:
     pass
 
   @abc.abstractmethod
-  def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: typing.Any, **kwargs) -> None:
+  def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: Any, **kwargs) -> None:
     pass
   
   @abc.abstractmethod
