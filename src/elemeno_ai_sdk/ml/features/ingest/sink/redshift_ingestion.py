@@ -84,7 +84,10 @@ class RedshiftIngestion(Ingestion):
           chunk = to_ingest.iloc[i*max_rows_per_insert:]
         else:
           chunk = to_ingest.iloc[i * max_rows_per_insert:(i + 1) * max_rows_per_insert]
-        self._to_sql(chunk, ft.name, conn)
+        chunk.to_sql(f"{ft.name}",
+                conn, index=False, if_exists='append', 
+                method='multi', 
+                chunksize=1000)
     except Exception as exception:
       logger.error("Failed to ingest data to Redshift: %e", exception)
       raise exception
