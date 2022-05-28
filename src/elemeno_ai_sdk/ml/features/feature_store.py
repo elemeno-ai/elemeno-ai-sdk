@@ -8,22 +8,26 @@ from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.base_feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestion
 from elemeno_ai_sdk.config import Configs
+from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import IngestionSinkBuilder, IngestionSinkType
 
 class FeatureStore(BaseFeatureStore):
-  def __init__(self, sink_type: IngestionSinkType, **kwargs) -> None:
+  def __init__(self, sink_type: typing.Optional[IngestionSinkType] = None, **kwargs) -> None:
     """
     FeatureStore is a BigQuery compatible Feature Store implementation
     """
     self._elm_config = Configs.instance()
     self._fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path)
-    if sink_type == IngestionSinkType.BIGQUERY:
-      self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
-    elif sink_type == IngestionSinkType.REDSHIFT:
-      self._sink = IngestionSinkBuilder().build_redshift(self._fs, kwargs['connection_string'])
+    if not sink_type:
+      logger.info("No sink type provided, read-only mode will be used")
     else:
-      raise Exception("Unsupported sink type %s", sink_type)
+      if sink_type == IngestionSinkType.BIGQUERY:
+        self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
+      elif sink_type == IngestionSinkType.REDSHIFT:
+        self._sink = IngestionSinkBuilder().build_redshift(self._fs, kwargs['connection_string'])
+      else:
+        raise Exception("Unsupported sink type %s", sink_type)
     self.config = self._fs.config
 
   @property
