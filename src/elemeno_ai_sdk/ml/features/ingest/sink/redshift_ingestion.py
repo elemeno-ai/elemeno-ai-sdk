@@ -45,7 +45,7 @@ class RedshiftIngestion(Ingestion):
       elif dtype == "object":
         columns[col] = "SUPER"
       elif dtype == "string":
-        columns[col] = "VARCHAR"
+        columns[col] = "VARCHAR(4096)"
       elif dtype == "Int64":
         columns[col] = "BIGINT"
       elif dtype == "Float64":
@@ -53,7 +53,7 @@ class RedshiftIngestion(Ingestion):
       elif dtype == "bool":
         columns[col] = "BOOLEAN"
       else:
-        columns[col] = "VARCHAR"
+        columns[col] = "VARCHAR(4096)"
     create = "CREATE TABLE IF NOT EXISTS {} (".format(ft.name)
     for col, dtype in columns.items():
       create += "{} {},".format(col, dtype)
