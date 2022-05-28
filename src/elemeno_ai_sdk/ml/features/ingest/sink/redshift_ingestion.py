@@ -21,13 +21,24 @@ class RedshiftIngestion(Ingestion):
     if len(expected_columns) == 0:
       logger.warning("No expected columns provided. Will ingest all columns.")
       expected_columns = to_ingest.columns.to_list()
-    conn = create_engine(self._conn_str, isolation_level="AUTOCOMMIT")
+    conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
     try:
+      logger.info("Within RedshiftIngestion.ingest, about to create table {}".format(ft.name))
       # create table if not exists
       to_ingest = self.create_table(to_ingest, ft, conn)
       # ingest data
-      to_ingest.to_sql(f"{ft.name}",
-              conn, index=False, if_exists='append', method='multi', chunksize=2000)
+      max_rows_per_insert = 5000
+      insert_pages = len(to_ingest) // max_rows_per_insert + 1
+      for i in range(insert_pages):
+        logger.info("Ingesting page %d of %d", i, insert_pages)
+        if len(to_ingest) < (i+1) * max_rows_per_insert:
+          chunk = to_ingest.iloc[i*max_rows_per_insert:]
+        else:
+          chunk = to_ingest.iloc[i * max_rows_per_insert:(i + 1) * max_rows_per_insert]
+        chunk.to_sql(f"{ft.name}",
+                conn, index=False, if_exists='append', 
+                method='multi', 
+                chunksize=1000)
     except Exception as exception:
       logger.error("Failed to ingest data to Redshift: %e", exception)
       raise exception
