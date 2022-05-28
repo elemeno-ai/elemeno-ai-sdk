@@ -1,6 +1,7 @@
 import typing
 from sqlalchemy import create_engine
 import pandas as pd
+import sqlalchemy
 
 from elemeno_ai_sdk.ml.features.feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
@@ -29,7 +30,7 @@ class RedshiftIngestion(Ingestion):
         .any(0)
       # we then typecast the lists to be super in redshift
       list_cols = z[z == True].index.to_list()
-      dtypes = {col: "SUPER" for col in list_cols}
+      dtypes = {col: sqlalchemy.dialects.postgresql.ARRAY for col in list_cols}
       to_ingest.to_sql(f"{ft.name}",
               conn, index=False, if_exists='append', method='multi', chunksize=2000, dtype=dtypes)
     except Exception as exception:
