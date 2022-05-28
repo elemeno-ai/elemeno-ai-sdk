@@ -9,7 +9,7 @@ class ElasticIngestion(BaseSource):
     self._es = Elasticsearch(hosts=[host],
             http_auth=(username, password))
   
-  def read(self, index: str, query: str, max_per_page: int = 1000) -> pd.DataFrame:
+  def read(self, index: str, query: str, max_per_page: int = 100) -> pd.DataFrame:
     count = self._es.count(index=index, query=query)["count"]
     if count <= max_per_page:
       res = self._es.search(index=index, query=query)
@@ -20,7 +20,7 @@ class ElasticIngestion(BaseSource):
     all_results = []
     pages = count // max_per_page + 1
     for page in range(1, pages):
-      res = self._es.search(index=index, query=query, size=100, from_=page*100)
+      res = self._es.search(index=index, query=query, size=max_per_page, from_=page*max_per_page)
       if 'hits' in res and 'hits' in res['hits']:
         sources = [hit['_source'] for hit in res['hits']['hits']]
         all_results.extend(sources)
