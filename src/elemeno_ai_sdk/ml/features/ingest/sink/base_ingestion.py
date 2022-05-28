@@ -1,13 +1,10 @@
 import abc
-import enum
-from typing import Union
 import pandas as pd
-from elemeno_ai_sdk.ml.features.feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 
 class Ingestion(abc.ABC):
 
-  def __init__(self, feature_store: BaseFeatureStore, **kwargs):
+  def __init__(self, **kwargs):
     self.ingestion_type = type(self).__name__
 
   @abc.abstractmethod
