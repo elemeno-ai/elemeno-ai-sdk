@@ -11,7 +11,7 @@ class ElasticIngestion(BaseSource):
     self._es = Elasticsearch(hosts=[host],
             http_auth=(username, password))
   
-  def read(self, index: str, query: str, max_per_page: int = 100) -> pd.DataFrame:
+  def read(self, index: str, query: str, max_per_page: int = 1000) -> pd.DataFrame:
     count = self._es.count(index=index, query=query)["count"]
     if count <= max_per_page:
       res = self._es.search(index=index, query=query)
@@ -29,7 +29,11 @@ class ElasticIngestion(BaseSource):
       if 'hits' in res and 'hits' in res['hits']:
         sources = [hit['_source'] for hit in res['hits']['hits']]
         all_hits = res['hits']['hits']
-        if 'sort' in all_hits[-1]:
-          search_after = all_hits[-1]['sort'][0]
-        all_results.extend(sources)
+        if len(all_hits) > 0 and 'sort' in all_hits[-1]:
+          sort_response = search_after = all_hits[-1]['sort']
+          all_results.extend(sources)
+          if len(sort_response) == 0:
+            logger.info("Exhausted pages")
+            break
+          search_after = sort_response[0]
     return pd.DataFrame(all_results)
