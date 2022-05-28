@@ -1,3 +1,4 @@
+import json
 from elasticsearch import Elasticsearch
 from elemeno_ai_sdk import logger
 import pandas as pd
@@ -19,13 +20,16 @@ class ElasticIngestion(BaseSource):
       sources = [hit['_source'] for hit in res['hits']['hits']]
       return pd.DataFrame(sources)
     all_results = []
+    search_after = 0
     pages = count // max_per_page + 1
     for page in range(0, pages):
       logger.info("Reading page %d of %d", page, pages)
       logger.info("Size of page: %d", max_per_page)
-      logger.info("From: %d", page * max_per_page)
-      res = self._es.search(index=index, query=query, size=max_per_page, search_after=page*max_per_page)
+      res = self._es.search(index=index, query=query, size=max_per_page, sort=[{"updated_date": "asc"}], search_after=[search_after])
       if 'hits' in res and 'hits' in res['hits']:
         sources = [hit['_source'] for hit in res['hits']['hits']]
+        all_hits = res['hits']['hits']
+        if 'sort' in all_hits[-1]:
+          search_after = all_hits[-1]['sort'][0]
         all_results.extend(sources)
     return pd.DataFrame(all_results)
