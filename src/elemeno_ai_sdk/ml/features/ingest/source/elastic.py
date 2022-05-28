@@ -14,7 +14,7 @@ class ElasticIngestion(BaseSource):
   def read(self, index: str, query: str, max_per_page: int = 1000) -> pd.DataFrame:
     count = self._es.count(index=index, query=query)["count"]
     if count <= max_per_page:
-      res = self._es.search(index=index, query=query)
+      res = self._es.search(index=index, query=query, size=count)
       if not 'hits' in res or not 'hits' in res['hits']:
         raise Exception("No hits found")
       sources = [hit['_source'] for hit in res['hits']['hits']]
