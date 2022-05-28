@@ -36,7 +36,7 @@ class RedshiftIngestion(Ingestion):
         else:
           chunk = to_ingest.iloc[i * max_rows_per_insert:(i + 1) * max_rows_per_insert]
         chunk.to_sql(f"{ft.name}",
-                conn, index=False, if_exists='append', 
+                conn, index=False, if_exists='append',
                 method='multi', 
                 chunksize=1000)
     except Exception as exception:
