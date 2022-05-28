@@ -4,6 +4,7 @@ import typing
 import pandas as pd
 import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
+from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.base_feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestion
 from elemeno_ai_sdk.config import Configs
@@ -29,20 +30,20 @@ class FeatureStore(BaseFeatureStore):
   def fs(self) -> feast.FeatureStore:
     return self._fs
 
-  def ingest(self, feature_view: feast.FeatureView, 
+  def ingest(self, feature_table: FeatureTable, 
       to_ingest: pd.DataFrame, schema: typing.List[typing.Dict] = None):
     all_columns = to_ingest.columns.to_list()
-    self._sink.ingest(to_ingest, feature_view, all_columns)
+    self._sink.ingest(to_ingest, feature_table, all_columns)
 
-  def ingest_from_query(self, ft: feast.FeatureView, query: str):
+  def ingest_from_query(self, ft: FeatureTable, query: str):
     self._sink.ingest_from_query(query, ft)
 
-  def ingest_from_elastic(self, feature_view: feast.FeatureView, index: str,
+  def ingest_from_elastic(self, feature_table: FeatureTable, index: str,
       query: str, host: str, username: str, password: str):
     elastic_source = ElasticIngestion(host=host, username=username, password=password)
     to_insert = elastic_source.read(index=index, query=query)
     all_columns = to_insert.columns.tolist()
-    self._sink.ingest(feature_view, to_insert, all_columns)
+    self._sink.ingest(to_insert, feature_table, all_columns)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
     return self._fs.get_historical_features(entity_source, feature_refs)
