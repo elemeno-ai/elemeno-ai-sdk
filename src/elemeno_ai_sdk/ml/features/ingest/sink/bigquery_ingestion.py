@@ -13,7 +13,7 @@ class BigQueryIngestion(Ingestion):
     super().__init__()
     self._fs = fs
 
-  def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, expected_columns: typing.List[str] = [], schema: typing.List[typing.Dict] = None) -> None:
+  def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, expected_columns: typing.List[str] = [], schema: typing.List[typing.Dict] = None, renames: typing.Optional[typing.Dict[str, str]] = None) -> None:
     if len(expected_columns) == 0:
       logger.warning("No expected columns provided. Will ingest all columns.")
       expected_columns = to_ingest.columns.to_list()

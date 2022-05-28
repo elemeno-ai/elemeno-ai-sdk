@@ -1,6 +1,6 @@
 
 
-import typing
+from typing import Optional, Dict, List, Any, Union
 import pandas as pd
 import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
@@ -13,7 +13,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import IngestionSinkBuilder, IngestionSinkType
 
 class FeatureStore(BaseFeatureStore):
-  def __init__(self, sink_type: typing.Optional[IngestionSinkType] = None, **kwargs) -> None:
+  def __init__(self, sink_type: Optional[IngestionSinkType] = None, **kwargs) -> None:
     """
     FeatureStore is a BigQuery compatible Feature Store implementation
     """
@@ -35,9 +35,10 @@ class FeatureStore(BaseFeatureStore):
     return self._fs
 
   def ingest(self, feature_table: FeatureTable, 
-      to_ingest: pd.DataFrame, schema: typing.List[typing.Dict] = None):
+      to_ingest: pd.DataFrame, schema: List[Dict] = None,
+      renames: Optional[Dict[str, str]] = None):
     all_columns = to_ingest.columns.to_list()
-    self._sink.ingest(to_ingest, feature_table, all_columns)
+    self._sink.ingest(to_ingest, feature_table, all_columns, renames)
 
   def ingest_from_query(self, ft: FeatureTable, query: str):
     self._sink.ingest_from_query(query, ft)
@@ -49,18 +50,18 @@ class FeatureStore(BaseFeatureStore):
     all_columns = to_insert.columns.tolist()
     self._sink.ingest(to_insert, feature_table, all_columns)
 
-  def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
+  def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
     return self._fs.get_historical_features(entity_source, feature_refs)
 
-  def get_online_features(self, entities: typing.List[typing.Dict[str, typing.Any]],
-        requested_features: typing.Optional[typing.List[str]]=None) \
+  def get_online_features(self, entities: List[Dict[str, Any]],
+        requested_features: Optional[List[str]]=None) \
         -> feast.online_response.OnlineResponse:
     if self._fs.config.online_store is None:
       raise ValueError("Online store is not configure, make sure to configure the property online_store in the config yaml")
     return self._fs.get_online_features(features=requested_features, entity_rows=entities)
 
-  def apply(self, objects: typing.Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
-    typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
-        objects_to_delete: typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,
+  def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
+    List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
+        objects_to_delete: List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,
         partial: bool = True):
     self._fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)

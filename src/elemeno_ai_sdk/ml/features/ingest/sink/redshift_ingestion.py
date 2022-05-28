@@ -16,7 +16,8 @@ class RedshiftIngestion(Ingestion):
     super().__init__()
     self._conn_str = connection_string
 
-  def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, expected_columns: typing.List[str] = [], renames: typing.Dict[str, str] = None) -> None:
+  def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, expected_columns: typing.List[str] = [], 
+      renames: typing.Optional[typing.Dict[str, str]] = None) -> None:
     if renames is not None:
       to_ingest = to_ingest.rename(columns=renames)
     to_ingest = to_ingest.filter(expected_columns, axis=1)
