@@ -24,7 +24,7 @@ class RedshiftIngestion(Ingestion):
     conn = create_engine(self._conn_str, isolation_level="AUTOCOMMIT")
     try:
       # create table if not exists
-      self.create_table(to_ingest, ft, conn)
+      to_ingest = self.create_table(to_ingest, ft, conn)
       # ingest data
       to_ingest.to_sql(f"{ft.name}",
               conn, index=False, if_exists='append', method='multi', chunksize=2000)
@@ -34,7 +34,7 @@ class RedshiftIngestion(Ingestion):
     finally:
       conn.dispose()
   
-  def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine):
+  def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
     to_ingest = to_ingest.convert_dtypes()
     # FIXME: this is a hack to get around the fact we're not using FeatureTable here
     date_cols = ["create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
@@ -44,6 +44,7 @@ class RedshiftIngestion(Ingestion):
         columns[col] = "TIMESTAMP"
       elif dtype == "object":
         columns[col] = "SUPER"
+        to_ingest[col] = to_ingest[col].astype("str")
       elif dtype == "string":
         columns[col] = "VARCHAR(4096)"
       elif dtype == "Int64":
@@ -59,6 +60,7 @@ class RedshiftIngestion(Ingestion):
       create += "{} {},".format(col, dtype)
     create = create[:-1] + ")"
     engine.execute(create)
+    return to_ingest
 
   def ingest_from_query(self, query: str, ft: FeatureTable, expected_columns: typing.List[str]) -> None:
     raise NotImplementedError("RedshiftIngestion.ingest_from_query is not implemented")
