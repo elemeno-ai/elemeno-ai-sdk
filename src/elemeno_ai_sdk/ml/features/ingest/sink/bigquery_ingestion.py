@@ -44,3 +44,7 @@ class BigQueryIngestion(Ingestion):
       table_name += f"{self._fs.config.offline_store.dataset}."
     table_name += name
     return table_name
+
+def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: typing.Any):
+  #TODO: implement
+  raise NotImplementedError("BigQueryIngestion.create_table is not implemented.")

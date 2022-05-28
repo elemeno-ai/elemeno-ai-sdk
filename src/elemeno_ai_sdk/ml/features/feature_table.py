@@ -88,6 +88,7 @@ class FeatureTable:
           project_id=project_id, if_exists="append", location=location)
 
   def ingest_schema_rs(self, schema_file_path: str, conn_str: str) -> None:
+    #TODO this method needs to be rewritten
     """
     This method should be called if you want to use a jsonschema file to create the feature table
     If other entities/features were registered, this method will append the ones in the jsonschema to them
@@ -96,7 +97,6 @@ class FeatureTable:
     schema_file_path: str - The local path to the file containing the jsonschema definition
 
     """
-    conn = create_engine(conn_str, isolation_level="AUTOCOMMIT")
     try:
       with open(schema_file_path, mode="r") as schema_file:
         jschema = json.loads(schema_file.read())
@@ -120,17 +120,10 @@ class FeatureTable:
           table_schema.append({"name": self.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
           pd_schema[self.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
 
-        logger.info("FT bq types schema: %s", table_schema)
+        logger.info("FT types schema: %s", table_schema)
         self._table_schema = table_schema
-        logger.info("Pandas types schema: %s", pd_schema)
-        df = pd.DataFrame(pd_schema)
-        # project_id = self._feast_elm.config.offline_store.project_id
-        # dataset = self._feast_elm.config.offline_store.dataset
-        # location = self._feast_elm.config.offline_store.location
-        df.to_sql(f"{self.name}",
-                  conn, index=False, if_exists='append')
-    finally:
-      conn.dispose()
+    except Exception as exception:
+      raise exception
 
   @property
   def features(self):
