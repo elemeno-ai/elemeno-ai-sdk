@@ -24,7 +24,7 @@ class ElasticIngestion(BaseSource):
       logger.info("Reading page %d of %d", page, pages)
       logger.info("Size of page: %d", max_per_page)
       logger.info("From: %d", page * max_per_page)
-      res = self._es.search(index=index, query=query, size=max_per_page, from_=page*max_per_page)
+      res = self._es.search(index=index, query=query, size=max_per_page, search_after=page*max_per_page)
       if 'hits' in res and 'hits' in res['hits']:
         sources = [hit['_source'] for hit in res['hits']['hits']]
         all_results.extend(sources)
