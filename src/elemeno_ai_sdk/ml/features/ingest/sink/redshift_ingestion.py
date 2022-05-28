@@ -21,8 +21,17 @@ class RedshiftIngestion(Ingestion):
       expected_columns = to_ingest.columns.to_list()
     conn = create_engine(self._conn_str, isolation_level="AUTOCOMMIT")
     try:
+      # first we identify which of the columns are lists
+      z = (to_ingest.\
+          sample(10).\
+          applymap(type).\
+          astype(str) == "<class 'list'>")\
+        .any(0)
+      # we then typecast the lists to be super in redshift
+      list_cols = z[z is True].index.to_list()
+      dtypes = {col: "SUPER" for col in list_cols}
       to_ingest.to_sql(f"{ft.name}",
-              conn, index=False, if_exists='append', method='multi', chunksize=2000)
+              conn, index=False, if_exists='append', method='multi', chunksize=2000, dtype=dtypes)
     except Exception as exception:
       logger.error("Failed to ingest data to Redshift: %e", exception)
       raise exception
