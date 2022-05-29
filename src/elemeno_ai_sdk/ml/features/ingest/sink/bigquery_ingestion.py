@@ -13,6 +13,9 @@ class BigQueryIngestion(Ingestion):
     super().__init__()
     self._fs = fs
 
+  def read_table(self, query: str) -> pd.DataFrame:
+    raise NotImplementedError("This method is not implemented yet.")
+
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: typing.Optional[typing.Dict[str, str]] = None, expected_columns: typing.List[str] = [], schema: typing.List[typing.Dict] = None) -> None:
     if len(expected_columns) == 0:
       logger.warning("No expected columns provided. Will ingest all columns.")
