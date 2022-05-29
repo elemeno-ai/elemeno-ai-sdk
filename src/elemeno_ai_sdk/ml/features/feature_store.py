@@ -1,5 +1,6 @@
 
 
+from datetime import datetime
 from typing import Optional, Dict, List, Any, Union
 import pandas as pd
 import feast
@@ -58,6 +59,39 @@ class FeatureStore(BaseFeatureStore):
     if self._fs.config.online_store is None:
       raise ValueError("Online store is not configure, make sure to configure the property online_store in the config yaml")
     return self._fs.get_online_features(features=requested_features, entity_rows=entities)
+  
+  def get_training_features(self, feature_table: FeatureTable,
+        features_selected: List[str] = None,
+        from_: Optional[datetime] = None,
+        to_: Optional[datetime] = None,
+        limit: Optional[int] = None) -> pd.DataFrame:
+      """ Get the training features for the given feature table.
+      Args:
+        feature_table: FeatureTable object
+        features_selected: A list of features to be selected. If None, all features will be selected.
+        from_: The start date of the training period. If None, the start date of the feature table will be used.
+        to_: The end date of the training period. If None, the end date of the feature table will be used.
+      Returns:
+        A dataframe with the training features.
+      """
+      table_name = feature_table.name
+      if features_selected is None:
+        columns = "*"
+      else:
+        columns = ",".join(features_selected)
+      where = ""
+      if from_:
+        where += f"WHERE created_timestamp >= '{from_.isoformat()}'"
+      if to_:
+        if where != "":
+          where += f" AND created_timestamp <= '{to_.isoformat()}'"
+        else:
+          where += f"WHERE created_timestamp <= '{to_.isoformat()}'"
+      if limit:
+        where += f" LIMIT {limit}"
+      query = f"SELECT {columns} FROM {table_name} {where}"
+      print(query)
+      return self._sink.read_table(query)
 
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
     List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],

@@ -9,6 +9,10 @@ class Ingestion(abc.ABC):
     self.ingestion_type = type(self).__name__
 
   @abc.abstractmethod
+  def read_table(self, query: str) -> pd.DataFrame:
+    pass
+
+  @abc.abstractmethod
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: Optional[Dict[str, str]], 
       expected_columns: Optional[List[str]] = None, **kwargs) -> None:
     pass

@@ -1,5 +1,7 @@
+from datetime import datetime
 import typing
 from sqlalchemy import create_engine
+from sqlalchemy.sql import text
 import sqlalchemy
 import pandas as pd
 
@@ -15,6 +17,11 @@ class RedshiftIngestion(Ingestion):
   def __init__(self, fs, connection_string: str):
     super().__init__()
     self._conn_str = connection_string
+
+  def read_table(self, query: str) -> pd.DataFrame:
+    engine = create_engine(self._conn_str, hide_parameters=True, isolation_level="READ COMMITTED")
+    with engine.connect().execution_options(autocommit=True) as conn:
+      return pd.read_sql(query, con = conn)
 
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: typing.Optional[typing.Dict[str, str]] = None,
       expected_columns: typing.Optional[typing.List[str]] = None) -> None:
