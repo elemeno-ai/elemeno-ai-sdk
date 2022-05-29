@@ -20,7 +20,7 @@ class RedshiftIngestion(Ingestion):
       expected_columns: typing.Optional[typing.List[str]] = None) -> None:
     if renames is not None:
       to_ingest = to_ingest.rename(columns=renames)
-    if len(expected_columns) == 0:
+    if expected_columns is None or len(expected_columns) == 0:
       logger.warning("No expected columns provided. Will ingest all columns.")
       expected_columns = to_ingest.columns.to_list()
     to_ingest = to_ingest.filter(expected_columns, axis=1)
