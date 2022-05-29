@@ -35,10 +35,9 @@ class FeatureStore(BaseFeatureStore):
     return self._fs
 
   def ingest(self, feature_table: FeatureTable, 
-      to_ingest: pd.DataFrame, schema: List[Dict] = None,
-      renames: Optional[Dict[str, str]] = None):
-    all_columns = to_ingest.columns.to_list()
-    self._sink.ingest(to_ingest, feature_table, all_columns, renames)
+      to_ingest: pd.DataFrame, renames: Optional[Dict[str, str]] = None,
+      all_columns: Optional[List[str]] = None) -> None:
+    self._sink.ingest(to_ingest, feature_table, renames, all_columns)
 
   def ingest_from_query(self, ft: FeatureTable, query: str):
     self._sink.ingest_from_query(query, ft)
