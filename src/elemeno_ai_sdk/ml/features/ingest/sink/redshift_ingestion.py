@@ -1,11 +1,14 @@
 from datetime import datetime
+import json
 import typing
+import feast
 from sqlalchemy import create_engine
 from sqlalchemy.sql import text
 import sqlalchemy
 import pandas as pd
 
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
+from elemeno_ai_sdk.ml.features.types import FeatureType
 from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.ingest.sink.base_ingestion import Ingestion
 
@@ -82,6 +85,43 @@ class RedshiftIngestion(Ingestion):
     create = create[:-1] + ")"
     engine.execute(create)
     return to_ingest
+  
+  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
+    """
+    This method should be called if you want to use a jsonschema file to create the feature table
+    If other entities/features were registered, this method will append the ones in the jsonschema to them
 
-  def ingest_from_query(self, query: str, ft: FeatureTable, expected_columns: typing.List[str]) -> None:
+    Arguments:
+    schema_file_path: str - The local path to the file containing the jsonschema definition
+
+    """
+    try:
+      with open(schema_file_path, mode="r", encoding="utf-8") as schema_file:
+        jschema = json.loads(schema_file.read())
+        table_schema = []
+        pd_schema = {}
+        for name, prop in jschema["properties"].items():
+          fmt = prop["format"] if "format" in prop else None
+          table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
+          pd_schema[name] = pd.Series(dtype=FeatureType.from_str_to_pd_type(prop["type"], format=fmt))
+          if "isKey" in prop and prop["isKey"] == "true":
+            feature_table.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
+          else:
+            if "format" in prop and prop["format"] == "date-time":
+              continue
+            feature_table.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
+
+        if len(list(filter(lambda x: x["name"] == feature_table.created_col, table_schema))) == 0:
+          table_schema.append({"name": feature_table.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+          pd_schema[feature_table.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
+        if len(list(filter(lambda x: x["name"] == feature_table.evt_col, table_schema))) == 0:
+          table_schema.append({"name": feature_table.evt_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
+          pd_schema[feature_table.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
+
+        logger.info("FT types schema: %s", table_schema)
+        feature_table.table_schema(table_schema)
+    except Exception as exception:
+      raise exception
+
+  def ingest_from_query(self, query: str, ft: FeatureTable) -> None:
     raise NotImplementedError("RedshiftIngestion.ingest_from_query is not implemented")
