@@ -25,7 +25,7 @@ class FeatureTable:
     self._online = online
     self._evt_col = event_column
     self._created_col = created_column
-    self._table_schema = None
+    self._table_schema = []
 
 
   @property
