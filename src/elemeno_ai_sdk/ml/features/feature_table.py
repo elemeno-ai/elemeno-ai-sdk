@@ -47,10 +47,6 @@ class FeatureTable:
   @entities.setter
   def entities(self, value):
     self._entities = value
-  
-  @table_schema.setter
-  def set_table_schema(self, value: typing.List[typing.Dict]) -> None:
-    self._table_schema = value
 
 
   @property
@@ -61,6 +57,9 @@ class FeatureTable:
   def features(self, value):
       self._features = value
 
+  def set_table_schema(self, value: typing.List[typing.Dict]) -> None:
+    self._table_schema = value
+  
   def register_entities(self, *entities: feast.Entity) -> None:
       self.entities.extend(list(entities))
 
