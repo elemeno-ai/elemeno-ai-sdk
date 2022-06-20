@@ -119,7 +119,7 @@ class RedshiftIngestion(Ingestion):
           pd_schema[feature_table.evt_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
 
         logger.info("FT types schema: %s", table_schema)
-        feature_table.table_schema(table_schema)
+        feature_table.set_table_schema(table_schema)
     except Exception as exception:
       raise exception
 
