@@ -25,6 +25,10 @@ class Ingestion(abc.ABC):
   def ingest_from_query(self, query: str, ft: FeatureTable, **kwargs) -> None:
     pass
   
+  @abc.abstractmethod
+  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
+    pass
+  
   def with_ts_if_not_present(self, dataframe: pd.DataFrame, created_timestamp: str) -> pd.DataFrame:
     if (not created_timestamp in dataframe or
         len(dataframe[created_timestamp].isna()) == len(dataframe)):
