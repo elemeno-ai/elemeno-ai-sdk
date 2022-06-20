@@ -49,7 +49,7 @@ class FeatureTable:
     self._entities = value
   
   @table_schema.setter
-  def table_schema(self, value: typing.List[typing.Dict]) -> None:
+  def set_table_schema(self, value: typing.List[typing.Dict]) -> None:
     self._table_schema = value
 
 
