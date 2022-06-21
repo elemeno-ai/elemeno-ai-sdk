@@ -101,12 +101,16 @@ class RedshiftIngestion(Ingestion):
         table_schema = []
         pd_schema = {}
         adjusted_dtypes = {}
+        dummy_row = {}
         for name, prop in jschema["properties"].items():
+          
           fmt = prop["format"] if "format" in prop else None
           if prop["type"] == "string" and "size" in prop:
             adjusted_dtypes[name] = VARCHAR(int(prop["size"]))
           table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
-          pd_schema[name] = pd.Series(dtype=FeatureType.from_str_to_pd_type(prop["type"], format=fmt))
+          this_pd_type = FeatureType.from_str_to_pd_type(prop["type"], format=fmt)
+          pd_schema[name] = pd.Series(dtype=this_pd_type)
+          dummy_row[name] = FeatureType.get_dummy_value(this_pd_type)
           if "isKey" in prop and prop["isKey"] == "true":
             feature_table.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
           else:
@@ -127,6 +131,7 @@ class RedshiftIngestion(Ingestion):
         dummy_df = pd.DataFrame(pd_schema)
         if len(adjusted_dtypes) == 0:
           adjusted_dtypes = None
+        dummy_df.append(dummy_row)
         dummy_df.to_sql(f"{feature_table.name}",
                 conn, index=False, if_exists='append', dtype=adjusted_dtypes)
     except Exception as exception:
