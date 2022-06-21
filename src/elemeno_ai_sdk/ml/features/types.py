@@ -95,15 +95,14 @@ class FeatureType:
       """
       Returns a dummy value for the given dtype.
       """
-      print(dtype)
+      if not hasattr(dtype, '__name__'):
+        return dtype
       if dtype.__name__ == np.float64.__name__:
         return np.float64(1.0)
       elif dtype.__name__ == np.int32.__name__:
         return np.int32(1)
       elif dtype.__name__ == np.bool_.__name__:
         return np.bool_(True)
-      elif dtype.__name__ == np.datetime64.__name__:
-        return np.datetime64('2002-02-03T13:56:03.172')
       elif dtype.__name__ == np.bytes_.__name__:
         return np.bytes_(b'bytes')
       elif dtype.__name__ == np.unicode_.__name__:
