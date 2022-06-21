@@ -2,7 +2,7 @@ from datetime import datetime
 import json
 import typing
 import feast
-from sqlalchemy import create_engine
+from sqlalchemy import VARCHAR, create_engine
 from sqlalchemy.sql import text
 import sqlalchemy
 import pandas as pd
@@ -100,8 +100,11 @@ class RedshiftIngestion(Ingestion):
         jschema = json.loads(schema_file.read())
         table_schema = []
         pd_schema = {}
+        adjusted_dtypes = {}
         for name, prop in jschema["properties"].items():
           fmt = prop["format"] if "format" in prop else None
+          if prop["type"] == "string" and "size" in prop:
+            adjusted_dtypes[name] = VARCHAR(int(prop["size"]))
           table_schema.append({"name": name, "type": FeatureType.from_str_to_bq_type(prop["type"], format=fmt).name})
           pd_schema[name] = pd.Series(dtype=FeatureType.from_str_to_pd_type(prop["type"], format=fmt))
           if "isKey" in prop and prop["isKey"] == "true":
@@ -120,6 +123,12 @@ class RedshiftIngestion(Ingestion):
 
         logger.info("FT types schema: %s", table_schema)
         feature_table.set_table_schema(table_schema)
+        conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+        dummy_df = pd.DataFrame(pd_schema)
+        if len(adjusted_dtypes) == 0:
+          adjusted_dtypes = None
+        dummy_df.to_sql(f"{feature_table.name}",
+                conn, index=False, if_exists='append', dtype=adjusted_dtypes)
     except Exception as exception:
       raise exception
 
