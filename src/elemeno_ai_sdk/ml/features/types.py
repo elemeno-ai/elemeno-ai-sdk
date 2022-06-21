@@ -22,7 +22,7 @@ class FeatureType:
     Inherited from Feast
     """
 
-    def from_str_to_bq_type(self, type_in_str: str, format: Optional[str] = None) -> BqType:
+    def from_str_to_bq_type(type_in_str: str, format: Optional[str] = None) -> BqType:
         """Converts the string containing the type (JSONSchema types are supported)
         to a Big Query equivalent type. Returns a BqType Enum value
 
@@ -46,7 +46,7 @@ class FeatureType:
         else:
             raise ValueError("Unsupported type in bigquery")
 
-    def from_str_to_pd_type(self, type_in_str: str, format: Optional[str] = None) -> np.dtype:
+    def from_str_to_pd_type(type_in_str: str, format: Optional[str] = None) -> np.dtype:
         """Converts the string containing the type (JSONSchema types are supported)
         to a pandas equivalent type. Returns a np.dtype
 
@@ -70,7 +70,7 @@ class FeatureType:
         else:
             raise ValueError("Unsupported type in pandas")
 
-    def from_str_to_feature_type(self, type_in_str: str) -> feast.ValueType:
+    def from_str_to_feature_type(type_in_str: str) -> feast.ValueType:
         """Converts the string containing the type (JSONSchema types are supported)
         to a Feast ValueType to be used in the FeatureStore. Returns a ValueType from feast-sdk
 
@@ -90,7 +90,7 @@ class FeatureType:
         else:
             return feast.ValueType.UNKNOWN
     
-    def get_dummy_value(self, dtype: np.dtype) -> Any:
+    def get_dummy_value(dtype: np.dtype) -> Any:
       """
       Returns a dummy value for the given dtype.
       """
