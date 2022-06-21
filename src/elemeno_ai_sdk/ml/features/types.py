@@ -94,6 +94,7 @@ class FeatureType:
       """
       Returns a dummy value for the given dtype.
       """
+      print(dtype)
       if dtype == np.float64:
         return np.float64(1.0)
       elif dtype == np.int32:
@@ -105,6 +106,8 @@ class FeatureType:
       elif dtype == np.bytes_:
         return np.bytes_(b'bytes')
       elif dtype == np.unicode_:
-        return np.unicode_(u'string')
+        return np.unicode_('string')
+      elif dtype == np.ndarray:
+        return np.array([1, 2, 3])
       else:
         raise ValueError("Unsupported dtype")
