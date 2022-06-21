@@ -131,7 +131,7 @@ class RedshiftIngestion(Ingestion):
         dummy_df = pd.DataFrame(pd_schema)
         if len(adjusted_dtypes) == 0:
           adjusted_dtypes = None
-        dummy_df.append(dummy_row)
+        dummy_df = dummy_df.append(dummy_row, ignore_index=True)
         dummy_df.to_sql(f"{feature_table.name}",
                 conn, index=False, if_exists='append', dtype=adjusted_dtypes)
     except Exception as exception:
