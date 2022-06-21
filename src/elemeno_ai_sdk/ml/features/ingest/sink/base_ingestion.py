@@ -26,7 +26,7 @@ class Ingestion(abc.ABC):
     pass
   
   @abc.abstractmethod
-  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
+  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str, **kwargs) -> None:
     pass
   
   def with_ts_if_not_present(self, dataframe: pd.DataFrame, created_timestamp: str) -> pd.DataFrame:

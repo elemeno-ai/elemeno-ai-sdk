@@ -1,5 +1,5 @@
 import enum
-from typing import Optional
+from typing import Any, Optional
 import numpy as np
 import feast
 
@@ -22,7 +22,7 @@ class FeatureType:
     Inherited from Feast
     """
 
-    def from_str_to_bq_type(type_in_str: str, format: Optional[str] = None) -> BqType:
+    def from_str_to_bq_type(self, type_in_str: str, format: Optional[str] = None) -> BqType:
         """Converts the string containing the type (JSONSchema types are supported)
         to a Big Query equivalent type. Returns a BqType Enum value
 
@@ -46,7 +46,7 @@ class FeatureType:
         else:
             raise ValueError("Unsupported type in bigquery")
 
-    def from_str_to_pd_type(type_in_str: str, format: Optional[str] = None) -> np.dtype:
+    def from_str_to_pd_type(self, type_in_str: str, format: Optional[str] = None) -> np.dtype:
         """Converts the string containing the type (JSONSchema types are supported)
         to a pandas equivalent type. Returns a np.dtype
 
@@ -70,7 +70,7 @@ class FeatureType:
         else:
             raise ValueError("Unsupported type in pandas")
 
-    def from_str_to_feature_type(type_in_str: str) -> feast.ValueType:
+    def from_str_to_feature_type(self, type_in_str: str) -> feast.ValueType:
         """Converts the string containing the type (JSONSchema types are supported)
         to a Feast ValueType to be used in the FeatureStore. Returns a ValueType from feast-sdk
 
@@ -89,3 +89,22 @@ class FeatureType:
             return feast.ValueType.INT32
         else:
             return feast.ValueType.UNKNOWN
+    
+    def get_dummy_value(self, dtype: np.dtype) -> Any:
+      """
+      Returns a dummy value for the given dtype.
+      """
+      if dtype == np.float64:
+        return np.float64(1.0)
+      elif dtype == np.int32:
+        return np.int32(1)
+      elif dtype == np.bool_:
+        return np.bool_(True)
+      elif dtype == np.datetime64:
+        return np.datetime64('2002-02-03T13:56:03.172')
+      elif dtype == np.bytes_:
+        return np.bytes_(b'bytes')
+      elif dtype == np.unicode_:
+        return np.unicode_(u'string')
+      else:
+        raise ValueError("Unsupported dtype")
