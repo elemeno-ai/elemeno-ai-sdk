@@ -3,7 +3,7 @@ elemeno-ai-feast[redis,gcp,aws]==0.18.3
 GitPython==3.1.26
 google_auth_oauthlib==0.4.6
 Jinja2==3.0.3
-mlflow==1.20.2
+mlflow==1.26.1
 numpy==1.21.4
 omegaconf==2.1.0
 onnx==1.10.2
