@@ -89,25 +89,26 @@ class FeatureType:
             return feast.ValueType.INT32
         else:
             return feast.ValueType.UNKNOWN
-    
+
+    @staticmethod
     def get_dummy_value(dtype: np.dtype) -> Any:
       """
       Returns a dummy value for the given dtype.
       """
       print(dtype)
-      if dtype == np.float64:
+      if dtype.__name__ == np.float64.__name__:
         return np.float64(1.0)
-      elif dtype == np.int32:
+      elif dtype.__name__ == np.int32.__name__:
         return np.int32(1)
-      elif dtype == np.bool_:
+      elif dtype.__name__ == np.bool_.__name__:
         return np.bool_(True)
-      elif dtype == np.datetime64:
+      elif dtype.__name__ == np.datetime64.__name__:
         return np.datetime64('2002-02-03T13:56:03.172')
-      elif dtype == np.bytes_:
+      elif dtype.__name__ == np.bytes_.__name__:
         return np.bytes_(b'bytes')
-      elif dtype == np.unicode_:
+      elif dtype.__name__ == np.unicode_.__name__:
         return np.unicode_('string')
-      elif dtype == np.ndarray:
+      elif dtype.__name__ == np.ndarray.__name__:
         return np.array([1, 2, 3])
       else:
         raise ValueError("Unsupported dtype")
