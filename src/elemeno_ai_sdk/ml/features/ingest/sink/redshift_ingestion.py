@@ -74,7 +74,7 @@ class RedshiftIngestion(Ingestion):
       elif dtype == "Int64":
         columns[col] = "BIGINT"
       elif dtype == "Float64":
-        columns[col] = "DECIMAL"
+        columns[col] = "DECIMAL(18,6)"
       elif dtype == "bool":
         columns[col] = "BOOLEAN"
       elif dtype == "datetime64[ns]":
