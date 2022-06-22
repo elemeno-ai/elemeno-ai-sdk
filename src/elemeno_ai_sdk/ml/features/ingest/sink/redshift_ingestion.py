@@ -61,7 +61,7 @@ class RedshiftIngestion(Ingestion):
   def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
     to_ingest = to_ingest.convert_dtypes()
     # FIXME: this is a hack to get around the fact we're not using FeatureTable here
-    date_cols = ["create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
+    date_cols = ["created_timestamp", "create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
     columns = {}
     for col, dtype in to_ingest.dtypes.items():
       if col in date_cols:
