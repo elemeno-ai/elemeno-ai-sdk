@@ -98,7 +98,7 @@ class FeatureType:
       if not hasattr(dtype, '__name__'):
         return dtype
       if dtype.__name__ == np.float64.__name__:
-        return np.float64(1.0)
+        return np.float64(1.50)
       elif dtype.__name__ == np.int32.__name__:
         return np.int32(1)
       elif dtype.__name__ == np.bool_.__name__:
