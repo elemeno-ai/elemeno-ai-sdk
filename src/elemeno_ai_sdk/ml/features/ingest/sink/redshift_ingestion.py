@@ -78,7 +78,7 @@ class RedshiftIngestion(Ingestion):
       elif dtype == "bool":
         columns[col] = "BOOLEAN"
       else:
-        columns[col] = "VARCHAR(12600)"
+        columns[col] = dtype
     create = "CREATE TABLE IF NOT EXISTS {} (".format(ft.name)
     for col, dtype in columns.items():
       create += "{} {},".format(col, dtype)
@@ -132,8 +132,9 @@ class RedshiftIngestion(Ingestion):
         if len(adjusted_dtypes) == 0:
           adjusted_dtypes = None
         dummy_df = dummy_df.append(dummy_row, ignore_index=True)
-        dummy_df.to_sql(f"{feature_table.name}",
-                conn, index=False, if_exists='append', dtype=adjusted_dtypes)
+        self.create_table(dummy_df, feature_table, conn)
+        # dummy_df.to_sql(f"{feature_table.name}",
+        #         conn, index=False, if_exists='append', dtype=adjusted_dtypes)
     except Exception as exception:
       raise exception
 
