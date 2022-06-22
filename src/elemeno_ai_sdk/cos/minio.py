@@ -1,19 +1,29 @@
-from typing import Any
+from typing import Any, Optional
 from minio import Minio
 from minio.error import S3Error
 from elemeno_ai_sdk.config import Configs
 
 class MinioClient:
 
-    def __init__(self):
-        cfg = Configs.instance()
-        self._config = cfg
-        self.client = Minio(
-            cfg.cos.host,
-            access_key=cfg.cos.key_id,
-            secret_key=cfg.cos.secret,
-            secure=cfg.cos.use_ssl
-        )
+    def __init__(self, host: Optional[str] = None, access_key: Optional[str] = None, 
+        secret_key: Optional[str] = None, use_ssl: Optional[bool] = None) -> None:
+      cfg = Configs.instance()
+      self._config = cfg
+      if host is None:
+        host = cfg.cos.host
+      if access_key is None:
+        access_key = cfg.cos.key_id
+      if secret_key is None:
+        secret_key = cfg.cos.secret
+      if use_ssl is None:
+        use_ssl = cfg.cos.use_ssl
+
+      self.client = Minio(
+          host,
+          access_key=access_key,
+          secret_key=secret_key,
+          secure=use_ssl
+      )
     
     def list_dir(self, bucket_name: str, prefix: str = "") -> list:
         found = self.client.bucket_exists(bucket_name)
