@@ -77,6 +77,8 @@ class RedshiftIngestion(Ingestion):
         columns[col] = "DECIMAL"
       elif dtype == "bool":
         columns[col] = "BOOLEAN"
+      elif dtype == "datetime64[ns]":
+        columns[col] = "TIMESTAMP"
       else:
         columns[col] = dtype
     create = "CREATE TABLE IF NOT EXISTS {} (".format(ft.name)
