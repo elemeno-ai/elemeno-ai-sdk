@@ -6,9 +6,9 @@ from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.types import FeatureType
 
 class FeatureTable:
-  """ A FeatureTable is the object that is used to manipulate feature tables on Elemeno feature store.
+  """ A FeatureTable is the object that is used to define feature tables on Elemeno feature store.
 
-  If you're looking to create a new feature table, look at ingest_schema of the class FeatureStore.
+  If you're looking to create a new feature table or read data look at ingest_schema of the class FeatureStore.
   """
 
   def __init__(self, name: str, feature_store: feast.FeatureStore,
