@@ -38,24 +38,83 @@ class FeatureStore(BaseFeatureStore):
   def ingest(self, feature_table: FeatureTable, 
       to_ingest: pd.DataFrame, renames: Optional[Dict[str, str]] = None,
       all_columns: Optional[List[str]] = None) -> None:
+    """ Ingest the given dataframe into the given feature table.
+    This method allows you to rename the columns of the dataframe before ingesting.
+    You can also filter the columns to be ingested.
+    It is required that your dataframe have the timestamp columns (event_timestamp and created_timestamp) with the correct types (pd.DateTime).
+
+    args:
+      - feature_table: FeatureTable object
+      - to_ingest: Dataframe to be ingested
+      - renames: A dictionary of column names to be renamed.
+      - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
+    """
     self._sink.ingest(to_ingest, feature_table, renames, all_columns)
 
   def ingest_from_query(self, ft: FeatureTable, query: str):
+    """ Ingest data from a query.
+    It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+    The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
+
+    args:
+      - ft: The FeatureTable object
+      - query: A SQL query to ingest data from.
+    """
     self._sink.ingest_from_query(query, ft)
 
   def ingest_from_elastic(self, feature_table: FeatureTable, index: str,
       query: str, host: str, username: str, password: str):
+    """ Ingest data from an Elasticsearch index.
+    It's important to notice that your index must have the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+    You must specify an elasticsearch query. We only support vanila ES queries. Other types, like Lucene, may not work properly.
+    Example:
+    ```
+     {"query_string": {"query": "epoch_second(created_date)>0"}}
+    ```
+
+    args:
+      - feature_table: FeatureTable object
+      - index: The name of the Elasticsearch index
+      - query: A query to ingest data from.
+      - host: The host of the Elasticsearch server
+      - username: The username of the Elasticsearch server
+      - password: The password of the Elasticsearch server
+    """
     elastic_source = ElasticIngestion(host=host, username=username, password=password)
     to_insert = elastic_source.read(index=index, query=query)
     all_columns = to_insert.columns.tolist()
     self._sink.ingest(to_insert, feature_table, all_columns)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
+    """ Get historical features from the feature store.
+    This method allows you to retrieve historical features from the feature store.
+    You must specify a dataframe with the entity_id and entity_type columns.
+    You must specify a list of feature_refs to retrieve. feature_refs are the name of the features.
+
+    args:
+      - entity_source: A dataframe with the entity_id and entity_type columns.
+      - feature_refs: A list of feature_refs to retrieve.
+
+    returns:
+      - A RetrievalJob object.
+    """
     return self._fs.get_historical_features(entity_source, feature_refs)
 
   def get_online_features(self, entities: List[Dict[str, Any]],
         requested_features: Optional[List[str]]=None) \
         -> feast.online_response.OnlineResponse:
+    """ Get online features from the feature store.
+    This method allows you to retrieve online features from the feature store.
+    You must specify a list of entities to retrieve.
+    You may specify a list of features to retrieve. If None, all features will be retrieved.
+
+    args:
+      - entities: A list of entities to retrieve.
+      - requested_features: Optional list of features to retrieve. If None, all features will be retrieved.
+    
+    returns:
+      - An OnlineResponse object.
+    """
     if self._fs.config.online_store is None:
       raise ValueError("Online store is not configure, make sure to configure the property online_store in the config yaml")
     return self._fs.get_online_features(features=requested_features, entity_rows=entities)
