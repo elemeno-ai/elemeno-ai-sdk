@@ -1,10 +1,10 @@
 
 import logging
 from typing import Optional, Tuple
-from .tflite import TFLiteConverter
-from .sklearn import SklearnConverter
-from .tensorflow import TensorflowConverter
-from .torch import TorchConverter
+from elemeno_ai_sdk.ml.conversion.tflite import TFLiteConverter
+from elemeno_ai_sdk.ml.conversion.sklearn import SklearnConverter
+from elemeno_ai_sdk.ml.conversion.tensorflow import TensorflowConverter
+from elemeno_ai_sdk.ml.conversion.torch import TorchConverter
 
 class ModelConverter:
 

@@ -24,7 +24,7 @@ project = 'Elemeno.ai SDK'
 copyright = '2021, elemeno.ai'
 author = 'elemeno.ai'
 
-_version_py = os.path.join('..', '..', 'src', 'elemeno_ai_sdk', '__init__.py')
+_version_py = os.path.join('..', 'src', 'elemeno_ai_sdk', '__init__.py')
 version_ns = {}
 
 with open(_version_py, mode='r') as version_file:
@@ -52,6 +52,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.mathjax',
+    'sphinx.ext.autodoc',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -80,7 +81,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'alabaster'
+html_theme = 'sphinx_rtd_theme'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -107,7 +108,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ElemenoaiSDKdoc'
+htmlhelp_basename = 'elemeno_sdk_docs'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -134,7 +135,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'ElemenoaiSDK.tex', 'Elemeno.ai SDK Documentation',
+    (master_doc, 'elemeno_sdk_docs.tex', 'Elemeno AI SDK Documentation',
      'elemeno.ai', 'manual'),
 ]
 
@@ -155,8 +156,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ElemenoaiSDK', 'Elemeno.ai SDK Documentation',
-     author, 'ElemenoaiSDK', 'One line description of project.',
+    (master_doc, 'elemeno_sdk_docs', 'Elemeno.ai SDK Documentation',
+     author, 'elemeno_sdk_docs', 'One line description of project.',
      'Miscellaneous'),
 ]
 

@@ -5,14 +5,44 @@ Getting Started
 Overview
 ########
 
-This SDK is intended to be used by Data Scientists and ML Engineers who have a affinity by the AI stack defined by Elemeno.ai
+Elemeno AI SDK is the one stop shop for all the elements needed to build your own AI engine.
 
-It can be used with both the opensource and managed (SaaS) versions of Elemeno platform, as well it is useful if you're using other opensource projects that
-are parte of Elemeno.ai stack. 
+It includes helpers to use the Elemeno AI operating system, and supports both Elemeno Serverless AI and local installations.
 
-The SDK currently includes helpers and utilities for the following projects:
+Current features available in the SDK:
 
-* elemeno-ai
-* google bigquery
-* feast 0.9.3
+- Feature Store Management
+- Data Ingestion
+  - Big Query Datasource
+  - Redshift Datasource
+  - Elasticsearch Datasource
+  - Pandas DF Datasource
+- Training Data Reading
+- Inference Data Reading
+- ML Frameworks Conversion to ONNX
+  - Scikit-learn
+  - Tensorflow
+  - Pytorch
+  - Tensorflow-Lite
+- Authentication Utils
+
+
+First Steps
+************
+
+The first step is to install the SDK module via pip.
+
+.. code-block:: bash
+  pip install elemeno-ai-sdk
+
+You then run the command
+:code `mlops init` 
+and follow the steps in the terminal to configure your MLOps environment.
+
+That's all.
+
+(optional) If you intend to leave the configuration files in a location different from the default, set the environment variable below.
+
+.. code-block:: bash
+  export ELEMENO_CFG_FILE=<path to config directory>
 

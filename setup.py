@@ -72,7 +72,7 @@ setup(
         'Issue Tracker': 'https://gitlab.com/elemeno-ai/python-elemeno-ai-sdk/issues',
     },
     keywords=[
-        # eg: 'keyword1', 'keyword2', 'keyword3',
+        'artificial intelligence', 'ai', 'machine learning', 'ml', 'sdk', 'elemeno', 'mlops'
     ],
     python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*',
     install_requires=parse_requirements('requirements.txt'),

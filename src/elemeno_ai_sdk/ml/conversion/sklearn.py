@@ -1,6 +1,6 @@
 
 from typing import Any
-from elemeno_ai_sdk.models.conversion.converter_abc import ConverterABC
+from elemeno_ai_sdk.ml.conversion.converter_abc import ConverterABC
 import pickle
 import skl2onnx
 from skl2onnx.common.data_types import FloatTensorType
