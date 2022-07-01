@@ -14,10 +14,11 @@ class ModelConverter:
 
   def apply_conversion(self) -> None:
     """
-    apply conversion to the model
-    saves the result on the same path
+    Apply ONNX conversion for the model.
+    
+    :return: None
+    :rtype: None
     """
-
     file_extension = self.model_path.split('.')[-1]
     if file_extension == 'onnx':
       logging.info('Nohting to do, model is already onnx')

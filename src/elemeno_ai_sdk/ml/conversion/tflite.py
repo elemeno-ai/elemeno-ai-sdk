@@ -7,8 +7,29 @@ ConverterABC.register
 
 
 class TFLiteConverter:
-    
+    """
+    Convert a pickled TensorflowLite model to onnx.
+
+    Parameters
+    ----------
+    path: str
+        Path to the pickled tflite model.
+
+    Returns
+    -------
+    Any
+        The onnx model.
+    """
+
     def transform(self, path: str, model_name: str = "elemeno") -> Any:
+        """
+        Converts the Tensorflow model to ONNX format.
+        
+        :param path: Path of the tensorflow model.
+        :param model_name: Name of the ONNX model.
+        
+        :return: None
+        """
         tf.compat.v1.disable_eager_execution()
         onnx_path = path + ".onnx"
         with tf.compat.v1.Session() as sess:
