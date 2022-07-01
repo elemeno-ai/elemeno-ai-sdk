@@ -8,14 +8,27 @@ ConverterABC.register
 
 
 class TensorflowConverter:
+    """
+    Transform a tensorflow model to a onnx model
+
+    :param path: the path to the tensorflow model
+    :return: the path to the onnx model
+    """
 
     def transform(self, path: str) -> Any:
         """
-        Convert a tensorflow model to onnx model
-        :param file_name: (a path to the .h5 file)
-        :return:
+        This function takes a path to a model file (in .h5 format) and converts it to ONNX format
+
+        Parameters
+        ----------
+        path : str
+            Path to the model file in .h5 format
+
+        Returns
+        -------
+        Any
+            Returns the path to the converted model file in ONNX format
         """
-        
         onnx_path = path + '.onnx'
 
         model = load_model(path)

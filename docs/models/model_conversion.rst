@@ -22,3 +22,15 @@ Reference
 
 .. autoclass:: elemeno_ai_sdk.ml.conversion.converter.ModelConverter
   :members:
+
+.. autoclass:: elemeno_ai_sdk.ml.conversion.sklearn.SklearnConverter
+  :members:
+
+.. autoclass:: elemeno_ai_sdk.ml.conversion.tensorflow.TensorflowConverter
+  :members:
+
+.. autoclass:: elemeno_ai_sdk.ml.conversion.tflite.TFLiteConverter
+  :members:
+
+.. autoclass:: elemeno_ai_sdk.ml.conversion.torch.TorchConverter
+  :members:

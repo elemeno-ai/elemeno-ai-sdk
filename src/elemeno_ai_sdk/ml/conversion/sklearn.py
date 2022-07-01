@@ -9,8 +9,34 @@ ConverterABC.register
 
 
 class SklearnConverter:
+    """
+    Convert a pickled sklearn model to onnx.
 
+    Parameters
+    ----------
+    path: str
+        Path to the pickled sklearn model.
+
+    Returns
+    -------
+    Any
+        The onnx model.
+    """
     def transform(self, path: str) -> Any:
+        """
+        This function takes a path to a pickled sklearn model and converts it to
+        onnx.
+
+        Parameters
+        ----------
+        path: str
+            The path to the pickled sklearn model.
+
+        Returns
+        -------
+        Any
+            The path to the converted onnx model.
+        """
         onnx_path = path + ".onnx"
         with open(path, 'rb') as file:
             model = pickle.load(file)

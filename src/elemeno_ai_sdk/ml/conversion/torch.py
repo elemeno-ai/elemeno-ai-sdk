@@ -6,17 +6,24 @@ ConverterABC.register
 
 
 class TorchConverter:
+    """
+    Converts a complete torch model to onnx.
+
+    :param path: path to the torch model file
+    :param input_dims: input dimensions of the model
+    :return: onnx model
+    """
 
     def transform_with_dims(self, path: str, input_dims: Tuple[int] = None) -> Any:
         """
-        Transforms a fully saved model from torch (not a state_dict)
-        to a onnx file.
+        This function is used to convert a Pytorch model to ONNX format.
 
-        Arguments:
-        path: str - The path to the .pt file
-        input_dims: Tuple[int] - A tuple containing the input dimensions for the model
-
-        Returns the onnx model
+        :param path: Path to the Pytorch model
+        :type path: str
+        :param input_dims: Input dimensions of the model
+        :type input_dims: Tuple[int]
+        :return: None
+        :rtype: Any
         """
 
         onnx_path = path + '.onnx'
