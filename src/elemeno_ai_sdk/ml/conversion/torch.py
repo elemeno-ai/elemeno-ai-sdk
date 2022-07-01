@@ -1,6 +1,6 @@
 from typing import Any, Tuple
 import torch
-from elemeno_ai_sdk.models.conversion.converter_abc import ConverterABC
+from elemeno_ai_sdk.ml.conversion.converter_abc import ConverterABC
 
 ConverterABC.register
 

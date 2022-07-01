@@ -1,10 +1,13 @@
-.PHONY: clean pip-testpypi wheel
+.PHONY: clean docs pip-testpypi wheel
 
 clean:
 	rm -rf dist
 
 wheel:
 	python setup.py bdist_wheel
+
+docs:
+	@MAKE html -C docs
 
 _pip-testpypi: clean
 	python setup.py sdist bdist_wheel

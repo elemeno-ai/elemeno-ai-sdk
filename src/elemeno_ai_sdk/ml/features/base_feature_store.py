@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 import typing
 import feast
 import pandas as pd
@@ -34,6 +35,13 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     pass
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: typing.List[str]) -> RetrievalJob:
+    pass
+
+  def get_training_features(self, feature_table: 'FeatureTable',
+        features_selected: typing.List[str] = None,
+        from_: typing.Optional[datetime] = None,
+        to_: typing.Optional[datetime] = None,
+        limit: typing.Optional[int] = None) -> pd.DataFrame:
     pass
 
   def get_online_features(self, entities: typing.List[typing.Dict[str, typing.Any]],

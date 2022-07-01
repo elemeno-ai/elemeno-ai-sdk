@@ -11,7 +11,8 @@ Welcome to Elemeno.ai SDK's documentation!
    :caption: Contents:
 
    gettingstarted/index
-   datasources/bigquery
+   authentication/auth
+   models/model_conversion
    featurestore/fs
     
 

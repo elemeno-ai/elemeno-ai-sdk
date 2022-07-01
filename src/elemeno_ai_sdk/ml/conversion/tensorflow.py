@@ -2,7 +2,7 @@ from typing import Any
 import tf2onnx
 from tensorflow.python.keras.models import load_model
 import onnx
-from elemeno_ai_sdk.models.conversion.converter_abc import ConverterABC
+from elemeno_ai_sdk.ml.conversion.converter_abc import ConverterABC
 
 ConverterABC.register
 
