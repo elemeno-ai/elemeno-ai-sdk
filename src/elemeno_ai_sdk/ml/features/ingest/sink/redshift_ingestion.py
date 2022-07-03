@@ -71,7 +71,7 @@ class RedshiftIngestion(Ingestion):
         to_ingest[col] = to_ingest[col].astype("str")
       elif dtype == "string":
         columns[col] = "VARCHAR(12600)"
-      elif dtype == "Int64":
+      elif dtype == "Int64" or dtype == "Int32":
         columns[col] = "BIGINT"
       elif dtype == "Float64":
         columns[col] = "DECIMAL(18,6)"
