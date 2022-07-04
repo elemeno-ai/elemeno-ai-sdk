@@ -14,6 +14,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import IngestionSinkBuilder, IngestionSinkType
 
 class FeatureStore(BaseFeatureStore):
+  #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
   def __init__(self, sink_type: Optional[IngestionSinkType] = None, **kwargs) -> None:
     """ 
     A FeatureStore is the starting point for working with Elemeno feature store via SDK.
@@ -28,9 +29,11 @@ class FeatureStore(BaseFeatureStore):
       if sink_type == IngestionSinkType.BIGQUERY:
         self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
       elif sink_type == IngestionSinkType.REDSHIFT:
+        #TODO Bruno: Change this to create the connection string from the new redshift params from the config file
         self._sink = IngestionSinkBuilder().build_redshift(self._fs, kwargs['connection_string'])
       else:
         raise Exception("Unsupported sink type %s", sink_type)
+    #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
     self.config = self._fs.config
 
   @property
@@ -73,6 +76,7 @@ class FeatureStore(BaseFeatureStore):
     """
     self._sink.ingest_from_query(query, ft)
 
+  #TODO Bruno: remove host, username, password, and change this method to use the ElasticSource from self
   def ingest_from_elastic(self, feature_table: FeatureTable, index: str,
       query: str, host: str, username: str, password: str):
     """

@@ -134,6 +134,7 @@ class RedshiftIngestion(Ingestion):
         if len(adjusted_dtypes) == 0:
           adjusted_dtypes = None
         dummy_df = dummy_df.append(dummy_row, ignore_index=True)
+        #TODO Bruno - When there's any column with type binary_download in the schema, create an auxiliary feature_table with the list of files to download for each entity
         self.create_table(dummy_df, feature_table, conn)
         # dummy_df.to_sql(f"{feature_table.name}",
         #         conn, index=False, if_exists='append', dtype=adjusted_dtypes)

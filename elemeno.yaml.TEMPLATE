@@ -13,14 +13,20 @@ registry:
 feature_store:
   feast_config_path: .
   registry: gs://elemeno-feature-store/generic_registry
-  provider: gcp
-  gcp:
-    project_id: your-google-project-id
-  binary_source:
-    elastic:
-      host: https://<host:port>
-      user: elastic
-      password: <elastic-password>
+  sink:
+    type: Redshift
+    params:
+      user: elemeno
+      password: ${oc.env:REDSHIFT_PASSWORD,elemeno}
+      host: cluster.host.on.aws
+      port: 5439
+      database: elemeno
+  source:
+    type: Elastic
+    params:
+      host: localhost:9200
+      user: elemeno
+      password: ${oc.env:ELASTIC_PASSWORD,elemeno}
 gcp:
   sa:
     file: /tmp/gcp-credentials.json
