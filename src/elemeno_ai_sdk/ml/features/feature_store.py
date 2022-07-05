@@ -31,7 +31,7 @@ class FeatureStore(BaseFeatureStore):
         self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
       elif sink_type == IngestionSinkType.REDSHIFT:
         #TODO Bruno: Change this to create the connection string from the new redshift params from the config file
-        self._sink = IngestionSinkBuilder().build_redshift(self._fs, self._get_connection_string())
+        self._sink = IngestionSinkBuilder().build_redshift(self._fs, kwargs['connection_string'])
       else:
         raise Exception("Unsupported sink type %s", sink_type)
     #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
@@ -46,14 +46,6 @@ class FeatureStore(BaseFeatureStore):
         raise Exception("Unsupported source type %s", source_type)
 
     self.config = self._fs.config
-
-  def _get_connection_string(self) -> str:
-    host = self._elm_config.get('host')
-    port = self._elm_config.get('port')
-    database = self._elm_config.get('database')
-    user = self._elm_config.get('user')
-    password = self._elm_config.get('password')
-    return f"jdbc:redshift://{host}:{port}/{database}?DBUser={user}&DBPassword={password}"
 
   @property
   def fs(self) -> feast.FeatureStore:
@@ -188,7 +180,16 @@ class FeatureStore(BaseFeatureStore):
     where = ""
     if date_from:
       where += f"WHERE created_timestamp >= '{date_from.isoformat()}'"
-    if date_to:´
+    if date_to:
+      if where != "":
+        where += f" AND created_timestamp <= '{date_to.isoformat()}'"
+      else:
+        where += f"WHERE created_timestamp <= '{date_to.isoformat()}'"
+    if limit:
+      where += f" LIMIT {limit}"
+    query = f"SELECT {columns} FROM {table_name} {where}"
+    print(query)
+    return self._sink.read_table(query)
 
   def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
     """
