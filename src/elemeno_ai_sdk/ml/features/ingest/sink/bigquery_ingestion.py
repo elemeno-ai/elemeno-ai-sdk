@@ -56,8 +56,8 @@ class BigQueryIngestion(Ingestion):
     Use this method if you want to use a jsonschema file to create the feature table
     If other entities/features were registered, this method will append the ones in the jsonschema to them
 
-    Arguments:
-    schema_file_path: str - The local path to the file containing the jsonschema definition
+    args:
+    - schema_file_path: str - The local path to the file containing the jsonschema definition
 
     """
     with open(schema_file_path, mode="r", encoding="utf-8") as schema_file:

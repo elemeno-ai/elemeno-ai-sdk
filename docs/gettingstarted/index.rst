@@ -13,13 +13,16 @@ Current features available in the SDK:
 
 - Feature Store Management
 - Data Ingestion
+  
   - Big Query Datasource
   - Redshift Datasource
   - Elasticsearch Datasource
   - Pandas DF Datasource
+
 - Training Data Reading
 - Inference Data Reading
 - ML Frameworks Conversion to ONNX
+  
   - Scikit-learn
   - Tensorflow
   - Pytorch
@@ -56,35 +59,6 @@ Configuration file schema
 A configuration file named elemeno.yaml is expected to be present in the root of the project (or where the variable ELEMENO_CFG_FILE points to).
 
 The file has the following structure:
-
-.. registry:
-..   tracking_url: http://mlflow.tracking.url:80
-.. feature_store:
-..   feast_config_path: .
-..   registry: gs://elemeno-feature-store/generic_registry
-..   sink:
-..     type: Redshift
-..     params:
-..       user: elemeno
-..       password: ${oc.env:REDSHIFT_PASSWORD,elemeno}
-..       host: cluster.host.on.aws
-..       port: 5439
-..       database: elemeno
-..   source:
-..     type: Elastic
-..     params:
-..       host: localhost:9200
-..       user: elemeno
-..       password: ${oc.env:ELASTIC_PASSWORD,elemeno}
-.. gcp:
-..   sa:
-..     file: /tmp/gcp-credentials.json
-..   appflow:
-..     client_secret:
-..       file: /tmp/client_secrets.json
-..     scopes:
-..       - https://www.googleapis.com/auth/bigquery
-
 
 .. list-table:: Config File Structure
     :widths: 30 30 60 80

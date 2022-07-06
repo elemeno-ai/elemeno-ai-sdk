@@ -15,12 +15,14 @@ class ElasticIngestionSource(BaseSource):
     """ Reads data from elastic.
 
     args:
-      - index: The index to read from.
-      - query: The query to use.
-      - max_per_page: The maximum number of records to read per page.
+    
+    - index: The index to read from.
+    - query: The query to use.
+    - max_per_page: The maximum number of records to read per page.
   
     return:
-      - A pandas dataframe.
+    
+    - A pandas dataframe.
     """
     count = self._es.count(index=index, query=query)["count"]
     if count <= max_per_page:
@@ -53,13 +55,15 @@ class ElasticIngestionSource(BaseSource):
     When using this function you can't specify a range filter in the query.
 
     args:
-      timestamp_str: A string representing a timestamp. It should have the same format used in the source elastic.
-      index: The index to read from.
-      query: The query to use.
-      max_per_page: The maximum number of records to read per page.
+    
+    - timestamp_str: A string representing a timestamp. It should have the same format used in the source elastic.
+    - index: The index to read from.
+    - query: The query to use.
+    - max_per_page: The maximum number of records to read per page.
     
     return:
-      - A pandas dataframe with the result.
+    
+    - A pandas dataframe with the result.
     """
 
     if "query" not in query:
