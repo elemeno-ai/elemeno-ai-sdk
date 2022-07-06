@@ -55,7 +55,7 @@ class FeatureStore(BaseFeatureStore):
     host = redshift_params.host
     port = redshift_params.port 
     database = redshift_params.database 
-    return f"jdbc:redshift://{host}:{port}/{database}?User={user}&Password={password}"
+    return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
   @property
   def fs(self) -> feast.FeatureStore:
