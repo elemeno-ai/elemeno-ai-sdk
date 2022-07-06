@@ -16,8 +16,9 @@ class BigQueryIngestionSource(BaseSource):
       This class is used internally by the feature table abstraction to ingest data from Big Query.
       
       args:
-        - gcp_project_id: The GCP project id (optional). If specified will overwrite the yaml configuration.
-        - base_query: The base query to be used to query the Big Query.
+        
+      - gcp_project_id: The GCP project id (optional). If specified will overwrite the yaml configuration.
+      - base_query: The base query to be used to query the Big Query.
       """
       if base_query is not None:
         self.base_query = base_query
@@ -30,7 +31,8 @@ class BigQueryIngestionSource(BaseSource):
       """ Reads the data from Big Query by running the query used when the object instance was created.
 
       returns:
-        - A dataframe with the resulting data.
+      
+      - A dataframe with the resulting data.
       """
       if base_query is not None:
         self.base_query = base_query

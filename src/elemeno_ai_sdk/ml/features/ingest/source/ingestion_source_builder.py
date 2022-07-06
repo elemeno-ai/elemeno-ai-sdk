@@ -15,6 +15,7 @@ class IngestionSourceType(enum.Enum):
 class IngestionSourceBuilder:
 
   def __init__(self):
+    """ Builder to create instancces of different types of Source"""
     self._config = Configs.instance()
     self.type = ""
 
@@ -22,12 +23,14 @@ class IngestionSourceBuilder:
     """ Builds an Elastic ingestion source instance.
 
     args:
-      - host: The host of the Elastic instance.
-      - username: The username of the Elastic instance.
-      - password: The password of the Elastic instance.
+    
+    - host: The host of the Elastic instance.
+    - username: The username of the Elastic instance.
+    - password: The password of the Elastic instance.
     
     return:
-      - An Elastic ingestion source instance.
+    
+    - An Elastic ingestion source instance.
     """
     if host is None:
       host = self._config.feature_store.source.params.host
@@ -42,11 +45,13 @@ class IngestionSourceBuilder:
     """ Builds a BigQuery ingestion source instance.
     
     args:
-      - project_id: The GCP project id.
-      - base_query: The base query to be used to query the Big Query.
+    
+    - project_id: The GCP project id.
+    - base_query: The base query to be used to query the Big Query.
     
     return:
-      - A BigQuery ingestion source instance.
+    
+    - A BigQuery ingestion source instance.
     """
     if project_id is None:
       project_id = self._config.feature_store.source.params.project_id
@@ -58,16 +63,18 @@ class IngestionSourceBuilder:
     """ Builds a Redshift ingestion source instance.
     
     args:
-      - cluster_name: The name of the Redshift cluster. When specified we will use IAM authentication.
-      - host: The host of the Redshift instance. Not used when cluster_name is specified.
-      - port: The port of the Redshift instance. Not used when cluster_name is specified.
-      - user: The username of the Redshift instance. Not used when cluster_name is specified.
-      - password: The password of the Redshift instance. Not used when cluster_name is specified.
-      - database: The name of the Redshift database.
-      - base_query: The base query to be used to query the Redshift.
+    
+    - cluster_name: The name of the Redshift cluster. When specified we will use IAM authentication.
+    - host: The host of the Redshift instance. Not used when cluster_name is specified.
+    - port: The port of the Redshift instance. Not used when cluster_name is specified.
+    - user: The username of the Redshift instance. Not used when cluster_name is specified.
+    - password: The password of the Redshift instance. Not used when cluster_name is specified.
+    - database: The name of the Redshift database.
+    - base_query: The base query to be used to query the Redshift.
     
     return:
-      - A Redshift ingestion source instance.
+    
+    - A Redshift ingestion source instance.
     """
     if cluster_name is None:
       cluster_name = self._config.feature_store.source.params.cluster_name

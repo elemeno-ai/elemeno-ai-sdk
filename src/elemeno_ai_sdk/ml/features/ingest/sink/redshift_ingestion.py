@@ -22,12 +22,33 @@ class RedshiftIngestion(Ingestion):
     self._conn_str = connection_string
 
   def read_table(self, query: str) -> pd.DataFrame:
+    """
+    Querys a Redshift table and returns a DataFrame.
+
+    args:
+    
+    - query: SQL query to run
+
+    return:
+    
+    - DataFrame with columns in the same order as the FeatureTable
+    """
     engine = create_engine(self._conn_str, hide_parameters=True, isolation_level="READ COMMITTED")
     with engine.connect().execution_options(autocommit=True) as conn:
       return pd.read_sql(query, con = conn)
 
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: typing.Optional[typing.Dict[str, str]] = None,
       expected_columns: typing.Optional[typing.List[str]] = None) -> None:
+    """"
+    Ingests a DataFrame to a Redshift table.
+    
+    args:
+    
+    - to_ingest: DataFrame to ingest
+    - ft: FeatureTable to ingest to
+    - renames: Optional dictionary of column names to rename
+    - expected_columns: Optional list of columns to check for
+    """
     if renames is not None:
       to_ingest = to_ingest.rename(columns=renames)
     if expected_columns is None or len(expected_columns) == 0:
@@ -59,6 +80,19 @@ class RedshiftIngestion(Ingestion):
       conn.dispose()
   
   def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
+    """
+    Creates a table in Redshift if it does not exist.
+
+    args:
+    
+    - to_ingest: DataFrame to ingest
+    - ft: FeatureTable to ingest to
+    - engine: SQLAlchemy engine
+
+    return:
+    
+    - DataFrame with columns in the same order as the FeatureTable
+    """
     to_ingest = to_ingest.convert_dtypes()
     # FIXME: this is a hack to get around the fact we're not using FeatureTable here
     date_cols = ["created_timestamp", "create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
@@ -93,8 +127,9 @@ class RedshiftIngestion(Ingestion):
     This method should be called if you want to use a jsonschema file to create the feature table
     If other entities/features were registered, this method will append the ones in the jsonschema to them
 
-    Arguments:
-    schema_file_path: str - The local path to the file containing the jsonschema definition
+    args:
+    
+    - schema_file_path: str - The local path to the file containing the jsonschema definition
 
     """
     try:

@@ -32,3 +32,10 @@ Reference
 .. autoclass:: elemeno_ai_sdk.ml.features.feature_store.FeatureStore
   :special-members: __init__
   :members:
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Classes:
+
+   ingest/sink/index
+   ingest/source/index
