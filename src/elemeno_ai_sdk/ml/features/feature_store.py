@@ -7,16 +7,16 @@ import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.base_feature_store import BaseFeatureStore
-from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestion
-from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import IngestionSourceType, IngestionSourceBuilder
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import IngestionSinkBuilder, IngestionSinkType
+from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
+  import IngestionSourceBuilder, IngestionSourceType
 
 class FeatureStore(BaseFeatureStore):
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
-  def __init__(self, source_type: Optional[IngestionSourceType] = None, sink_type: Optional[IngestionSinkType] = None, **kwargs) -> None:
+  def __init__(self, sink_type: Optional[IngestionSinkType] = None, source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
     """ 
     A FeatureStore is the starting point for working with Elemeno feature store via SDK.
     
@@ -36,16 +36,17 @@ class FeatureStore(BaseFeatureStore):
       else:
         raise Exception("Unsupported sink type %s", sink_type)
     #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
-
     if not source_type:
-      logger.info("No sink type provided.")
+      logger.info("No source type provided, read-only mode will be used")
     else:
+      if source_type == IngestionSourceType.BIGQUERY:
+        self._source = IngestionSourceBuilder().build_big_query()
       if source_type == IngestionSourceType.ELASTIC:
-        elastic_params = self._elm_config.feature_store.source.params
-        self._source = IngestionSourceBuilder().build_elastic(**elastic_params)
-      else: 
+        self._source = IngestionSourceBuilder().build_elastic()
+      elif source_type == IngestionSourceType.REDSHIFT:
+        self._source = IngestionSourceBuilder().build_redshift(self._fs, kwargs['connection_string'])
+      else:
         raise Exception("Unsupported source type %s", source_type)
-
     self.config = self._fs.config
 
   def _get_connection_string(self, redshift_params):
@@ -81,9 +82,9 @@ class FeatureStore(BaseFeatureStore):
     """
     self._sink.ingest(to_ingest, feature_table, renames, all_columns)
 
-  def ingest_from_query(self, ft: FeatureTable, query: str):
+  def ingest_from_query_same_source(self, ft: FeatureTable, query: str):
     """ 
-    Ingest data from a query.
+    Ingest data from a query. Used when the source and the sink are the same.
     
     It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
     
@@ -96,28 +97,37 @@ class FeatureStore(BaseFeatureStore):
     """
     self._sink.ingest_from_query(query, ft)
 
-  #TODO Bruno: remove host, username, password, and change this method to use the ElasticSource from self
-  def ingest_from_elastic(self, feature_table: FeatureTable, index: str, query: str):
+  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str):
     """
-    Ingest data from an Elasticsearch index.
+    Ingest data from a query. Used when the source and the sink are different.
     
-    It's important to notice that your index must have the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+    It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
     
-    You must specify an elasticsearch query. We only support vanila ES queries. Other types, like Lucene, may not work properly.
-    
-    Example:
-    
-    >>> query = {"query_string": {"query": "epoch_second(created_date)>0"}}
+    The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
 
     args:
     
-    - feature_table: FeatureTable object
-    - index: The name of the Elasticsearch index
-    - query: A query to ingest data from.
+    - ft: The FeatureTable object
+    - query: A SQL query to ingest data from.
     """
-    to_insert = self._source.read(index=index, query=query)
-    all_columns = to_insert.columns.tolist()
-    self._sink.ingest(to_insert, feature_table, all_columns)
+    df = self._source.read(query)
+    self.ingest(ft, df)
+
+  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str):
+    """
+    Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
+
+    It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+    
+    The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
+
+    args:
+    - ft: The FeatureTable object
+    - query: A SQL query to ingest data from.
+    - after: A timestamp after which the query will be executed. Use the same date format of the source.
+    """
+    df = self._source.read_after(query, after)
+    self.ingest(ft, df)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
     """ Get historical features from the feature store.

@@ -4,14 +4,24 @@ from elemeno_ai_sdk import logger
 import pandas as pd
 from .base_source import BaseSource
 
-class ElasticIngestion(BaseSource):
+class ElasticIngestionSource(BaseSource):
 
   def __init__(self, host: str, username: str, password: str):
     super().__init__()
     self._es = Elasticsearch(hosts=[host],
             http_auth=(username, password))
   
-  def read(self, index: str, query: str, max_per_page: int = 1000) -> pd.DataFrame:
+  def read(self, index: str = "", query: str = "", max_per_page: int = 1000) -> pd.DataFrame:
+    """ Reads data from elastic.
+
+    args:
+      - index: The index to read from.
+      - query: The query to use.
+      - max_per_page: The maximum number of records to read per page.
+  
+    return:
+      - A pandas dataframe.
+    """
     count = self._es.count(index=index, query=query)["count"]
     if count <= max_per_page:
       res = self._es.search(index=index, query=query, size=count)
@@ -37,3 +47,26 @@ class ElasticIngestion(BaseSource):
             break
           search_after = sort_response[0]
     return pd.DataFrame(all_results)
+
+  def read_after(self, timestamp_str: str, index: str = "", query: str = "", max_per_page: int = 1000) -> pd.DataFrame:
+    """ Read data after a given timestamp. 
+    When using this function you can't specify a range filter in the query.
+
+    args:
+      timestamp_str: A string representing a timestamp. It should have the same format used in the source elastic.
+      index: The index to read from.
+      query: The query to use.
+      max_per_page: The maximum number of records to read per page.
+    
+    return:
+      - A pandas dataframe with the result.
+    """
+
+    if "query" not in query:
+      query["query"] = {}
+    if "range" in query["query"]:
+      raise ValueError("Cannot specify range in query and use read_after, use read instead")
+    query["query"]["range"] = {"event_timestamp": {
+      "gt": timestamp_str}
+    } 
+    return self.read(index, query, max_per_page)
