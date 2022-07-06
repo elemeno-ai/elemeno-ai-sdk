@@ -8,6 +8,7 @@ from feast.infra.offline_stores.offline_store import RetrievalJob
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.base_feature_store import BaseFeatureStore
 from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestion
+from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import IngestionSourceType, IngestionSourceBuilder
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
@@ -15,7 +16,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
 
 class FeatureStore(BaseFeatureStore):
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
-  def __init__(self, sink_type: Optional[IngestionSinkType] = None, **kwargs) -> None:
+  def __init__(self, source_type: Optional[IngestionSourceType] = None, sink_type: Optional[IngestionSinkType] = None, **kwargs) -> None:
     """ 
     A FeatureStore is the starting point for working with Elemeno feature store via SDK.
     
@@ -34,6 +35,16 @@ class FeatureStore(BaseFeatureStore):
       else:
         raise Exception("Unsupported sink type %s", sink_type)
     #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
+
+    if not source_type:
+      logger.info("No sink type provided.")
+    else:
+      if source_type == IngestionSourceType.ELASTIC:
+        elastic_params = self._elm_config.feature_store.source.params
+        self._source = IngestionSourceBuilder().build_elastic(**elastic_params)
+      else:
+        raise Exception("Unsupported source type %s", source_type)
+
     self.config = self._fs.config
 
   def _get_connection_string(self) -> str:
@@ -85,8 +96,7 @@ class FeatureStore(BaseFeatureStore):
     self._sink.ingest_from_query(query, ft)
 
   #TODO Bruno: remove host, username, password, and change this method to use the ElasticSource from self
-  def ingest_from_elastic(self, feature_table: FeatureTable, index: str,
-      query: str, host: str, username: str, password: str):
+  def ingest_from_elastic(self, feature_table: FeatureTable, index: str, query: str):
     """
     Ingest data from an Elasticsearch index.
     
@@ -103,12 +113,8 @@ class FeatureStore(BaseFeatureStore):
     - feature_table: FeatureTable object
     - index: The name of the Elasticsearch index
     - query: A query to ingest data from.
-    - host: The host of the Elasticsearch server
-    - username: The username of the Elasticsearch server
-    - password: The password of the Elasticsearch server
     """
-    elastic_source = ElasticIngestion(host=host, username=username, password=password)
-    to_insert = elastic_source.read(index=index, query=query)
+    to_insert = self._source.read(index=index, query=query)
     all_columns = to_insert.columns.tolist()
     self._sink.ingest(to_insert, feature_table, all_columns)
 
