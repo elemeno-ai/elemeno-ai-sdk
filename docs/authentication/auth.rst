@@ -48,9 +48,9 @@ If you need help generating the client_secrets.json file, see `Google documentat
 
 .. _Google documentation: https://cloud.google.com/bigquery/docs/authentication/end-user-installed#manually-creating-credentials
 
-***
+
 AWS
-***
+###
 
 For AWS we recommend you use IAM authentication when possible. If you're running your workloads in Elemeno MLOps cloud, there's an option
 to generate IAM credentials for AWS integration, and then you can use that *arn* to allow necessary permissions on your account.
