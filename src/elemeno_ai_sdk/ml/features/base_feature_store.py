@@ -12,8 +12,6 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     return (hasattr(subclass, 'ingest') and
         callable(subclass.ingest) and
         hasattr(subclass, 'ingest_from_query') and
-        callable(subclass.ingest_rs) and
-        hasattr(subclass, 'ingest_rs') and
         callable(subclass.ingest_from_query) and
         hasattr(subclass, 'get_historical_features') and
         callable(subclass.get_historical_features) and
@@ -26,11 +24,6 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
   def ingest(self, ft: feast.FeatureView, df: pd.DataFrame):
-    pass
-  
-  @abc.abstractmethod
-  def ingest_rs(self, ft: feast.FeatureView, df: pd.DataFrame, conn_str: str, 
-      expected_columns: typing.List[str], created_timestamp_name: str):
     pass
 
   @abc.abstractmethod
