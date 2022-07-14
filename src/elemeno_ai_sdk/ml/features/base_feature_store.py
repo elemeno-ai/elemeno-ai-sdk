@@ -47,7 +47,8 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
         features_selected: typing.List[str] = None,
         from_: typing.Optional[datetime] = None,
         to_: typing.Optional[datetime] = None,
-        limit: typing.Optional[int] = None) -> pd.DataFrame:
+        limit: typing.Optional[int] = None,
+        only_most_recent: typing.Optional[bool] = True) -> pd.DataFrame:
     pass
 
   @abc.abstractmethod
