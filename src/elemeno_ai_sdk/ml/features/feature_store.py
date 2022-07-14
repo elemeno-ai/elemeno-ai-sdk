@@ -44,10 +44,10 @@ class FeatureStore:
     else:
       if source_type == IngestionSourceType.BIGQUERY:
         self._source = IngestionSourceBuilder().build_big_query()
-      if source_type == IngestionSourceType.ELASTIC:
+      elif source_type == IngestionSourceType.ELASTIC:
         self._source = IngestionSourceBuilder().build_elastic()
       elif source_type == IngestionSourceType.REDSHIFT:
-        self._source = IngestionSourceBuilder().build_redshift(self._fs, kwargs['connection_string'])
+        self._source = IngestionSourceBuilder().build_redshift()
       else:
         raise Exception("Unsupported source type %s", source_type)
     self.config = self._fs.config
