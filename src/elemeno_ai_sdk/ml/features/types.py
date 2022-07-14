@@ -43,6 +43,8 @@ class FeatureType:
             return BqType.BOOL
         elif type_in_str == "integer":
             return BqType.INTEGER
+        elif type_in_str == "binary_download":
+            return BqType.STRING
         else:
             raise ValueError("Unsupported type in bigquery")
 
@@ -67,6 +69,8 @@ class FeatureType:
             return np.bool_
         elif type_in_str == "integer":
             return np.int32
+        elif type_in_str == "binary_download":
+            return np.bytes_
         else:
             raise ValueError("Unsupported type in pandas")
 
