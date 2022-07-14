@@ -31,8 +31,7 @@ class FeatureStore(BaseFeatureStore):
         self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
       elif sink_type == IngestionSinkType.REDSHIFT:
         #TODO Bruno: Change this to create the connection string from the new redshift params from the config file
-        redshift_params = self._elm_config.feature_store.sink.params
-        self._sink = IngestionSinkBuilder().build_redshift(self._fs, self._get_connection_string(redshift_params))
+        self._sink = IngestionSinkBuilder().build_redshift(self._fs, self._get_connection_string())
       else:
         raise Exception("Unsupported sink type %s", sink_type)
     #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
@@ -41,20 +40,20 @@ class FeatureStore(BaseFeatureStore):
     else:
       if source_type == IngestionSourceType.BIGQUERY:
         self._source = IngestionSourceBuilder().build_big_query()
-      if source_type == IngestionSourceType.ELASTIC:
+      elif source_type == IngestionSourceType.ELASTIC:
         self._source = IngestionSourceBuilder().build_elastic()
       elif source_type == IngestionSourceType.REDSHIFT:
-        self._source = IngestionSourceBuilder().build_redshift(self._fs, kwargs['connection_string'])
+        self._source = IngestionSourceBuilder().build_redshift()
       else:
         raise Exception("Unsupported source type %s", source_type)
     self.config = self._fs.config
 
-  def _get_connection_string(self, redshift_params):
-    user = redshift_params.user
-    password = redshift_params.password
-    host = redshift_params.host
-    port = redshift_params.port 
-    database = redshift_params.database 
+  def _get_connection_string(self) -> str:
+    user = self._elm_config.feature_store.sink.params.user
+    password = self._elm_config.feature_store.sink.params.password
+    host = self._elm_config.feature_store.sink.params.host
+    port = self._elm_config.feature_store.sink.params.port 
+    database = self._elm_config.feature_store.sink.params.database 
     return f"postgresql://{user}:{password}@{host}:{port}/{database}"
 
   @property
