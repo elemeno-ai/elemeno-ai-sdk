@@ -100,7 +100,7 @@ class RedshiftIngestion(Ingestion):
     date_cols = ["created_timestamp", "create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
     columns = {}
     for col, dtype in to_ingest.dtypes.items():
-      if col == 'media':
+      if col == 'media' or 'media' in col.split('_'):
           columns[f'{col}_status'] = 'BOOLEAN'
           to_ingest[f'{col}_status'] = False
       if col in date_cols:
