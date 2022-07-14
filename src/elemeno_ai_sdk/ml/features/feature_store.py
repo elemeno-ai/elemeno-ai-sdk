@@ -176,7 +176,8 @@ class FeatureStore(BaseFeatureStore):
         features_selected: List[str] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
-        limit: Optional[int] = None) -> pd.DataFrame:
+        limit: Optional[int] = None,
+        only_most_recent: Optional[bool] = True) -> pd.DataFrame:
     """ 
     Get the training features for the given feature table.
     
@@ -186,6 +187,7 @@ class FeatureStore(BaseFeatureStore):
     - features_selected: A list of features to be selected. If None, all features will be selected.
     - date_from: The start date of the training period. If None, the start date of the feature table will be used.
     - date_to: The end date of the training period. If None, the end date of the feature table will be used.
+    - only_most_recent: If True, only the most recent features will be selected. If False, all features will be selected.
     
     returns:
     
@@ -207,8 +209,12 @@ class FeatureStore(BaseFeatureStore):
     if limit:
       where += f" LIMIT {limit}"
     query = f"SELECT {columns} FROM {table_name} {where}"
-    print(query)
-    return self._sink.read_table(query)
+    df = self._sink.read_table(query)
+    if only_most_recent:
+      return df.sort_values(by="created_timestamp", ascending=False).groupby(by=[feature_table.entities]).tail(1)
+    else:
+      return df
+
 
   def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
     """
