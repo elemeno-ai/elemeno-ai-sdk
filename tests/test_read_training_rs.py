@@ -6,7 +6,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import Ingest
 
 
 def test_get_training_features():
-  conn_str = "postgresql://***REMOVED***"
+  conn_str = "postgresql://"
   fs = FeatureStore(sink_type=IngestionSinkType.REDSHIFT, connection_string=conn_str)
   ft = FeatureTable(name="bel_test", feature_store=fs)
   print("will read training features")
