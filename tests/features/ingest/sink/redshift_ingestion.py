@@ -34,9 +34,13 @@ def test_get_sink_last_row_happy_path(feature_store, feature_table, with_test_ro
   clean_db()
 
 def test_get_sink_last_row_empty(feature_store, feature_table):
-  assert feature_store.get_training_features(feature_table).empty
-  assert feature_store.get_sink_last_ts(feature_table) == None
-  clean_db()
+  try:
+    assert feature_store.get_training_features(feature_table).empty
+    assert feature_store.get_sink_last_ts(feature_table) == None
+  except Exception as e:
+    assert False, "Exception was thrown: " + str(e)
+  finally:
+    clean_db()
 
 def test_get_training_features_happy_path(feature_table, feature_store, with_test_row):
   df = feature_store.get_training_features(feature_table)
