@@ -7,7 +7,7 @@ from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestionSou
 from elemeno_ai_sdk.ml.features.ingest.source.bigquery import BigQueryIngestionSource
 from elemeno_ai_sdk.ml.features.ingest.source.redshift import RedshiftIngestionSource
 
-class IngestionSourceType(enum.Enum):
+class IngestionSourceType(str, enum.Enum):
   ELASTIC = "Elastic"
   BIGQUERY = "BigQuery"
   REDSHIFT = "Redshift"
