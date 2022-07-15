@@ -60,7 +60,7 @@ class FeatureType:
                 return np.datetime64('2002-02-03T13:56:03.172')
             return np.unicode_
         elif type_in_str == "array":
-            return np.ndarray
+            return np.object_
         elif type_in_str == "object":
             return np.bytes_
         elif type_in_str == "boolean":
@@ -107,7 +107,7 @@ class FeatureType:
         return np.bytes_(b'bytes')
       elif dtype.__name__ == np.unicode_.__name__:
         return np.unicode_('string')
-      elif dtype.__name__ == np.ndarray.__name__:
+      elif dtype.__name__ == np.ndarray.__name__ or dtype.__name__ == np.object_.__name__:
         return np.array([1, 2, 3])
       else:
         raise ValueError("Unsupported dtype")

@@ -2,8 +2,8 @@ import feast
 import os
 from numpy import dtype
 import pandas as pd
-from elemeno_ai_sdk.features.feature_store import FeatureStore
-from elemeno_ai_sdk.features.feature_table import FeatureTableDefinition
+from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
+from elemeno_ai_sdk.ml.features.feature_table import FeatureTableDefinition
 from sqlalchemy import create_engine
 
 def test_ingest_rs():

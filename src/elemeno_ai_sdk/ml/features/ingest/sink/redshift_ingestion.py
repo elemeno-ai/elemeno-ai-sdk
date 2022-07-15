@@ -20,6 +20,17 @@ class RedshiftIngestion(Ingestion):
   def __init__(self, fs, connection_string: str):
     super().__init__()
     self._conn_str = connection_string
+    self.rs_types = {
+      "object": "SUPER",
+      "string": "VARCHAR(12600)",
+      "string[python]": "VARCHAR(12600)",
+      "Int64": "BIGINT",
+      "Int32": "BIGINT",
+      "Float64": "DECIMAL(18,6)",
+      "bool": "BOOLEAN",
+      "datetime64[ns]": "TIMESTAMP"
+    }
+
 
   def read_table(self, query: str) -> pd.DataFrame:
     """
@@ -33,7 +44,7 @@ class RedshiftIngestion(Ingestion):
     
     - DataFrame with columns in the same order as the FeatureTable
     """
-    engine = create_engine(self._conn_str, hide_parameters=True, isolation_level="READ COMMITTED")
+    engine = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
     with engine.connect().execution_options(autocommit=True) as conn:
       return pd.read_sql(query, con = conn)
 
@@ -99,27 +110,17 @@ class RedshiftIngestion(Ingestion):
     columns = {}
     for col, dtype in to_ingest.dtypes.items():
       if col in date_cols:
-        columns[col] = "TIMESTAMP"
-      elif dtype == "object":
-        columns[col] = "SUPER"
-        to_ingest[col] = to_ingest[col].astype("str")
-      elif dtype == "string":
-        columns[col] = "VARCHAR(12600)"
-      elif dtype == "Int64" or dtype == "Int32":
-        columns[col] = "BIGINT"
-      elif dtype == "Float64":
-        columns[col] = "DECIMAL(18,6)"
-      elif dtype == "bool":
-        columns[col] = "BOOLEAN"
-      elif dtype == "datetime64[ns]":
-        columns[col] = "TIMESTAMP"
+        columns[col] = "TEXT"
       else:
-        columns[col] = dtype
-    create = "CREATE TABLE IF NOT EXISTS {} (".format(ft.name)
-    for col, dtype in columns.items():
-      create += "{} {},".format(col, dtype)
-    create = create[:-1] + ")"
-    engine.execute(create)
+        columns[col] = self.rs_types[dtype.name]
+
+    if not sqlalchemy.inspect(engine).has_table(ft.name):
+      create = "CREATE TABLE {} (".format(ft.name)
+      for col, dtype in columns.items():
+        create += "{} {},".format(col, dtype)
+      create = create[:-1] + ")"
+      engine.execute(create)
+      print(create)
     return to_ingest
   
   def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
@@ -177,13 +178,13 @@ class RedshiftIngestion(Ingestion):
       raise exception
 
   def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None) -> pd.DataFrame:
-    with create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT") as conn:
-      where = ""
-      if date_from != None:
-        where = "WHERE {} > '{}'".format(feature_table.created_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
-      return pd.read_sql(
-        f"SELECT MAX({feature_table.created_col}) FROM {feature_table.name} {where}", 
-        conn)
+    conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+    where = ""
+    if date_from != None:
+      where = "WHERE {} > '{}'".format(feature_table.created_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
+    return pd.read_sql(
+      f"SELECT MAX({feature_table.created_col}) FROM {feature_table.name} {where}", 
+      conn)
 
   def ingest_from_query(self, query: str, ft: FeatureTable) -> None:
     raise NotImplementedError("RedshiftIngestion.ingest_from_query is not implemented")

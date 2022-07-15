@@ -14,7 +14,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
 
-class FeatureStore(BaseFeatureStore):
+class FeatureStore:
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
   def __init__(self, sink_type: Optional[IngestionSinkType] = None, source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
     """ 
@@ -27,12 +27,16 @@ class FeatureStore(BaseFeatureStore):
     if not sink_type:
       logger.info("No sink type provided, read-only mode will be used")
     else:
+      self._sink_type = sink_type
       if sink_type == IngestionSinkType.BIGQUERY:
         self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
       elif sink_type == IngestionSinkType.REDSHIFT:
         #TODO Bruno: Change this to create the connection string from the new redshift params from the config file
         redshift_params = self._elm_config.feature_store.sink.params
         self._sink = IngestionSinkBuilder().build_redshift(self._fs, self._get_connection_string(redshift_params))
+      elif sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
+        redshift_params = self._elm_config.feature_store.sink.params
+        self._sink = IngestionSinkBuilder()._build_redshift_unit_tests(self._fs, self._get_connection_string(redshift_params))
       else:
         raise Exception("Unsupported sink type %s", sink_type)
     #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
@@ -50,6 +54,8 @@ class FeatureStore(BaseFeatureStore):
     self.config = self._fs.config
 
   def _get_connection_string(self, redshift_params):
+    if self._sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
+      return "sqlite:///test.db"
     user = redshift_params.user
     password = redshift_params.password
     host = redshift_params.host
@@ -211,7 +217,9 @@ class FeatureStore(BaseFeatureStore):
     query = f"SELECT {columns} FROM {table_name} {where}"
     df = self._sink.read_table(query)
     if only_most_recent:
-      return df.sort_values(by="created_timestamp", ascending=False).groupby(by=[feature_table.entities]).tail(1)
+      return df.sort_values(by="created_timestamp", ascending=False) \
+        .groupby(by=[e.name for e in feature_table.entities]) \
+        .tail(1)
     else:
       return df
 
@@ -266,7 +274,7 @@ class FeatureStore(BaseFeatureStore):
     """
     self._sink.ingest_schema(feature_table, schema_file_path)
 
-  def get_sink_last_row(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> pd.DataFrame:
+  def get_sink_last_ts(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> Any:
     """
     Get the last row of the feature table.
     This is particularly useful when ingesting or reading data,
@@ -280,12 +288,14 @@ class FeatureStore(BaseFeatureStore):
 
     returns:
 
-    - A dataframe with the last row of the feature table.
+    - A timestamp of the same type used in the created_timestamp column
     """
-    return self._sink.get_last_row(feature_table, date_from=date_from)
+    return self._sink.get_last_row(feature_table, date_from=date_from)[f"MAX({feature_table.created_col})"][0]
 
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
     List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
         objects_to_delete: List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,
         partial: bool = True):
     self._fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
+
+BaseFeatureStore.register(FeatureStore)

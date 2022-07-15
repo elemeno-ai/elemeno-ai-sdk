@@ -1,5 +1,6 @@
-[MAIN]
+[MASTER]
 
+ignore-paths=./tests/**/*
 indent-string='  '
 disable=
     C0114, # missing-module-docstring
