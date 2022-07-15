@@ -290,7 +290,10 @@ class FeatureStore:
 
     - A timestamp of the same type used in the created_timestamp column
     """
-    return self._sink.get_last_row(feature_table, date_from=date_from)[f"MAX({feature_table.created_col})"][0]
+    row = self._sink.get_last_row(feature_table, date_from=date_from)
+    if row is None or row.empty:
+      return None
+    return row[f"MAX({feature_table.created_col})"][0]
 
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
     List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
