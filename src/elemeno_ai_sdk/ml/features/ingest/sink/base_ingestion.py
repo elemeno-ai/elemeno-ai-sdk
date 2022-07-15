@@ -1,4 +1,5 @@
 import abc
+from datetime import datetime
 from typing import Dict, Optional, Any, List
 import pandas as pd
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
@@ -27,6 +28,10 @@ class Ingestion(abc.ABC):
   
   @abc.abstractmethod
   def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str, **kwargs) -> None:
+    pass
+  
+  @abc.abstractmethod
+  def get_last_row(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> pd.DataFrame:
     pass
   
   def with_ts_if_not_present(self, dataframe: pd.DataFrame, created_timestamp: str) -> pd.DataFrame:

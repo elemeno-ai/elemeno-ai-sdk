@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import typing
 import feast
@@ -91,6 +92,9 @@ class BigQueryIngestion(Ingestion):
       location = self._fs.config.offline_store.location
       dataframe.to_gbq(destination_table=f"{dataset}.{feature_table.name}",
           project_id=project_id, if_exists="append", location=location)
+
+  def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None) -> pd.DataFrame:
+    raise(NotImplementedError("This method is not implemented yet."))
 
 def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: typing.Any):
   #TODO: implement
