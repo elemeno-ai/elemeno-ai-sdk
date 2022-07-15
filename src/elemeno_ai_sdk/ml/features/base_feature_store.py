@@ -58,6 +58,10 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     pass
   
   @abc.abstractmethod
+  def get_last_row(self, feature_table: 'FeatureTable') -> pd.DataFrame:
+    pass
+  
+  @abc.abstractmethod
   def apply(self, objects: typing.Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
     typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
         objects_to_delete: typing.List[typing.Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,

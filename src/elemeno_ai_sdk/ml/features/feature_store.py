@@ -266,6 +266,24 @@ class FeatureStore(BaseFeatureStore):
     """
     self._sink.ingest_schema(feature_table, schema_file_path)
 
+  def get_sink_last_row(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> pd.DataFrame:
+    """
+    Get the last row of the feature table.
+    This is particularly useful when ingesting or reading data,
+    the result of this method could be piped into the date_from
+    of your method to read data from a source.
+
+    args:
+    
+    - feature_table: FeatureTable object
+    - date_from: The start date of the training period. If None, the start date of the feature table will be used.
+
+    returns:
+
+    - A dataframe with the last row of the feature table.
+    """
+    return self._sink.get_last_row(feature_table, date_from=date_from)
+
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
     List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
         objects_to_delete: List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,

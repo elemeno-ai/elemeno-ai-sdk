@@ -176,5 +176,14 @@ class RedshiftIngestion(Ingestion):
     except Exception as exception:
       raise exception
 
+  def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None) -> pd.DataFrame:
+    with create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT") as conn:
+      where = ""
+      if date_from != None:
+        where = "WHERE {} > '{}'".format(feature_table.created_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
+      return pd.read_sql(
+        f"SELECT MAX({feature_table.created_col}) FROM {feature_table.name} {where}", 
+        conn)
+
   def ingest_from_query(self, query: str, ft: FeatureTable) -> None:
     raise NotImplementedError("RedshiftIngestion.ingest_from_query is not implemented")
