@@ -58,7 +58,7 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     pass
   
   @abc.abstractmethod
-  def get_last_row(self, feature_table: 'FeatureTable') -> pd.DataFrame:
+  def get_sink_last_row(self, feature_table: 'FeatureTable') -> pd.DataFrame:
     pass
   
   @abc.abstractmethod
