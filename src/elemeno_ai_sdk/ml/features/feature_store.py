@@ -293,7 +293,9 @@ class FeatureStore:
     row = self._sink.get_last_row(feature_table, date_from=date_from)
     if row is None or row.empty:
       return None
-    return row[f"MAX({feature_table.created_col})"][0]
+    # rename column if the db returned in the format bellow, otherwise no-op
+    row = row.rename(columns={f"MAX({feature_table.created_col})": "max"})
+    return row["max"][0]
 
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
     List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService]]],
