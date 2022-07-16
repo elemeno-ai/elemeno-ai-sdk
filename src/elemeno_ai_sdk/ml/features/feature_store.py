@@ -118,7 +118,7 @@ class FeatureStore:
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read(query, index=kwargs['index'])
+    df = self._source.read(query, kwargs)
     self.ingest(ft, df)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
@@ -136,7 +136,7 @@ class FeatureStore:
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read(query, index=kwargs['index'])
+    df = self._source.read(query, kwargs)
     df = self._source.read_after(query, after)
     self.ingest(ft, df)
 
