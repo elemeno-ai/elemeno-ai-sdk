@@ -11,7 +11,7 @@ class ElasticIngestionSource(BaseSource):
     self._es = Elasticsearch(hosts=[host],
             http_auth=(username, password))
   
-  def read(self, index: str = "", query: str = "", max_per_page: int = 1000) -> pd.DataFrame:
+  def read(self, index: str = "", query: str = "", max_per_page: int = 1000, **kwargs) -> pd.DataFrame:
     """ Reads data from elastic.
 
     args:
@@ -50,7 +50,7 @@ class ElasticIngestionSource(BaseSource):
           search_after = sort_response[0]
     return pd.DataFrame(all_results)
 
-  def read_after(self, timestamp_str: str, index: str = "", query: str = "", max_per_page: int = 1000) -> pd.DataFrame:
+  def read_after(self, timestamp_str: str, index: str = "", query: str = "", max_per_page: int = 1000, **kwargs) -> pd.DataFrame:
     """ Read data after a given timestamp. 
     When using this function you can't specify a range filter in the query.
 
