@@ -31,11 +31,11 @@ class BaseFeatureStore(metaclass=abc.ABCMeta):
     pass
   
   @abc.abstractmethod
-  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str):
+  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, **kwargs):
     pass
   
   @abc.abstractmethod
-  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str):
+  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
     pass
 
   @abc.abstractmethod

@@ -103,7 +103,7 @@ class FeatureStore:
     """
     self._sink.ingest_from_query(query, ft)
 
-  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str):
+  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, **kwargs):
     """
     Ingest data from a query. Used when the source and the sink are different.
     
@@ -116,10 +116,12 @@ class FeatureStore:
     - ft: The FeatureTable object
     - query: A SQL query to ingest data from.
     """
-    df = self._source.read(query)
+    if not 'index' in kwargs:
+      raise("index must be provided")
+    df = self._source.read(query, index=kwargs['index'])
     self.ingest(ft, df)
 
-  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str):
+  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
     """
     Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
 
@@ -132,6 +134,9 @@ class FeatureStore:
     - query: A SQL query to ingest data from.
     - after: A timestamp after which the query will be executed. Use the same date format of the source.
     """
+    if not 'index' in kwargs:
+      raise("index must be provided")
+    df = self._source.read(query, index=kwargs['index'])
     df = self._source.read_after(query, after)
     self.ingest(ft, df)
 
