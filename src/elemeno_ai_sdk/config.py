@@ -19,10 +19,10 @@ class Configs:
         raise RuntimeError("Call instance() instead")
 
     @classmethod
-    def instance(cls):
+    def instance(cls, force_reload=False):
         cfg_path = os.getenv('ELEMENO_CFG_FILE', 'elemeno.yaml')
         try:
-            if cls._instance is None:
+            if cls._instance is None or force_reload:
                 cls._instance = cls.__new__(cls)
                 cls._props = OmegaConf.load(cfg_path)
             return cls._instance.props

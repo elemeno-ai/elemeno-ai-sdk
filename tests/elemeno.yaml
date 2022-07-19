@@ -24,8 +24,8 @@ feature_store:
   source:
     type: Elastic
     params:
-      host: localhost:9200
-      user: elemeno
+      host: http://localhost:9200
+      username: elemeno
       password: ${oc.env:ELASTIC_PASSWORD,elemeno}
 gcp:
   sa:

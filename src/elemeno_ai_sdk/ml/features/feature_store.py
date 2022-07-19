@@ -1,7 +1,7 @@
 
 
 from datetime import datetime
-from typing import Callable, Optional, Dict, List, Any, ParamSpecArgs, TypeVar, Union
+from typing import Optional, Dict, List, Any, Union
 import pandas as pd
 import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
@@ -13,8 +13,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import IngestionSinkBuilder, IngestionSinkType
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
-from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource
-class FeatureStore(BaseSource):
+class FeatureStore:
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
   def __init__(self, sink_type: Optional[IngestionSinkType] = None, source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
     """ 
@@ -124,7 +123,7 @@ class FeatureStore(BaseSource):
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read(query, **kwargs)
+    df = self._source.read(query=query, **kwargs)
     self.ingest(ft, df)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
@@ -142,7 +141,7 @@ class FeatureStore(BaseSource):
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read_after(query, after, **kwargs)
+    df = self._source.read_after(query=query, timestamp_str=after, **kwargs)
     self.ingest(ft, df)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
