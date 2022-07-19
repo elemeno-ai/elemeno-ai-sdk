@@ -1,7 +1,7 @@
 
 
 from datetime import datetime
-from typing import Optional, Dict, List, Any, Union
+from typing import Callable, Optional, Dict, List, Any, ParamSpecArgs, TypeVar, Union
 import pandas as pd
 import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
@@ -13,8 +13,8 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import IngestionSinkBuilder, IngestionSinkType
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
-
-class FeatureStore:
+from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource
+class FeatureStore(BaseSource):
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
   def __init__(self, sink_type: Optional[IngestionSinkType] = None, source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
     """ 
@@ -52,6 +52,11 @@ class FeatureStore:
       else:
         raise Exception("Unsupported source type %s", source_type)
     self.config = self._fs.config
+    # memory holds a reference for the result of the last data handling method
+    self._memory = None
+
+  def read_from_query(self, query: str) -> pd.DataFrame:
+    return super().read_from_query(self._source, query)
 
   def _get_connection_string(self, redshift_params):
     if self._sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
@@ -103,6 +108,7 @@ class FeatureStore:
     """
     self._sink.ingest_from_query(query, ft)
 
+
   def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, **kwargs):
     """
     Ingest data from a query. Used when the source and the sink are different.
@@ -118,7 +124,7 @@ class FeatureStore:
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read(query, kwargs)
+    df = self._source.read(query, **kwargs)
     self.ingest(ft, df)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
@@ -136,8 +142,7 @@ class FeatureStore:
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read(query, kwargs)
-    df = self._source.read_after(query, after)
+    df = self._source.read_after(query, after, **kwargs)
     self.ingest(ft, df)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
