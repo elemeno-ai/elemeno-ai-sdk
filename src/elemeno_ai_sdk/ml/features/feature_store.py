@@ -14,7 +14,41 @@ from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource
-class FeatureStore(BaseSource):
+
+class FeatureReaderMixin(object):
+  """
+  A class to manage the feature store reader functions
+  """
+
+  P = ParamSpecArgs('P')
+  T = TypeVar('T')
+  
+  def pipeTo(self, fn: Callable[[FeatureTable, pd.DataFrame, P], T]) -> T:
+    """ 
+    Pipe the result of the last data handling method to the given function.
+    
+    args:
+    
+    - fn: A function to pipe the result to.
+    """
+    def inner(*args: P.args, **kwargs: P.kwargs):
+      return fn(*args, **kwargs)
+    return inner
+
+  def read_from_query(self, source: BaseSource, query: str) -> pd.DataFrame:
+    """ 
+    Read data from a query.
+    
+    It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+    
+    The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
+
+    args:
+    
+    - query: A SQL query to ingest data from.
+    """
+    return source.read(query)
+class FeatureStore(FeatureReaderMixin):
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
   def __init__(self, sink_type: Optional[IngestionSinkType] = None, source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
     """ 

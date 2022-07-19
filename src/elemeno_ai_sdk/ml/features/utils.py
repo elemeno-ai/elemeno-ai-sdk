@@ -1,3 +1,10 @@
+from elemeno_ai_sdk.ml.features.base_feature_store import BaseFeatureStore
+
+class Pipe:
+
+  @staticmethod
+  def To(fs: BaseFeatureStore, fn, *args, **kwargs):
+    return fn(fs._memory, *args, **kwargs)
 
 
 def create_insert_into(into_path, client_query):
