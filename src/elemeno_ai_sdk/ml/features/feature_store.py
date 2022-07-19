@@ -124,7 +124,10 @@ class FeatureStore:
     if not 'index' in kwargs:
       raise("index must be provided")
     df = self._source.read(query=query, **kwargs)
-    self.ingest(ft, df)
+    # make sure only the featuretable columns are ingested
+    cols = [e.name for e in ft.entities]
+    cols.extend([f.name for f in ft.features])
+    self.ingest(ft, df, all_columns=cols)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
     """
@@ -142,7 +145,10 @@ class FeatureStore:
     if not 'index' in kwargs:
       raise("index must be provided")
     df = self._source.read_after(query=query, timestamp_str=after, **kwargs)
-    self.ingest(ft, df)
+    # make sure only the featuretable columns are ingested
+    cols = [e.name for e in ft.entities]
+    cols.extend([f.name for f in ft.features])
+    self.ingest(ft, df, all_columns=cols)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
     """ Get historical features from the feature store.

@@ -1,7 +1,9 @@
 import os
 from unittest.mock import Mock
+from feast import Entity, Feature, ValueType
 import mock
 from mock import patch
+import pandas as pd
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import IngestionSinkType
 import pytest
 from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
@@ -88,4 +90,66 @@ def test_read_after_elastic_check_calls(feature_table):
     f.read_and_ingest_from_query_after(feature_table, query, max_per_page=10, index="test-index", after="2022-01-01T00:00:00")
     elastic_module.count.assert_called_once_with(index='test-index', query={"query": {"match_all": {}, 'range': {'event_timestamp': {'gt': '2022-01-01T00:00:00'}}}})
     elastic_module.search.assert_called_once_with(index='test-index', query={"query": {"match_all": {}, 'range': {'event_timestamp': {'gt': '2022-01-01T00:00:00'}}}}, size=10)
+    pass
+
+def test_read_after_with_more_columns_and_ingest(feature_table):
+  os.environ["ELEMENO_CFG_FILE"] = "tests/elemeno.yaml"
+  Configs.instance(force_reload=True)
+  with mock.patch("elemeno_ai_sdk.ml.features.ingest.source.elastic.Elasticsearch") as elastic_module:
+    elastic_module.count.return_value = {"count": 10}
+    elastic_module.search.return_value = {"hits": {"hits": [{"_source": {
+      "listingId": "123a", 
+      "aggregationIds":["abc"], 
+      "other_column": "ae"}
+    }, {"_source": {
+      "listingId": "zz2",
+      "aggregationIds":["abc"], 
+      "other_column": "ax"
+    }}]}}
+    elastic_module.configure_mock()
+    f = FeatureStore(source_type=IngestionSourceType.ELASTIC, sink_type=IngestionSinkType._REDSHIFT_UNIT_TESTS)
+    f._source._es = elastic_module
+    f._sink = Mock()
+    query = {"query": {"match_all": {}}}
+    f.read_and_ingest_from_query_after(feature_table, query, max_per_page=10, index="test-index", after="2022-01-01T00:00:00")
+    assert feature_table.features == [Feature("aggregationIds", ValueType.BYTES)]
+    assert feature_table.entities == [Entity("listingId", ValueType.STRING, description="listingId", join_key="listingId")]
+    f._sink.ingest.assert_called_once()
+    call_args = f._sink.ingest.call_args
+    df = call_args[0][0]
+    feature_columns = df.columns.tolist()
+    assert feature_columns == ["listingId", "aggregationIds", "other_column"]
+    print(call_args.kwargs)
+    all_columns_param = call_args[0][3]
+    assert all_columns_param == ["listingId", "aggregationIds"]
+    pass
+
+def test_read_with_more_columns_and_ingest(feature_table):
+  os.environ["ELEMENO_CFG_FILE"] = "tests/elemeno.yaml"
+  Configs.instance(force_reload=True)
+  with mock.patch("elemeno_ai_sdk.ml.features.ingest.source.elastic.Elasticsearch") as elastic_module:
+    elastic_module.count.return_value = {"count": 10}
+    elastic_module.search.return_value = {"hits": {"hits": [{"_source": {
+      "listingId": "123a", 
+      "aggregationIds":["abc"], 
+      "other_column": "ae"}
+    }, {"_source": {
+      "listingId": "zz2",
+      "aggregationIds":["abc"], 
+      "other_column": "ax"
+    }}]}}
+    elastic_module.configure_mock()
+    f = FeatureStore(source_type=IngestionSourceType.ELASTIC, sink_type=IngestionSinkType._REDSHIFT_UNIT_TESTS)
+    f._source._es = elastic_module
+    f._sink = Mock()
+    query = {"query": {"match_all": {}}}
+    f.read_and_ingest_from_query(feature_table, query, max_per_page=10, index="test-index")
+    f._sink.ingest.assert_called_once()
+    call_args = f._sink.ingest.call_args
+    df = call_args[0][0]
+    feature_columns = df.columns.tolist()
+    assert feature_columns == ["listingId", "aggregationIds", "other_column"]
+    print(call_args.kwargs)
+    all_columns_param = call_args[0][3]
+    assert all_columns_param == ["listingId", "aggregationIds"]
     pass
