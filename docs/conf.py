@@ -32,7 +32,7 @@ with open(_version_py, mode='r') as version_file:
 
 # The short X.Y version.
 #version = version_ns['__version__'][:6]
-version = '0.2.34'
+version = '0.2.35'
 
 # The full version, including alpha/beta/rc tags.
 #release = version_ns['__version__']
