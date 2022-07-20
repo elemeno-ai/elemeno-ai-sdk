@@ -16,11 +16,11 @@ feature_store:
   sink:
     type: Redshift
     params:
-        host: ***REMOVED***
+        host: "***REMOVED***"
         port: 5439
         user: awsuser
-        password: ***REMOVED***
-        database: ***REMOVED***
+        password: "***REMOVED***"
+        database: "***REMOVED***"
   source:
     type: Elastic
     params:

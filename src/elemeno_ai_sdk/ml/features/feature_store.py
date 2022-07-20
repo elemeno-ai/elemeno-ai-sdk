@@ -127,6 +127,7 @@ class FeatureStore:
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
+    cols.extend([ft.created_col, ft.evt_col])
     self.ingest(ft, df, all_columns=cols)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):

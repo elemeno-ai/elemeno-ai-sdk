@@ -1,6 +1,7 @@
 import abc
 from datetime import datetime
 from typing import Dict, Optional, Any, List
+from elemeno_ai_sdk import logger
 import pandas as pd
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 
@@ -16,7 +17,12 @@ class Ingestion(abc.ABC):
   @abc.abstractmethod
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: Optional[Dict[str, str]], 
       expected_columns: Optional[List[str]] = None, **kwargs) -> None:
-    pass
+    if ft.created_col not in to_ingest.columns:
+      logger.warn("Could not find created_timestamp column in dataframe. Adding it now with default value.")
+      to_ingest[ft.created_col] = pd.to_datetime('now', utc=True)
+    if ft.evt_col not in to_ingest.columns:
+      logger.warn("Could not find event_timestamp column in dataframe. Adding it now with default value.")
+      to_ingest[ft.evt_col] = pd.to_datetime('now', utc=True)
 
   @abc.abstractmethod
   def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: Any, **kwargs) -> None:

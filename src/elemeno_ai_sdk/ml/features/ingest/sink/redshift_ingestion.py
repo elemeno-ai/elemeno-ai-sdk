@@ -61,6 +61,7 @@ class RedshiftIngestion(Ingestion):
     - renames: Optional dictionary of column names to rename
     - expected_columns: Optional list of columns to check for
     """
+    super().ingest(to_ingest, ft, renames, expected_columns)
     if renames is not None:
       to_ingest = to_ingest.rename(columns=renames)
     if expected_columns is None or len(expected_columns) == 0:
