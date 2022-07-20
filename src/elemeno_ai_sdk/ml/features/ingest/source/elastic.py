@@ -36,7 +36,7 @@ class ElasticIngestionSource(BaseSource):
     search_after = 0
     pages = count // max_per_page + 1
     for page in range(0, pages):
-      if page >= max_pages:
+      if max_pages is not None and page >= max_pages:
         break
       logger.info("Reading page %d of %d", page, pages)
       logger.info("Size of page: %d", max_per_page)
