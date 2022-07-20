@@ -10,8 +10,8 @@ from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.config import Configs
 
-from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestionSource
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import IngestionSourceType
+from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestionSource
 
 from ..fixtures import feature_table, feature_store
 
@@ -36,6 +36,28 @@ def fs_fixture():
     build_elastic.return_value = elastic_mock
     f = FeatureStore(source_type=IngestionSourceType.ELASTIC, sink_type=IngestionSinkType._REDSHIFT_UNIT_TESTS)
     return (f, elastic_mock)
+
+@pytest.fixture
+def test_mem():
+  mem = {}
+  mem["json_match_schema"] = {"hits": {"hits": [{"_source": {
+      "listingId": "123a", 
+      "aggregationIds":["abc"]}
+    }, {"_source": {
+      "listingId": "zz2",
+      "aggregationIds":["abc"]
+    }}]}}
+  
+  mem["json_add_schema"] = {"hits": {"hits": [{"_source": {
+      "listingId": "123a", 
+      "aggregationIds":["abc"]},
+      "other_column": "ax"
+    }, {"_source": {
+      "listingId": "zz2",
+      "aggregationIds":["abc"],
+      "other_column": "ax"
+    }}]}}
+  return mem
 
 def test_read_happy_path(mocked_elastic):
   source = ElasticIngestionSource("http://localhost:9200", "username", "password")
@@ -92,20 +114,12 @@ def test_read_after_elastic_check_calls(feature_table):
     elastic_module.search.assert_called_once_with(index='test-index', query={"query": {"match_all": {}, 'range': {'event_timestamp': {'gt': '2022-01-01T00:00:00'}}}}, size=10)
     pass
 
-def test_read_after_with_more_columns_and_ingest(feature_table):
+def test_read_after_with_more_columns_and_ingest(feature_table, test_mem):
   os.environ["ELEMENO_CFG_FILE"] = "tests/elemeno.yaml"
   Configs.instance(force_reload=True)
   with mock.patch("elemeno_ai_sdk.ml.features.ingest.source.elastic.Elasticsearch") as elastic_module:
     elastic_module.count.return_value = {"count": 10}
-    elastic_module.search.return_value = {"hits": {"hits": [{"_source": {
-      "listingId": "123a", 
-      "aggregationIds":["abc"], 
-      "other_column": "ae"}
-    }, {"_source": {
-      "listingId": "zz2",
-      "aggregationIds":["abc"], 
-      "other_column": "ax"
-    }}]}}
+    elastic_module.search.return_value = test_mem["json_add_schema"]
     elastic_module.configure_mock()
     f = FeatureStore(source_type=IngestionSourceType.ELASTIC, sink_type=IngestionSinkType._REDSHIFT_UNIT_TESTS)
     f._source._es = elastic_module
@@ -124,20 +138,12 @@ def test_read_after_with_more_columns_and_ingest(feature_table):
     assert all_columns_param == ["listingId", "aggregationIds"]
     pass
 
-def test_read_with_more_columns_and_ingest(feature_table):
+def test_read_with_more_columns_and_ingest(feature_table, test_mem):
   os.environ["ELEMENO_CFG_FILE"] = "tests/elemeno.yaml"
   Configs.instance(force_reload=True)
   with mock.patch("elemeno_ai_sdk.ml.features.ingest.source.elastic.Elasticsearch") as elastic_module:
     elastic_module.count.return_value = {"count": 10}
-    elastic_module.search.return_value = {"hits": {"hits": [{"_source": {
-      "listingId": "123a", 
-      "aggregationIds":["abc"], 
-      "other_column": "ae"}
-    }, {"_source": {
-      "listingId": "zz2",
-      "aggregationIds":["abc"], 
-      "other_column": "ax"
-    }}]}}
+    elastic_module.search.return_value = test_mem["json_add_schema"]
     elastic_module.configure_mock()
     f = FeatureStore(source_type=IngestionSourceType.ELASTIC, sink_type=IngestionSinkType._REDSHIFT_UNIT_TESTS)
     f._source._es = elastic_module
@@ -149,7 +155,6 @@ def test_read_with_more_columns_and_ingest(feature_table):
     df = call_args[0][0]
     feature_columns = df.columns.tolist()
     assert feature_columns == ["listingId", "aggregationIds", "other_column"]
-    print(call_args.kwargs)
     all_columns_param = call_args[0][3]
     assert all_columns_param == ["listingId", "aggregationIds"]
     pass

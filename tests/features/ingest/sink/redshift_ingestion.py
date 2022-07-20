@@ -1,6 +1,12 @@
 from datetime import datetime
 import os
+from unittest import mock
+import pandas as pd
+import numpy as np
 import pytest
+import sqlalchemy
+
+from elemeno_ai_sdk.ml.features.ingest.sink.redshift_ingestion import RedshiftIngestion
 
 from ..fixtures import feature_table, with_test_row, feature_store
 
@@ -30,3 +36,53 @@ def test_get_training_features_from_ts(feature_table, feature_store, with_test_r
   assert len(df) == 1
   assert df.columns.tolist() == ["listingId", "aggregationIds", "created_timestamp", "event_timestamp"]
   assert df.iloc[0]['created_timestamp'] == '2020-01-01T00:00:01'
+
+def test_create_table_dtypes(feature_store, feature_table):
+  with mock.patch("elemeno_ai_sdk.ml.features.ingest.sink.redshift_ingestion.sqlalchemy") as sqlalchemy_mock:
+    source = RedshiftIngestion(feature_store, "sqlite:///test.db?mode=rwc")
+    to_ingest = pd.DataFrame([{
+      "id": 1,
+      "aggregation_ids": ["12", "abc"]
+    }])
+    engine_mock = mock.Mock()
+    sqlalchemy_mock.create_engine.return_value = engine_mock
+    has_table_check = mock.Mock()
+    sqlalchemy_mock.inspect.return_value = has_table_check
+    has_table_check.has_table.return_value=False
+    df = source.create_table(to_ingest, feature_table, engine_mock)
+    engine_mock.execute.assert_called_once_with("CREATE TABLE test_table (id BIGINT,aggregation_ids SUPER)")
+
+@mock.patch.object(sqlalchemy, "create_engine")
+@mock.patch.object(sqlalchemy, "inspect")
+def test_ingest_df(mock_sqlalchemy, feature_table):
+  emock = mock.Mock()
+  mock_sqlalchemy.return_value = emock
+  sink = RedshiftIngestion(None, "sqlite:///test.db?mode=rwc")
+  sink._conn = emock
+  to_ingest = pd.DataFrame([{
+    "id": 1,
+    "aggregation_ids": ["12", "abc"]
+  }])
+  with mock.patch("pandas.DataFrame.to_sql") as pd_mock:
+    sink.ingest(to_ingest, feature_table, expected_columns=["id", "aggregation_ids"])
+    pd_mock.assert_called_once_with(feature_table.name, emock, 
+      chunksize=1000, if_exists='append', index=False, 
+      method='multi')
+
+@mock.patch.object(sqlalchemy, "create_engine")
+@mock.patch.object(sqlalchemy, "inspect")
+def test_ingest_df_with_str_list(mock_sqlalchemy, feature_table):
+  emock = mock.Mock()
+  mock_sqlalchemy.return_value = emock
+  sink = RedshiftIngestion(None, "sqlite:///test.db?mode=rwc")
+  sink._conn = emock
+  to_ingest = pd.DataFrame([{
+    "id": 1,
+    "aggregation_ids": ["12", "abc"]
+  }])
+  with mock.patch.object(sink, "_to_sql") as to_sql_mock:
+    sink.ingest(to_ingest, feature_table, expected_columns=["id", "aggregation_ids"])
+    to_sql_mock.assert_called_once()
+    internal_df_types = to_sql_mock.call_args[0][0].dtypes.tolist()
+    internal_df_types = [x.type for x in internal_df_types]
+    assert internal_df_types == [np.dtype('int64'), np.dtype('str')]

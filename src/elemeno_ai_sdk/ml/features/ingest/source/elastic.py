@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 from elasticsearch import Elasticsearch
 from elemeno_ai_sdk import logger
 import pandas as pd
@@ -11,7 +12,7 @@ class ElasticIngestionSource(BaseSource):
     self._es = Elasticsearch(hosts=[host],
             http_auth=(username, password))
   
-  def read(self, index: str = "", query: str = "", max_per_page: int = 1000) -> pd.DataFrame:
+  def read(self, index: str = "", query: str = "", max_per_page: int = 1000, max_pages: Optional[int] = None) -> pd.DataFrame:
     """ Reads data from elastic.
 
     args:
@@ -35,6 +36,8 @@ class ElasticIngestionSource(BaseSource):
     search_after = 0
     pages = count // max_per_page + 1
     for page in range(0, pages):
+      if page >= max_pages:
+        break
       logger.info("Reading page %d of %d", page, pages)
       logger.info("Size of page: %d", max_per_page)
       res = self._es.search(index=index, query=query, size=max_per_page, sort=[{"updated_date": "asc"}], search_after=[search_after])
@@ -48,6 +51,8 @@ class ElasticIngestionSource(BaseSource):
             logger.info("Exhausted pages")
             break
           search_after = sort_response[0]
+        else:
+          all_results.extend(sources)
     return pd.DataFrame(all_results)
 
   def read_after(self, timestamp_str: str, index: str = "", query: str = "", max_per_page: int = 1000) -> pd.DataFrame:

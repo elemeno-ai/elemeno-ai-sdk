@@ -20,6 +20,7 @@ class RedshiftIngestion(Ingestion):
   def __init__(self, fs, connection_string: str):
     super().__init__()
     self._conn_str = connection_string
+    self._conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
     self.rs_types = {
       "object": "SUPER",
       "string": "VARCHAR(12600)",
@@ -66,7 +67,9 @@ class RedshiftIngestion(Ingestion):
       logger.warning("No expected columns provided. Will ingest all columns.")
       expected_columns = to_ingest.columns.to_list()
     to_ingest = to_ingest.filter(expected_columns, axis=1)
-    conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+    # redshift doesn't like list of strings, so we turn them into strings
+    to_ingest = self._fix_lists_str(to_ingest)
+    conn = self._conn
     try:
       logger.info("Within RedshiftIngestion.ingest, about to create table {}".format(ft.name))
       # create table if not exists
@@ -80,15 +83,15 @@ class RedshiftIngestion(Ingestion):
           chunk = to_ingest.iloc[i*max_rows_per_insert:]
         else:
           chunk = to_ingest.iloc[i * max_rows_per_insert:(i + 1) * max_rows_per_insert]
-        chunk.to_sql(f"{ft.name}",
-                conn, index=False, if_exists='append',
-                method='multi', 
-                chunksize=1000)
+        self._to_sql(chunk, ft.name, conn)
     except Exception as exception:
       logger.error("Failed to ingest data to Redshift: %e", exception)
       raise exception
     finally:
       conn.dispose()
+
+  def _to_sql(self, df: pd.DataFrame, ft_name, conn) -> None:
+    return df.to_sql(ft_name, conn, index=False, if_exists='append', method='multi', chunksize=1000)
   
   def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
     """
@@ -107,6 +110,7 @@ class RedshiftIngestion(Ingestion):
     to_ingest = to_ingest.convert_dtypes()
     # FIXME: this is a hack to get around the fact we're not using FeatureTable here
     date_cols = ["created_timestamp", "create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
+    
     columns = {}
     for col, dtype in to_ingest.dtypes.items():
       if col in date_cols:
@@ -115,14 +119,27 @@ class RedshiftIngestion(Ingestion):
         columns[col] = self.rs_types[dtype.name]
 
     if not sqlalchemy.inspect(engine).has_table(ft.name):
+      print("inside not has table")
       create = "CREATE TABLE {} (".format(ft.name)
       for col, dtype in columns.items():
         create += "{} {},".format(col, dtype)
       create = create[:-1] + ")"
+      print("Call execute")
       engine.execute(create)
+      print("print create")
       print(create)
     return to_ingest
   
+  def _fix_lists_str(self, df: pd.DataFrame) -> pd.DataFrame:
+    all_types = df.dtypes.tolist()
+    all_columns = df.columns.tolist()
+    # create a new list containing only the columns that are array of strings
+    array_types = [x for x in enumerate(all_types) if x[1].name == "object" and type(df.iloc[0][all_columns[x[0]]]) == list]
+    for col in array_types:
+      col_name = all_columns[col[0]]
+      df[col_name] = df[col_name].astype("str")
+    return df
+
   def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
     """
     This method should be called if you want to use a jsonschema file to create the feature table
