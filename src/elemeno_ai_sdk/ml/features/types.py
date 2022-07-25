@@ -2,6 +2,7 @@ import enum
 from typing import Any, Optional
 import numpy as np
 import feast
+import pandas as pd
 
 class BqType(enum.Enum):
     """
@@ -62,7 +63,7 @@ class FeatureType:
                 return np.datetime64('2002-02-03T13:56:03.172')
             return np.unicode_
         elif type_in_str == "array":
-            return np.object_
+            return pd.Series([]).dtype
         elif type_in_str == "object":
             return np.bytes_
         elif type_in_str == "boolean":

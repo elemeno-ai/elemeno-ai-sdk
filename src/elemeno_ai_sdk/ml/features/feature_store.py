@@ -289,6 +289,8 @@ class FeatureStore:
     }
     """
     self._sink.ingest_schema(feature_table, schema_file_path)
+    # call get_view to force an apply of the schema
+    feature_table.get_view()
 
   def get_sink_last_ts(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> Any:
     """

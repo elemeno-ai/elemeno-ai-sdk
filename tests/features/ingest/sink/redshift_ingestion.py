@@ -71,7 +71,8 @@ def test_ingest_df(mock_sqlalchemy, feature_table):
 
 @mock.patch.object(sqlalchemy, "create_engine")
 @mock.patch.object(sqlalchemy, "inspect")
-def test_ingest_df_with_str_list(mock_sqlalchemy, feature_table):
+@mock.patch.object(pd.io.sql, "to_sql")
+def test_ingest_df_with_str_list(mock_sqlalchemy, feature_table, mock_pandas):
   emock = mock.Mock()
   mock_sqlalchemy.return_value = emock
   sink = RedshiftIngestion(None, "sqlite:///test.db?mode=rwc")
@@ -86,3 +87,14 @@ def test_ingest_df_with_str_list(mock_sqlalchemy, feature_table):
     internal_df_types = to_sql_mock.call_args[0][0].dtypes.tolist()
     internal_df_types = [x.type for x in internal_df_types]
     assert internal_df_types == [np.dtype('int64'), np.dtype('str')]
+
+@mock.patch.object(sqlalchemy, "create_engine")
+def test_ingest_schema(mock_create_engine):
+  ftmock = mock.Mock()
+  ftmock.created_col = 'created_timestamp'
+  ftmock.evt_col = 'event_timestamp'
+  ftmock.dtypes.items.return_value = [('id', 'int64'), ('aggregation_ids', 'str')]
+  sink = RedshiftIngestion(None, "sqlite:///test.db?mode=rwc")
+  sink.create_table = mock.Mock()
+  sink.ingest_schema(ftmock, "tests/schema/test_schema.json")
+  ftmock.set_table_schema.assert_called_once_with([{'name': 'listingId', 'type': 'STRING'}, {'name': 'aggregationIds', 'type': 'ARRAY'}, {'name': 'created_timestamp', 'type': 'TIMESTAMP'}, {'name': 'event_timestamp', 'type': 'TIMESTAMP'}])

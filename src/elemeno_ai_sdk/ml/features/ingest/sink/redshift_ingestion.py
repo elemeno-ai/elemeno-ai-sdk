@@ -86,10 +86,7 @@ class RedshiftIngestion(Ingestion):
           chunk = to_ingest.iloc[i*max_rows_per_insert:]
         else:
           chunk = to_ingest.iloc[i * max_rows_per_insert:(i + 1) * max_rows_per_insert]
-        chunk.to_sql(f"{ft.name}",
-                conn, index=False, if_exists='append', 
-                method='multi', 
-                chunksize=1000)
+        self._to_sql(chunk, ft.name, conn)
     except Exception as exception:
       logger.error("Failed to ingest data to Redshift: %e", exception)
       raise exception
@@ -166,6 +163,7 @@ class RedshiftIngestion(Ingestion):
         pd_schema = {}
         adjusted_dtypes = {}
         dummy_row = {}
+        print(jschema["properties"].items())
         for name, prop in jschema["properties"].items():
           fmt = prop["format"] if "format" in prop else None
           if prop["type"] == "string" and "size" in prop:
@@ -181,6 +179,8 @@ class RedshiftIngestion(Ingestion):
               continue
             feature_table.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
 
+        print("search for ")
+        print(feature_table.created_col)
         if len(list(filter(lambda x: x["name"] == feature_table.created_col, table_schema))) == 0:
           table_schema.append({"name": feature_table.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
           pd_schema[feature_table.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
@@ -197,8 +197,6 @@ class RedshiftIngestion(Ingestion):
         #TODO Bruno - When there's any column with type binary_download in the schema, create an auxiliary feature_table with the list of files to download for each entity
         conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
         self.create_table(dummy_df, feature_table, conn)
-        # dummy_df.to_sql(f"{feature_table.name}",
-        #         conn, index=False, if_exists='append', dtype=adjusted_dtypes)
     except Exception as exception:
       raise exception
 
