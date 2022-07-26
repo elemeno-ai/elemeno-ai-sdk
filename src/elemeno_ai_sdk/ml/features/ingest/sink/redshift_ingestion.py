@@ -29,7 +29,7 @@ class RedshiftIngestion(Ingestion):
       "string[python]": "VARCHAR(12600)",
       "Int64": "BIGINT",
       "Int32": "BIGINT",
-      "Float64": "DECIMAL(18,6)",
+      "Float64": "DECIMAL(8,6)",
       "bool": "BOOLEAN",
       "datetime64[ns]": "TIMESTAMP"
     }
