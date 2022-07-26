@@ -83,7 +83,7 @@ class FeatureType:
         type_in_str -- the type name (JSONSchema)
         """
         if type_in_str == "number":
-            return feast.ValueType.DOUBLE
+            return feast.ValueType.FLOAT
         elif type_in_str == "string":
             return feast.ValueType.STRING
         elif type_in_str in ["array", "object"]:
