@@ -27,6 +27,8 @@ feature_store:
       host: localhost:9200
       user: elemeno
       password: ${oc.env:ELASTIC_PASSWORD,elemeno}
+      binary:
+        media_id_col: test
 gcp:
   sa:
     file: /tmp/gcp-credentials.json
