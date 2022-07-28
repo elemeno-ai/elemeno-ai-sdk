@@ -11,6 +11,8 @@ class IngestionSinkType(str, enum.Enum):
   REDSHIFT = "Redshift"
   _REDSHIFT_UNIT_TESTS = "RedshiftUnitTests"
 
+class FileIngestionSinkType(str, enum.Enum):
+  MINIO = "Minio"
 class IngestionSinkBuilder:
 
   def __init__(self):

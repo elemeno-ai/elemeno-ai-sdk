@@ -31,21 +31,23 @@ class FeatureType:
         type_in_str -- the type name (JSONSchema)
         """
         if type_in_str == "number":
-            return BqType.FLOAT
+          return BqType.FLOAT
         elif type_in_str == "string":
-            if format != None and format == "date-time":
-                return BqType.TIMESTAMP
-            return BqType.STRING
+          if format != None and format == "date-time":
+            return BqType.TIMESTAMP
+          return BqType.STRING
         elif type_in_str == "array":
-            return BqType.ARRAY
+          return BqType.ARRAY
         elif type_in_str == "object":
-            return BqType.STRUCT
+          return BqType.STRUCT
         elif type_in_str == "boolean":
-            return BqType.BOOL
+          return BqType.BOOL
         elif type_in_str == "integer":
-            return BqType.INTEGER
+          return BqType.INTEGER
         elif type_in_str == "binary_download":
-            return BqType.STRING
+          return BqType.STRING
+        elif type_in_str == "array[binary_download]":
+          return BqType.ARRAY
         else:
             raise ValueError("Unsupported type in bigquery")
 
@@ -63,15 +65,17 @@ class FeatureType:
                 return np.datetime64('2002-02-03T13:56:03.172')
             return np.unicode_
         elif type_in_str == "array":
-            return pd.Series([]).dtype
+          return pd.Series([]).dtype
         elif type_in_str == "object":
-            return np.bytes_
+          return np.bytes_
         elif type_in_str == "boolean":
-            return np.bool_
+          return np.bool_
         elif type_in_str == "integer":
-            return np.int32
+          return np.int32
         elif type_in_str == "binary_download":
-            return np.bytes_
+          return np.unicode_
+        elif type_in_str == "array[binary_download]":
+          return np.object0
         else:
             raise ValueError("Unsupported type in pandas")
 
@@ -83,17 +87,21 @@ class FeatureType:
         type_in_str -- the type name (JSONSchema)
         """
         if type_in_str == "number":
-            return feast.ValueType.FLOAT
+          return feast.ValueType.FLOAT
         elif type_in_str == "string":
-            return feast.ValueType.STRING
+          return feast.ValueType.STRING
         elif type_in_str in ["array", "object"]:
-            return feast.ValueType.BYTES
+          return feast.ValueType.BYTES
         elif type_in_str == "boolean":
-            return feast.ValueType.BOOL
+          return feast.ValueType.BOOL
         elif type_in_str == "integer":
-            return feast.ValueType.INT32
+          return feast.ValueType.INT32
+        elif type_in_str == "binary_download":
+          return feast.ValueType.STRING
+        elif type_in_str == "array[binary_download]":
+          return feast.ValueType.STRING_LIST
         else:
-            return feast.ValueType.UNKNOWN
+          return feast.ValueType.UNKNOWN
 
     @staticmethod
     def get_dummy_value(dtype: np.dtype) -> Any:

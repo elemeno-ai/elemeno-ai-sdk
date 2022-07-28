@@ -6,16 +6,21 @@ import pandas as pd
 import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
-from elemeno_ai_sdk.ml.features.base_feature_store import BaseFeatureStore
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk import logger
+from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import FileIngestion
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
-   import IngestionSinkBuilder, IngestionSinkType
+   import FileIngestionSinkType, IngestionSinkBuilder, IngestionSinkType
+from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestionDask
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
+from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
 class FeatureStore:
   #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
-  def __init__(self, sink_type: Optional[IngestionSinkType] = None, source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
+  def __init__(self, 
+    sink_type: Optional[IngestionSinkType] = None,
+    file_sink_type: Optional[FileIngestionSinkType] = None,
+    source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
     """ 
     A FeatureStore is the starting point for working with Elemeno feature store via SDK.
     
@@ -50,6 +55,15 @@ class FeatureStore:
         self._source = IngestionSourceBuilder().build_redshift()
       else:
         raise Exception("Unsupported source type %s", source_type)
+    self._file_sink_type = file_sink_type
+    if not file_sink_type:
+      logger.info("File sink type not specified, will not download files when there are binary columns")
+    else:
+      if not self._elm_config.dask.uri:
+        logger.warn("Dask URI not specified, will not download files")
+      else:
+        print("Creating instance of MinioIngestionDask")
+        self. _file_sink = MinioIngestionDask(self._elm_config.dask.uri)
     self.config = self._fs.config
     # memory holds a reference for the result of the last data handling method
     self._memory = None
@@ -72,7 +86,7 @@ class FeatureStore:
     return self._fs
 
   def ingest(self, feature_table: FeatureTable, 
-      to_ingest: pd.DataFrame, renames: Optional[Dict[str, str]] = None,
+      to_ingest: ReadResponse, renames: Optional[Dict[str, str]] = None,
       all_columns: Optional[List[str]] = None) -> None:
     """ 
     Ingest the given dataframe into the given feature table.
@@ -86,12 +100,23 @@ class FeatureStore:
     args:
     
     - feature_table: FeatureTable object
-    - to_ingest: Dataframe to be ingested
+    - to_ingest: A ReadResponse instance (since base_source.py ReadResponse)
     - renames: A dictionary of column names to be renamed.
     - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
     """
-    self._sink.ingest(to_ingest, feature_table, renames, all_columns)
+    self._ingest_files(to_ingest)
+    #self._sink.ingest(to_ingest.dataframe, feature_table, renames, all_columns)
 
+  def _ingest_files(self, to_ingest: ReadResponse):
+    print("file sink type")
+    print(self._file_sink_type)
+    if self._file_sink_type is not None:
+      media_id_col = self._elm_config.feature_store.source.params.media_id_col
+      media_url_col = self._elm_config.feature_store.source.params.media_url_col
+      dest_folder_col = self._elm_config.feature_store.source.params.dest_folder_col
+      print("len of to_ingest.prepared_medias", len(to_ingest.prepared_medias))
+      self._file_sink.io_batch_ingest(to_ingest.prepared_medias, media_id_col, media_url_col, dest_folder_col)
+  
   def ingest_from_query_same_source(self, ft: FeatureTable, query: str):
     """ 
     Ingest data from a query. Used when the source and the sink are the same.
@@ -107,8 +132,7 @@ class FeatureStore:
     """
     self._sink.ingest_from_query(query, ft)
 
-
-  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, **kwargs):
+  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, binary_cols: List[str], **kwargs):
     """
     Ingest data from a query. Used when the source and the sink are different.
     
@@ -123,14 +147,15 @@ class FeatureStore:
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read(query=query, **kwargs)
+    
+    read_response = self._source.read(query=query, binary_columns=binary_cols, dest_folder_col="id", media_id_col="id", **kwargs)
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
     cols.extend([ft.created_col, ft.evt_col])
-    self.ingest(ft, df, all_columns=cols)
+    self.ingest(ft, read_response, all_columns=cols)
 
-  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, **kwargs):
+  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, binary_cols: List[str], after: str, **kwargs):
     """
     Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
 
@@ -145,11 +170,11 @@ class FeatureStore:
     """
     if not 'index' in kwargs:
       raise("index must be provided")
-    df = self._source.read_after(query=query, timestamp_str=after, **kwargs)
+    read_response = self._source.read_after(query=query, timestamp_str=after, binary_columns=binary_cols, media_id_col="id", dest_folder_col="id", **kwargs)
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
-    self.ingest(ft, df, all_columns=cols)
+    self.ingest(ft, read_response, all_columns=cols)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
     """ Get historical features from the feature store.
@@ -320,5 +345,3 @@ class FeatureStore:
         objects_to_delete: List[Union[feast.FeatureView, feast.OnDemandFeatureView, feast.Entity, feast.FeatureService, None]] = None,
         partial: bool = True):
     self._fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
-
-BaseFeatureStore.register(FeatureStore)
