@@ -23,9 +23,9 @@ def io_batch_dask(params: Tuple['IngestionParams', Dict]):
     secret_key=config.minio_pass,
     use_ssl=config.minio_ssl)
   headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
-  media_id = to_ingest[to_ingest['media_id_col']]
-  media_url = to_ingest[to_ingest['media_url_col']].replace("\\", "")
-  folder_id = to_ingest[to_ingest['dest_folder_col']]
+  media_id = to_ingest[config.media_id_col]
+  media_url = to_ingest[config.media_url_col].replace("\\", "")
+  folder_id = to_ingest[config.dest_folder_col]
   position = to_ingest['position']
   media_url = media_url.replace('/{description}.', "/x.")
 
@@ -50,11 +50,15 @@ def io_batch_dask(params: Tuple['IngestionParams', Dict]):
 
 class IngestionParams:
 
-  def __init__(self, minio_host: str, minio_user: str, minio_pass: str, minio_ssl: bool):
+  def __init__(self, minio_host: str, minio_user: str, minio_pass: str, minio_ssl: bool, 
+    media_id_col: str, media_url_col: str, dest_folder_col: str):
     self.minio_host = minio_host
     self.minio_user = minio_user
     self.minio_pass = minio_pass
     self.minio_ssl = minio_ssl
+    self.media_id_col = media_id_col
+    self.media_url_col = media_url_col
+    self.dest_folder_col = dest_folder_col
 class MinioIngestionDask(FileIngestion):
 
   def __init__(self, dask_uri: Optional[str] = None):
@@ -65,15 +69,14 @@ class MinioIngestionDask(FileIngestion):
     dask_client.upload_file(os.getenv('FEAST_CONFIG_PATH', 'feature_store.yaml'))
   
 
-  def io_batch_ingest(self, to_ingest: List[Dict], media_id_col: str, media_url_col: str, dest_folder_col: str):
+  def io_batch_ingest(self, to_ingest: List[Dict]):
     config = Configs.instance()
     params = []
     for d in to_ingest:
-      d['media_id_col'] = media_id_col
-      d['media_url_col'] = media_url_col
-      d['dest_folder_col'] = dest_folder_col
-
-      i = IngestionParams(config.cos.host, config.cos.key_id, config.cos.secret, config.cos.use_ssl)
+      i = IngestionParams(config.cos.host, 
+        config.cos.key_id, config.cos.secret, config.cos.use_ssl,
+        config.source.params.binary.media_id_col, config.source.params.binary.media_url_col,
+        config.source.params.binary.dest_folder_col)
       params.append((i, d))
     m = self.dask_client.map(io_batch_dask, params, batch_size=500)
     self.dask_client.compute(m)

@@ -111,11 +111,8 @@ class FeatureStore:
     print("file sink type")
     print(self._file_sink_type)
     if self._file_sink_type is not None:
-      media_id_col = self._elm_config.feature_store.source.params.media_id_col
-      media_url_col = self._elm_config.feature_store.source.params.media_url_col
-      dest_folder_col = self._elm_config.feature_store.source.params.dest_folder_col
       print("len of to_ingest.prepared_medias", len(to_ingest.prepared_medias))
-      self._file_sink.io_batch_ingest(to_ingest.prepared_medias, media_id_col, media_url_col, dest_folder_col)
+      self._file_sink.io_batch_ingest(to_ingest.prepared_medias)
   
   def ingest_from_query_same_source(self, ft: FeatureTable, query: str):
     """ 
