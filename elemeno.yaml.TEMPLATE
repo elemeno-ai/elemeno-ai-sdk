@@ -29,6 +29,8 @@ feature_store:
       password: ${oc.env:ELASTIC_PASSWORD,elemeno}
       binary:
         media_id_col: test
+        media_url_col: url
+        dest_folder_col: test
 gcp:
   sa:
     file: /tmp/gcp-credentials.json
