@@ -22,7 +22,7 @@ class RedshiftIngestion(Ingestion):
   def __init__(self, fs, connection_string: str):
     super().__init__()
     self._conn_str = connection_string
-    self._conn = create_engine(self._conn_str, hide_parameters=False, echo=True, isolation_level="AUTOCOMMIT")
+    self._conn = create_engine(self._conn_str, hide_parameters=True, echo=False, isolation_level="AUTOCOMMIT")
     self.rs_types = {
       "object": "SUPER",
       "string": "VARCHAR(12600)",
@@ -185,7 +185,7 @@ class RedshiftIngestion(Ingestion):
           adjusted_dtypes = None
         dummy_df = dummy_df.append(dummy_row, ignore_index=True) # we don't need to append the dummy row here
         #TODO Bruno - When there's any column with type binary_download in the schema, create an auxiliary feature_table with the list of files to download for each entity
-        conn = create_engine(self._conn_str, hide_parameters=False, echo=True, isolation_level="AUTOCOMMIT")
+        conn = create_engine(self._conn_str, hide_parameters=True, echo=False, isolation_level="AUTOCOMMIT")
         self.create_table(dummy_df, feature_table, conn)
     except Exception as exception:
       raise exception

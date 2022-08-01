@@ -84,7 +84,7 @@ class FeatureStore:
   def fs(self) -> feast.FeatureStore:
     return self._fs
 
-  def ingest(self, feature_table: FeatureTable, 
+  def ingest_response(self, feature_table: FeatureTable, 
       to_ingest: ReadResponse, renames: Optional[Dict[str, str]] = None,
       all_columns: Optional[List[str]] = None) -> None:
     """ 
@@ -104,8 +104,29 @@ class FeatureStore:
     - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
     """
     self._ingest_files(to_ingest)
-    self._sink.ingest(to_ingest.dataframe, feature_table, renames, all_columns)
+    self.ingest(to_ingest.dataframe, feature_table, renames, all_columns)
 
+  def ingest(self, feature_table: FeatureTable, 
+      to_ingest: pd.DataFrame, renames: Optional[Dict[str, str]] = None,
+      all_columns: Optional[List[str]] = None) -> None:
+    """ 
+    Ingest the given dataframe into the given feature table.
+    
+    This method allows you to rename the columns of the dataframe before ingesting.
+    
+    You can also filter the columns to be ingested.
+    
+    It is required that your dataframe have the timestamp columns (event_timestamp and created_timestamp) with the correct types (pd.DateTime).
+
+    args:
+    
+    - feature_table: FeatureTable object
+    - to_ingest: A pandas dataframe to be ingested
+    - renames: A dictionary of column names to be renamed
+    - all_columns: A list of columns to be ingested. If None, all columns will be ingested
+    """
+    self._sink.ingest(to_ingest, feature_table, renames, all_columns)
+    
   def _ingest_files(self, to_ingest: ReadResponse):
     print("file sink type")
     print(self._file_sink_type)
@@ -150,7 +171,7 @@ class FeatureStore:
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
     cols.extend([ft.created_col, ft.evt_col])
-    self.ingest(ft, read_response, all_columns=cols)
+    self.ingest_response(ft, read_response, all_columns=cols)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, binary_cols: Optional[List[str]] = None, **kwargs):
     """
@@ -172,7 +193,7 @@ class FeatureStore:
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
-    self.ingest(ft, read_response, all_columns=cols)
+    self.ingest_response(ft, read_response, all_columns=cols)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
     """ Get historical features from the feature store.
