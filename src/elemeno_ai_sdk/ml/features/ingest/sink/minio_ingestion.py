@@ -72,12 +72,15 @@ class MinioIngestionDask(FileIngestion):
   def io_batch_ingest(self, to_ingest: List[Dict]):
     config = Configs.instance()
     params = []
+    print("prepare map")
     for d in to_ingest:
       i = IngestionParams(config.cos.host, 
         config.cos.key_id, config.cos.secret, config.cos.use_ssl,
-        config.source.params.binary.media_id_col, config.source.params.binary.media_url_col,
-        config.source.params.binary.dest_folder_col)
+        config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
+        config.feature_store.source.params.binary.dest_folder_col)
       params.append((i, d))
-    m = self.dask_client.map(io_batch_dask, params, batch_size=500)
+    print("Client will map to scheduler")
+    m = self.dask_client.map(io_batch_dask, params, batch_size=10000)
+    print("Will compute")
     self.dask_client.compute(m)
     print("Finished dask processing result")

@@ -4,7 +4,7 @@ import pandas as pd
 
 
 class ReadResponse:
-  def __init__(self, dataframe: pd.DataFrame, prepared_medias: Optional[List[Dict]]):
+  def __init__(self, dataframe: pd.DataFrame, prepared_medias: Optional[str]):
     self.dataframe = dataframe
     self.prepared_medias = prepared_medias
 class BaseSource(abc.ABC):

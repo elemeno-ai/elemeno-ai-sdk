@@ -1,6 +1,7 @@
 
 
 from datetime import datetime
+import json
 from typing import Optional, Dict, List, Any, Union
 import pandas as pd
 import feast
@@ -16,7 +17,7 @@ from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
 class FeatureStore:
-  #TODO Bruno: add a new argument for the __init__ method to specify the feature source type
+
   def __init__(self, 
     sink_type: Optional[IngestionSinkType] = None,
     file_sink_type: Optional[FileIngestionSinkType] = None,
@@ -27,7 +28,7 @@ class FeatureStore:
     Use this class in conjunction with the FeatureTable class to create, read, update, and delete features.
     """
     self._elm_config = Configs.instance()
-    self._fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path)
+    self._fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path, )
     if not sink_type:
       logger.info("No sink type provided, read-only mode will be used")
     else:
@@ -35,7 +36,6 @@ class FeatureStore:
       if sink_type == IngestionSinkType.BIGQUERY:
         self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
       elif sink_type == IngestionSinkType.REDSHIFT:
-        #TODO Bruno: Change this to create the connection string from the new redshift params from the config file
         redshift_params = self._elm_config.feature_store.sink.params
         self._sink = IngestionSinkBuilder().build_redshift(self._fs, self._get_connection_string(redshift_params))
       elif sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
@@ -43,7 +43,6 @@ class FeatureStore:
         self._sink = IngestionSinkBuilder()._build_redshift_unit_tests(self._fs, self._get_connection_string(redshift_params))
       else:
         raise Exception("Unsupported sink type %s", sink_type)
-    #TODO Bruno: add the logic to create the ElasticIngestion object when source_type from config is Elastic, or source type elastic was sent as an argument
     if not source_type:
       logger.info("No source type provided, read-only mode will be used")
     else:
@@ -105,14 +104,15 @@ class FeatureStore:
     - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
     """
     self._ingest_files(to_ingest)
-    #self._sink.ingest(to_ingest.dataframe, feature_table, renames, all_columns)
+    self._sink.ingest(to_ingest.dataframe, feature_table, renames, all_columns)
 
   def _ingest_files(self, to_ingest: ReadResponse):
     print("file sink type")
     print(self._file_sink_type)
     if self._file_sink_type is not None:
-      print("len of to_ingest.prepared_medias", len(to_ingest.prepared_medias))
-      self._file_sink.io_batch_ingest(to_ingest.prepared_medias)
+      medias = json.loads(to_ingest.prepared_medias)
+      print("len of to_ingest.prepared_medias", len(medias))
+      self._file_sink.io_batch_ingest(medias)
   
   def ingest_from_query_same_source(self, ft: FeatureTable, query: str):
     """ 
@@ -152,7 +152,7 @@ class FeatureStore:
     cols.extend([ft.created_col, ft.evt_col])
     self.ingest(ft, read_response, all_columns=cols)
 
-  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, binary_cols: List[str], after: str, **kwargs):
+  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, binary_cols: Optional[List[str]] = None, **kwargs):
     """
     Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
 
@@ -164,6 +164,7 @@ class FeatureStore:
     - ft: The FeatureTable object
     - query: A SQL query to ingest data from.
     - after: A timestamp after which the query will be executed. Use the same date format of the source.
+    - binary_cols: A list of binary columns containing references to files to be downloaded to our cloud object storage.
     """
     if not 'index' in kwargs:
       raise("index must be provided")
@@ -328,13 +329,13 @@ class FeatureStore:
 
     returns:
 
-    - A timestamp of the same type used in the created_timestamp column
+    - A timestamp of the same type used in the event_timestamp column
     """
     row = self._sink.get_last_row(feature_table, date_from=date_from)
     if row is None or row.empty:
       return None
     # rename column if the db returned in the format bellow, otherwise no-op
-    row = row.rename(columns={f"MAX({feature_table.created_col})": "max"})
+    row = row.rename(columns={f"MAX({feature_table.evt_col})": "max"})
     return row["max"][0]
 
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,

@@ -22,17 +22,18 @@ class RedshiftIngestion(Ingestion):
   def __init__(self, fs, connection_string: str):
     super().__init__()
     self._conn_str = connection_string
-    self._conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+    self._conn = create_engine(self._conn_str, hide_parameters=False, echo=True, isolation_level="AUTOCOMMIT")
     self.rs_types = {
       "object": "SUPER",
       "string": "VARCHAR(12600)",
       "string[python]": "VARCHAR(12600)",
       "Int64": "BIGINT",
       "Int32": "BIGINT",
-      "Float64": "DECIMAL(8,6)",
+      "Float64": "DECIMAL(14,6)",
       "bool": "BOOLEAN",
       "datetime64[ns]": "TIMESTAMP"
     }
+    self._schema_dict: typing.Dict = None
 
 
   def read_table(self, query: str) -> pd.DataFrame:
@@ -47,7 +48,7 @@ class RedshiftIngestion(Ingestion):
     
     - DataFrame with columns in the same order as the FeatureTable
     """
-    engine = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+    engine = create_engine(self._conn_str, hide_parameters=False, isolation_level="AUTOCOMMIT")
     with engine.connect().execution_options(autocommit=True) as conn:
       return pd.read_sql(query, con = conn)
 
@@ -70,8 +71,6 @@ class RedshiftIngestion(Ingestion):
       logger.warning("No expected columns provided. Will ingest all columns.")
       expected_columns = to_ingest.columns.to_list()
     to_ingest = to_ingest.filter(expected_columns, axis=1)
-    # redshift doesn't like list of strings, so we turn them into strings
-    to_ingest = self._fix_lists_str(to_ingest)
     conn = self._conn
     try:
       logger.info("Within RedshiftIngestion.ingest, about to create table {}".format(ft.name))
@@ -94,7 +93,14 @@ class RedshiftIngestion(Ingestion):
       conn.dispose()
 
   def _to_sql(self, df: pd.DataFrame, ft_name, conn) -> None:
-    return df.to_sql(ft_name, conn, index=False, if_exists='append', method='multi', chunksize=1000)
+    dtypes = {}
+    if self._schema_dict is None:
+      logger.info("Schema was not provided. Will attempt to infer schema from table.")
+    else:
+      for k, v in self._schema_dict['properties'].items():
+        if "type" in v and v["type"] == "object" or v["type"] == "binary_download":
+          dtypes[k] = sqlalchemy.types.JSON
+    return df.to_sql(ft_name, conn, index=False, if_exists='append', method='multi', chunksize=1000, dtype=dtypes)
   
   def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
     """
@@ -125,27 +131,13 @@ class RedshiftIngestion(Ingestion):
         columns[col] = self.rs_types[dtype.name]
 
     if not sqlalchemy.inspect(engine).has_table(ft.name):
-      print("inside not has table")
       create = "CREATE TABLE {} (".format(ft.name)
       for col, dtype in columns.items():
         create += "{} {},".format(col, dtype)
       create = create[:-1] + ")"
-      print("Call execute")
       engine.execute(create)
-      print("print create")
-      print(create)
     return to_ingest
   
-  def _fix_lists_str(self, df: pd.DataFrame) -> pd.DataFrame:
-    all_types = df.dtypes.tolist()
-    all_columns = df.columns.tolist()
-    # create a new list containing only the columns that are array of strings
-    array_types = [x for x in enumerate(all_types) if x[1].name == "object" and type(df.iloc[0][all_columns[x[0]]]) == list]
-    for col in array_types:
-      col_name = all_columns[col[0]]
-      df[col_name] = df[col_name].astype("str")
-    return df
-
   def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
     """
     This method should be called if you want to use a jsonschema file to create the feature table
@@ -159,11 +151,11 @@ class RedshiftIngestion(Ingestion):
     try:
       with open(schema_file_path, mode="r", encoding="utf-8") as schema_file:
         jschema = json.loads(schema_file.read())
+        self._schema_dict = jschema
         table_schema = []
         pd_schema = {}
         adjusted_dtypes = {}
         dummy_row = {}
-        print(jschema["properties"].items())
         for name, prop in jschema["properties"].items():
           fmt = prop["format"] if "format" in prop else None
           if prop["type"] == "string" and "size" in prop:
@@ -179,8 +171,6 @@ class RedshiftIngestion(Ingestion):
               continue
             feature_table.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
 
-        print("search for ")
-        print(feature_table.created_col)
         if len(list(filter(lambda x: x["name"] == feature_table.created_col, table_schema))) == 0:
           table_schema.append({"name": feature_table.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
           pd_schema[feature_table.created_col] = pd.Series(dtype=FeatureType.from_str_to_pd_type("string", format="date-time"))
@@ -195,18 +185,18 @@ class RedshiftIngestion(Ingestion):
           adjusted_dtypes = None
         dummy_df = dummy_df.append(dummy_row, ignore_index=True) # we don't need to append the dummy row here
         #TODO Bruno - When there's any column with type binary_download in the schema, create an auxiliary feature_table with the list of files to download for each entity
-        conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+        conn = create_engine(self._conn_str, hide_parameters=False, echo=True, isolation_level="AUTOCOMMIT")
         self.create_table(dummy_df, feature_table, conn)
     except Exception as exception:
       raise exception
 
   def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None) -> pd.DataFrame:
-    conn = create_engine(self._conn_str, hide_parameters=True, isolation_level="AUTOCOMMIT")
+    conn = create_engine(self._conn_str, hide_parameters=False, isolation_level="AUTOCOMMIT")
     where = ""
     if date_from != None:
-      where = "WHERE {} > '{}'".format(feature_table.created_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
+      where = "WHERE {} > '{}'".format(feature_table.evt_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
     return pd.read_sql(
-      f"SELECT MAX({feature_table.created_col}) FROM {feature_table.name} {where}", 
+      f"SELECT MAX({feature_table.evt_col}) FROM {feature_table.name} {where}", 
       conn)
 
   def ingest_from_query(self, query: str, ft: FeatureTable) -> None:
