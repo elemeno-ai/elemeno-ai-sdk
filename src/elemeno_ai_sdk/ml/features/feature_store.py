@@ -193,6 +193,7 @@ class FeatureStore:
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
+    cols.extend([ft.created_col, ft.evt_col])
     self.ingest_response(ft, read_response, all_columns=cols)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
