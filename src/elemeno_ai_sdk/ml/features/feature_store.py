@@ -104,7 +104,7 @@ class FeatureStore:
     - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
     """
     self._ingest_files(to_ingest)
-    self.ingest(to_ingest.dataframe, feature_table, renames, all_columns)
+    self.ingest(feature_table, to_ingest.dataframe, renames, all_columns)
 
   def ingest(self, feature_table: FeatureTable, 
       to_ingest: pd.DataFrame, renames: Optional[Dict[str, str]] = None,
