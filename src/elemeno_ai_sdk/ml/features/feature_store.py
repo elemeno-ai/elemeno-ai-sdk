@@ -150,7 +150,8 @@ class FeatureStore:
     """
     self._sink.ingest_from_query(query, ft)
 
-  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, binary_cols: List[str], **kwargs):
+  def read_and_ingest_from_query(self, ft: 'FeatureTable', query: str, 
+      binary_cols: List[str], ignore_when_empty: Optional[List[str]] = None, **kwargs):
     """
     Ingest data from a query. Used when the source and the sink are different.
     
@@ -162,6 +163,8 @@ class FeatureStore:
     
     - ft: The FeatureTable object
     - query: A SQL query to ingest data from.
+    - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
+    - ignore_when_empty: A list of columns that will be ignored when the result is empty.
     """
     if not 'index' in kwargs:
       raise("index must be provided")
@@ -171,9 +174,12 @@ class FeatureStore:
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
     cols.extend([ft.created_col, ft.evt_col])
+    if ignore_when_empty != None:
+      read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
     self.ingest_response(ft, read_response, all_columns=cols)
 
-  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, binary_cols: Optional[List[str]] = None, **kwargs):
+  def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, binary_cols: Optional[List[str]] = None,
+      ignore_when_empty: Optional[List[str]] = None, **kwargs):
     """
     Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
 
@@ -194,6 +200,8 @@ class FeatureStore:
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
     cols.extend([ft.created_col, ft.evt_col])
+    if ignore_when_empty != None:
+      read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
     self.ingest_response(ft, read_response, all_columns=cols)
 
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
@@ -337,7 +345,7 @@ class FeatureStore:
     # call get_view to force an apply of the schema
     feature_table.get_view()
 
-  def get_sink_last_ts(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> Any:
+  def get_sink_last_ts(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None, where: Optional[Dict[str, Any]] = None) -> Any:
     """
     Get the last row of the feature table.
     This is particularly useful when ingesting or reading data,

@@ -93,7 +93,7 @@ class BigQueryIngestion(Ingestion):
       dataframe.to_gbq(destination_table=f"{dataset}.{feature_table.name}",
           project_id=project_id, if_exists="append", location=location)
 
-  def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None) -> pd.DataFrame:
+  def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None, where: typing.Optional[typing.Dict[str, typing.Any]] = None) -> pd.DataFrame:
     raise(NotImplementedError("This method is not implemented yet."))
 
 def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: typing.Any):

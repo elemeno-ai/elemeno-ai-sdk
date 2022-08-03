@@ -190,13 +190,21 @@ class RedshiftIngestion(Ingestion):
     except Exception as exception:
       raise exception
 
-  def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None) -> pd.DataFrame:
+  def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None, where: typing.Optional[typing.Dict[str, typing.Any]] = None) -> pd.DataFrame:
     conn = create_engine(self._conn_str, hide_parameters=False, isolation_level="AUTOCOMMIT")
-    where = ""
+    _where = ""
     if date_from != None:
-      where = "WHERE {} > '{}'".format(feature_table.evt_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
+      _where = "WHERE {} > '{}'".format(feature_table.evt_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
+    if where != None:
+      if _where != "":
+        _where += " AND "
+      else:
+        _where = "WHERE "
+      for k,v in where.items():
+        _where += "{} = '{}' AND ".format(k, v)
+      _where = _where[:-4]
     return pd.read_sql(
-      f"SELECT MAX({feature_table.evt_col}) FROM {feature_table.name} {where}", 
+      f"SELECT MAX({feature_table.evt_col}) FROM {feature_table.name} {_where}", 
       conn)
 
   def ingest_from_query(self, query: str, ft: FeatureTable) -> None:

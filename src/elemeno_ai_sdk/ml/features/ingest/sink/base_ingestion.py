@@ -37,7 +37,7 @@ class Ingestion(abc.ABC):
     pass
   
   @abc.abstractmethod
-  def get_last_row(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None) -> pd.DataFrame:
+  def get_last_row(self, feature_table: 'FeatureTable', date_from: Optional[datetime] = None, where: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
     pass
   
   def with_ts_if_not_present(self, dataframe: pd.DataFrame, created_timestamp: str) -> pd.DataFrame:
