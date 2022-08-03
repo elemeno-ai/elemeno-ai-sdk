@@ -121,8 +121,9 @@ class ElasticIngestionSource(BaseSource):
 
   def prepare_medias(self, properties: List[Dict], binary_col: str, media_id_col: str, dest_folder_col: str) -> List:
     for p in properties:
-      for i, m in enumerate(p['_source'][binary_col]):
-        m['position'] = i
+      if binary_col in p['_source']:
+        for i, m in enumerate(p['_source'][binary_col]):
+          m['position'] = i
     # sort the properties by number of assets in descending order
     sorted_properties = sorted(properties, key=lambda x: len(x['_source'][binary_col]), reverse=True)
 
@@ -131,8 +132,9 @@ class ElasticIngestionSource(BaseSource):
 
     # iterate over the properties
     for property in sorted_properties:
-      for asset in property['_source'][binary_col]:
-        asset[dest_folder_col] = property['_source'][media_id_col]
-        result.append(asset)
+      if binary_col in property['_source']:
+        for asset in property['_source'][binary_col]:
+          asset[dest_folder_col] = property['_source'][media_id_col]
+          result.append(asset)
 
     return result
