@@ -40,7 +40,7 @@ class ElasticIngestionSource(BaseSource):
       sources = [hit['_source'] for hit in res['hits']['hits']]
       self._add_to_prepard_medias(binary_columns, media_id_col, dest_folder_col, res, prepared_medias=binary_prepared)
       df = pd.DataFrame(sources)
-      df['event_timestamp'] = df['updated_date']
+      df['event_timestamp'] = df['record_date']
       return ReadResponse(df, json.dumps(binary_prepared))
     all_results = []
     search_after = 0
@@ -55,7 +55,7 @@ class ElasticIngestionSource(BaseSource):
         break
       logger.info("Reading page %d of %d", page, pages)
       logger.info("Size of page: %d", max_per_page)
-      res = self._es.search(index=index, query=query, size=max_per_page, sort=[{"updated_date": "asc"}], search_after=[search_after])
+      res = self._es.search(index=index, query=query, size=max_per_page, sort=[{"record_date": "asc"}], search_after=[search_after])
       if 'hits' in res and 'hits' in res['hits']:
         self._add_to_prepard_medias(binary_columns, media_id_col, dest_folder_col, res, prepared_medias=binary_prepared)
         sources = [hit['_source'] for hit in res['hits']['hits']]
@@ -71,7 +71,7 @@ class ElasticIngestionSource(BaseSource):
           all_results.extend(sources)
     # Add the event_timestamp column with the value of updated_date
     df = pd.DataFrame(all_results)
-    df['event_timestamp'] = df['updated_date']
+    df['event_timestamp'] = df['record_date']
     return ReadResponse(dataframe=df, prepared_medias=json.dumps(binary_prepared))
 
   def _add_to_prepard_medias(self, binary_columns: List[str], media_id_col: str, dest_folder_col: str, res: Dict, prepared_medias: List = []):
@@ -110,13 +110,11 @@ class ElasticIngestionSource(BaseSource):
       clause = query['bool']['must']
       query['bool']['must'] = [clause]
     query['bool']['must'].append({
-      "range": {"updated_date": {
+      "range": {"record_date": {
         "gt": timestamp_str,
         "format": "yyyy-MM-dd HH:mm:ss"
         }
       }})
-    print("QQQQ")
-    print(query)
     return self.read(index, query, max_per_page, 10, binary_columns, media_id_col, dest_folder_col)
 
   def prepare_medias(self, properties: List[Dict], binary_col: str, media_id_col: str, dest_folder_col: str) -> List:
