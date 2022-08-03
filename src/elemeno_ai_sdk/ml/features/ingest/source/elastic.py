@@ -126,7 +126,7 @@ class ElasticIngestionSource(BaseSource):
           m['position'] = i
     # sort the properties by number of assets in descending order
     sorted_properties = filter(lambda x: binary_col in x['_source'], properties)
-    sorted_properties = sorted(properties, key=lambda x: len(x['_source'][binary_col]), reverse=True)
+    sorted_properties = sorted(sorted_properties, key=lambda x: len(x['_source'][binary_col]), reverse=True)
 
     # create a list of lists to hold the resulting array
     result = []
