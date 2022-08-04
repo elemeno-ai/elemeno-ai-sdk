@@ -361,7 +361,7 @@ class FeatureStore:
 
     - A timestamp of the same type used in the event_timestamp column
     """
-    row = self._sink.get_last_row(feature_table, date_from=date_from)
+    row = self._sink.get_last_row(feature_table, date_from=date_from, where=where)
     if row is None or row.empty:
       return None
     # rename column if the db returned in the format bellow, otherwise no-op
