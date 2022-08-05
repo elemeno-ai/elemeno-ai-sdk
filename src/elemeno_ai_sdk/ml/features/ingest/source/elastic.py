@@ -32,9 +32,10 @@ class ElasticIngestionSource(BaseSource):
     """
     binary_prepared: List[Dict] = []
     count = self._es.count(index=index, query=query)["count"]
+    print("count: {}".format(count))
 
     if count <= max_per_page:
-      res = self._es.search(index=index, query=query, size=count)
+      res = self._es.search(index=index, query=query, sort=[{"record_date": "asc"}], size=count)
       if not 'hits' in res or not 'hits' in res['hits']:
         raise Exception("No hits found")
       sources = [hit['_source'] for hit in res['hits']['hits']]
@@ -46,9 +47,9 @@ class ElasticIngestionSource(BaseSource):
     search_after = 0
     pages = count // max_per_page + 1
 
-    if pages > 10:
+    if pages > 2:
       logger.warning("More than 10 pages, will limit to 10 pages and you need to repeat the operation to get the rest")
-      pages = 10
+      pages = 2
     
     for page in range(0, pages):
       if max_pages is not None and page >= max_pages:
@@ -72,6 +73,8 @@ class ElasticIngestionSource(BaseSource):
     # Add the event_timestamp column with the value of updated_date
     df = pd.DataFrame(all_results)
     df['event_timestamp'] = df['record_date']
+    print("LEN OF PREPARED MEDIAS: ", len(binary_prepared))
+    print("LEN OF DF: ", len(df))
     return ReadResponse(dataframe=df, prepared_medias=json.dumps(binary_prepared))
 
   def _add_to_prepard_medias(self, binary_columns: List[str], media_id_col: str, dest_folder_col: str, res: Dict, prepared_medias: List = []):

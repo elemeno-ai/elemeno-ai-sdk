@@ -1,5 +1,6 @@
 
 import io
+import numpy as np
 import os
 from typing import Dict, List, Optional, Tuple
 from dask.distributed import Client
@@ -13,45 +14,46 @@ def install():
   import sys
   os.system("pip install minio")
 
-def io_batch_dask(params: Tuple['IngestionParams', Dict]):
+def io_batch_dask(params: 'IngestionParams'):
   from elemeno_ai_sdk.cos.minio import MinioClient
   from elemeno_ai_sdk.config import logging
-
-  config, to_ingest = params
-  client = MinioClient(host=config.minio_host,
-    access_key=config.minio_user,
-    secret_key=config.minio_pass,
-    use_ssl=config.minio_ssl)
+  
+  logging.error("Started batch dask")
+  p = params
+  client = MinioClient(host=p.minio_host,
+    access_key=p.minio_user,
+    secret_key=p.minio_pass,
+    use_ssl=p.minio_ssl)
   headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
-  media_id = to_ingest[config.media_id_col]
-  media_url = to_ingest[config.media_url_col].replace("\\", "")
-  folder_id = to_ingest[config.dest_folder_col]
+  to_ingest = p.to_ingest
+  media_id = to_ingest[p.media_id_col]
+  media_url = to_ingest[p.media_url_col].replace("\\", "")
+  folder_id = to_ingest[p.dest_folder_col]
   position = to_ingest['position']
   media_url = media_url.replace('/{description}.', "/x.")
 
   r = requests.get(media_url, headers=headers, stream=True)
   content_type = r.headers['content-type']
+  logging.error("Will check image")
   if content_type.startswith('image'):
+      logging.error("Image found")
       st = io.BytesIO(r.content)
       media_extension = media_url.split('.')[-1]
       try:
           client.put_object('elemeno-cos', f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}", st)
           logging.error("uploaded path: " + f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}")
-          return True
       except Exception as e:
           logging.error("error uploading file to folder: " + folder_id)
           logging.error(e)
-          return False
   else:
     logging.error(f'{media_id}: {media_url}')
     logging.error("Not an image")
-
-    return False
+  return True
 
 class IngestionParams:
 
   def __init__(self, minio_host: str, minio_user: str, minio_pass: str, minio_ssl: bool, 
-    media_id_col: str, media_url_col: str, dest_folder_col: str):
+    media_id_col: str, media_url_col: str, dest_folder_col: str, to_ingest: Dict):
     self.minio_host = minio_host
     self.minio_user = minio_user
     self.minio_pass = minio_pass
@@ -59,6 +61,7 @@ class IngestionParams:
     self.media_id_col = media_id_col
     self.media_url_col = media_url_col
     self.dest_folder_col = dest_folder_col
+    self.to_ingest = to_ingest
 class MinioIngestionDask(FileIngestion):
 
   def __init__(self, dask_uri: Optional[str] = None):
@@ -77,8 +80,9 @@ class MinioIngestionDask(FileIngestion):
       i = IngestionParams(config.cos.host, 
         config.cos.key_id, config.cos.secret, config.cos.use_ssl,
         config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
-        config.feature_store.source.params.binary.dest_folder_col)
-      params.append((i, d))
+        config.feature_store.source.params.binary.dest_folder_col,
+        to_ingest=d)
+      params.append(i)
     print("Client will map to scheduler")
     m = self.dask_client.map(io_batch_dask, params, batch_size=10000)
     print("Will compute")
