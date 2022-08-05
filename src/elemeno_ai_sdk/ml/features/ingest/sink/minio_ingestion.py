@@ -21,6 +21,7 @@ def io_batch_dask(params: List['IngestionParams']):
   
   logging.error("Started batch dask")
   for p in params:
+    logging.error("Processing {}".format(type(p)))
     client = MinioClient(host=p.minio_host,
       access_key=p.minio_user,
       secret_key=p.minio_pass,
