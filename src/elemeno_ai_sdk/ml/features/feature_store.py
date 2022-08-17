@@ -300,7 +300,7 @@ class FeatureStore:
     args:
     
     - feature_table: FeatureTable object
-    - schema_file_path: The local path to the schema file.
+    - schema_file_path: Twhe local path to the schema file.
 
     The is the first step to create a feature table via SDK, you will need to manually create a json schema file to your table.
     The schema file syntax uses an extension of JSONSchema. It's basically a JSONSchema file with some additional fields and properties.

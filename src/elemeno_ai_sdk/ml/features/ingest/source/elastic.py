@@ -47,9 +47,9 @@ class ElasticIngestionSource(BaseSource):
     search_after = 0
     pages = count // max_per_page + 1
 
-    if pages > 2:
+    if pages > 10:
       logger.warning("More than 10 pages, will limit to 10 pages and you need to repeat the operation to get the rest")
-      pages = 2
+      pages = 10
     
     for page in range(0, pages):
       if max_pages is not None and page >= max_pages:
@@ -108,16 +108,16 @@ class ElasticIngestionSource(BaseSource):
       raise ValueError("Query must be a bool query")
     if not "must" in query["bool"]:
       raise ValueError("Query must be a bool query with a must clause")
-    print(type(query["bool"]["must"]))
     if type(query["bool"]["must"]) is not list:
       clause = query['bool']['must']
       query['bool']['must'] = [clause]
     query['bool']['must'].append({
       "range": {"record_date": {
-        "gt": timestamp_str,
-        "format": "yyyy-MM-dd HH:mm:ss"
+        "gte": timestamp_str
         }
       }})
+    print("The query")
+    print(query)
     return self.read(index, query, max_per_page, 10, binary_columns, media_id_col, dest_folder_col)
 
   def prepare_medias(self, properties: List[Dict], binary_col: str, media_id_col: str, dest_folder_col: str) -> List:

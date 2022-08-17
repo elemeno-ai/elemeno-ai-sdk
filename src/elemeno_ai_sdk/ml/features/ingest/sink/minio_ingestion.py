@@ -77,19 +77,23 @@ class MinioIngestionDask(FileIngestion):
 
   def io_batch_ingest(self, to_ingest: List[Dict]):
     config = Configs.instance()
-    params = []
+    futures = []
     print("prepare map")
+    errors = 0
     for d in to_ingest:
-      i = IngestionParams(config.cos.host, 
-        config.cos.key_id, config.cos.secret, config.cos.use_ssl,
-        config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
-        config.feature_store.source.params.binary.dest_folder_col,
-        to_ingest=d)
-      params.append(i)
-    arr = da.from_array(params, chunks=1000, asarray=False)
+      try:
+        i = IngestionParams(config.cos.host, 
+          config.cos.key_id, config.cos.secret, config.cos.use_ssl,
+          config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
+          config.feature_store.source.params.binary.dest_folder_col,
+          to_ingest=d)
+        futures.append(self.dask_client.submit(io_batch_dask, i))
+      except Exception as e:
+        print(e)
+        errors += 1
+        print("error submiting to dask ^")
+        continue
+    print("Num of submission errors: " + str(errors))
     print("Client will map to scheduler")
-    print("len params: " + str(len(params)))
-    big_future = self.dask_client.scatter(arr)
-    future = self.dask_client.submit(io_batch_dask, big_future)
-    future.result()
+    self.dask_client.gather(futures, errors="skip")
     return None
