@@ -205,7 +205,7 @@ class RedshiftIngestion(Ingestion):
       _where = _where[:-4]
     _order_by = "ORDER BY {} DESC LIMIT 1".format(feature_table.created_col)
     return pd.read_sql(
-      f"SELECT MAX({feature_table.evt_col}) FROM {feature_table.name} {_where} {_order_by}", 
+      f"SELECT {feature_table.evt_col} FROM {feature_table.name} {_where} {_order_by}", 
       conn)
 
   def ingest_from_query(self, query: str, ft: FeatureTable) -> None:
