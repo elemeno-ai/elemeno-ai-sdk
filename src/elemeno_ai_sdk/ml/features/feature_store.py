@@ -365,7 +365,7 @@ class FeatureStore:
     if row is None or row.empty:
       return None
     # rename column if the db returned in the format bellow, otherwise no-op
-    row = row.rename(columns={f"MAX({feature_table.evt_col})": "max"})
+    row = row.rename(columns={f"{feature_table.evt_col}": "max"})
     return row["max"][0]
 
   def apply(self, objects: Union[feast.Entity, feast.FeatureView, feast.OnDemandFeatureView, feast.FeatureService,
