@@ -1,8 +1,10 @@
 import typing
 from google.protobuf.duration_pb2 import Duration
 import pandas as pd
+import datetime
 import feast
-from elemeno_ai_sdk import logger
+from elemeno_ai_sdk import logger, config
+from feast.data_format import JsonFormat
 from elemeno_ai_sdk.ml.features.types import FeatureType
 
 class FeatureTable:
@@ -26,10 +28,11 @@ class FeatureTable:
     self._evt_col = event_column
     self._created_col = created_column
     self._table_schema = []
+    self._elm_config = config.Configs.instance()
 
 
   @property
-  def entities(self):
+  def entities(self) -> typing.List[feast.Entity]:
     return self._entities
 
   @property
@@ -63,13 +66,13 @@ class FeatureTable:
   def register_entities(self, *entities: feast.Entity) -> None:
       self.entities.extend(list(entities))
 
-  def register_features(self, *features: feast.Feature) -> None:
+  def register_features(self, *features: feast.Field) -> None:
       self.features.extend(list(features))
 
   def register_entity(self, entity: feast.Entity) -> None:
       self.entities.append(entity)
 
-  def register_feature(self, feature: feast.Feature) -> None:
+  def register_feature(self, feature: feast.Field) -> None:
       self.features.append(feature)
     
   def all_columns(self) -> typing.List[str]:
@@ -85,42 +88,70 @@ class FeatureTable:
   def _get_ft(self):
     dataset = self._feast_elm.config.offline_store.dataset
     ft_source = feast.BigQuerySource(
-        table_ref=f"{dataset}.{self.name}",
-        event_timestamp_column=self.evt_col,
-        created_timestamp_column=self.created_col
+      table_ref=f"{dataset}.{self.name}",
+      event_timestamp_column=self.evt_col,
+      created_timestamp_column=self.created_col
     )
-
+    ft_kafka_source = feast.KafkaSource(
+      kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
+      topic=self._elm_config.feature_store.stream_source.params.topic,
+      timestamp_field=self.evt_col,
+      created_timestamp_column=self.created_col,
+      message_format=JsonFormat(),
+      batch_source=ft_source,
+    )
     fv = feast.FeatureView(
-        name = self.name,
-        entities=[e.name for e in self._entities],
-        ttl=Duration(seconds=self._duration * 604800),
-        features=self._features,
+        name = self.name+"_stream",
+        entities=self._entities,
         online=self._online,
-        batch_source=ft_source,
+        source=ft_source,
         tags={}
     )
+    sfv = feast.StreamFeatureView(
+        name = self.name,
+        entities=self._entities,
+        schema=self._features,
+        online=self._online,
+        source=ft_kafka_source,
+    )
     self._feast_elm.apply(objects=self.entities)
-    self._feast_elm.apply(objects=fv)
+    self._feast_elm.apply(objects=[fv, sfv])
     return fv
 
   def _get_ft_rs(self):
     ft_source = feast.RedshiftSource(
+      name=self.name,
       table= f"{self.name}",
-      event_timestamp_column=self.evt_col,
-      created_timestamp_column=self.created_col
+      created_timestamp_column=self.created_col,
+      timestamp_field=self.evt_col
     )
-
+    ft_kafka_source = feast.KafkaSource(
+      name="kafka_source_redshift",
+      kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
+      topic=self._elm_config.feature_store.stream_source.params.topic,
+      timestamp_field=self.evt_col,
+      created_timestamp_column=self.created_col,
+      message_format=JsonFormat(schema_json=", ".join([str(field['name']+" "+FeatureType.from_feast_to_json_schema_feast(field['type'])) for field in self.table_schema])),
+      batch_source=ft_source,
+      watermark_delay_threshold=datetime.timedelta(hours=72)
+    )
     fv = feast.FeatureView(
       name = self.name,
-      entities=[e.name for e in self._entities],
-      ttl=Duration(seconds=self._duration * 604800),
-      features=self._features,
+      entities=self._entities,
       online=self._online,
-      batch_source=ft_source,
+      source=ft_source,
       tags={}
     )
+    sfv = feast.StreamFeatureView(
+        name = self.name+"_stream",
+        entities=self._entities,
+        schema=self._features,
+        online=self._online,
+        timestamp_field=self.evt_col,
+        source=ft_kafka_source,
+    )
     self._feast_elm.apply(objects=self.entities)
-    self._feast_elm.apply(objects=fv)
+    self._feast_elm.apply(objects=[fv, sfv])
 
     return fv
 
@@ -133,11 +164,10 @@ class FeatureTable:
 
     fv = feast.FeatureView(
       name = self.name,
-      entities=[e.name for e in self._entities],
-      ttl=Duration(seconds=self._duration * 604800),
+      entities=self._entities,
       features=self._features,
       online=self._online,
-      batch_source=ft_source,
+      source=ft_source,
       tags={}
     )
     self._feast_elm.apply(objects=self.entities)

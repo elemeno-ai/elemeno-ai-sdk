@@ -51,8 +51,11 @@ class BigQueryIngestion(Ingestion):
       table_name += f"{self._fs.config.offline_store.dataset}."
     table_name += name
     return table_name
+
+  def staging_ingest(self, to_ingest: pd.DataFrame, name: str) -> None:
+    raise(NotImplementedError("This method is not implemented yet."))
   
-  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
+  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> str:
     """
     Use this method if you want to use a jsonschema file to create the feature table
     If other entities/features were registered, this method will append the ones in the jsonschema to them
@@ -96,7 +99,7 @@ class BigQueryIngestion(Ingestion):
   def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None, where: typing.Optional[typing.Dict[str, typing.Any]] = None) -> pd.DataFrame:
     raise(NotImplementedError("This method is not implemented yet."))
 
-def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: typing.Any):
+def create_table(self, to_ingest: pd.DataFrame, ft_name: str, engine: typing.Any):
   #TODO: implement
   raise NotImplementedError("BigQueryIngestion.create_table is not implemented.")
 

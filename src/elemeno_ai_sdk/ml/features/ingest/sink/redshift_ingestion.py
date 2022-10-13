@@ -29,7 +29,7 @@ class RedshiftIngestion(Ingestion):
       "string[python]": "VARCHAR(12600)",
       "Int64": "BIGINT",
       "Int32": "BIGINT",
-      "Float64": "DECIMAL(14,6)",
+      "Float64": "FLOAT",
       "bool": "BOOLEAN",
       "datetime64[ns]": "TIMESTAMP"
     }
@@ -52,6 +52,34 @@ class RedshiftIngestion(Ingestion):
     with engine.connect().execution_options(autocommit=True) as conn:
       return pd.read_sql(query, con = conn)
 
+  def staging_ingest(self, to_ingest: pd.DataFrame, name: str) -> None:
+    """
+    Ingests a DataFrame to a Redshift staging table.
+    
+    args:
+    
+    - to_ingest: DataFrame to ingest
+    - name: Name of the staging table
+    """
+    conn = self._conn
+    try:
+      # ingest data
+      max_rows_per_insert = 5000
+      insert_pages = len(to_ingest) // max_rows_per_insert + 1
+      for i in range(insert_pages):
+        logger.info("Ingesting page %d of %d", i, insert_pages)
+        if len(to_ingest) < (i+1) * max_rows_per_insert:
+          chunk = to_ingest.iloc[i*max_rows_per_insert:]
+        else:
+          chunk = to_ingest.iloc[i * max_rows_per_insert:(i + 1) * max_rows_per_insert]
+        self._to_sql(chunk, name, conn)
+    except Exception as exception:
+      logger.error("Failed to ingest data to Redshift: %e", exception)
+      raise exception
+    finally:
+      conn.dispose()
+    
+  
   def ingest(self, to_ingest: pd.DataFrame, ft: FeatureTable, renames: typing.Optional[typing.Dict[str, str]] = None,
       expected_columns: typing.Optional[typing.List[str]] = None) -> None:
     """"
@@ -75,7 +103,7 @@ class RedshiftIngestion(Ingestion):
     try:
       logger.info("Within RedshiftIngestion.ingest, about to create table {}".format(ft.name))
       # create table if not exists
-      to_ingest = self.create_table(to_ingest, ft, conn)
+      to_ingest = self.create_table(to_ingest, ft.name, conn)
       # ingest data
       max_rows_per_insert = 5000
       insert_pages = len(to_ingest) // max_rows_per_insert + 1
@@ -102,7 +130,7 @@ class RedshiftIngestion(Ingestion):
           dtypes[k] = sqlalchemy.types.JSON
     return df.to_sql(ft_name, conn, index=False, if_exists='append', method='multi', chunksize=1000, dtype=dtypes)
   
-  def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
+  def create_table(self, to_ingest: pd.DataFrame, ft_name: str, engine: sqlalchemy.engine.Engine) -> pd.DataFrame:
     """
     Creates a table in Redshift if it does not exist.
 
@@ -130,15 +158,15 @@ class RedshiftIngestion(Ingestion):
       else:
         columns[col] = self.rs_types[dtype.name]
 
-    if not sqlalchemy.inspect(engine).has_table(ft.name):
-      create = "CREATE TABLE {} (".format(ft.name)
+    if not sqlalchemy.inspect(engine).has_table(ft_name):
+      create = "CREATE TABLE {} (".format(ft_name)
       for col, dtype in columns.items():
         create += "{} {},".format(col, dtype)
       create = create[:-1] + ")"
       engine.execute(create)
     return to_ingest
   
-  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
+  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> str:
     """
     This method should be called if you want to use a jsonschema file to create the feature table
     If other entities/features were registered, this method will append the ones in the jsonschema to them
@@ -152,6 +180,7 @@ class RedshiftIngestion(Ingestion):
       with open(schema_file_path, mode="r", encoding="utf-8") as schema_file:
         jschema = json.loads(schema_file.read())
         self._schema_dict = jschema
+        feature_table.schema_str = json.dumps(jschema)
         table_schema = []
         pd_schema = {}
         adjusted_dtypes = {}
@@ -165,11 +194,11 @@ class RedshiftIngestion(Ingestion):
           pd_schema[name] = pd.Series(dtype=this_pd_type)
           dummy_row[name] = FeatureType.get_dummy_value(this_pd_type) # we don't need to create this dict 
           if "isKey" in prop and prop["isKey"] == "true":
-            feature_table.register_entity(feast.Entity(name=name, description=name, value_type=FeatureType.from_str_to_feature_type(prop["type"])))
+            feature_table.register_entity(feast.Entity(name=name, join_keys=[name], description=name, value_type=FeatureType.from_str_to_entity_type(prop["type"])))
           else:
             if "format" in prop and prop["format"] == "date-time":
               continue
-            feature_table.register_features(feast.Feature(name, FeatureType.from_str_to_feature_type(prop["type"])))
+            feature_table.register_features(feast.Field(name=name, dtype=FeatureType.from_str_to_feature_type(prop["type"])))
 
         if len(list(filter(lambda x: x["name"] == feature_table.created_col, table_schema))) == 0:
           table_schema.append({"name": feature_table.created_col, "type": FeatureType.from_str_to_bq_type("string", format="date-time").name})
@@ -186,7 +215,8 @@ class RedshiftIngestion(Ingestion):
         dummy_df = dummy_df.append(dummy_row, ignore_index=True) # we don't need to append the dummy row here
         #TODO Bruno - When there's any column with type binary_download in the schema, create an auxiliary feature_table with the list of files to download for each entity
         conn = create_engine(self._conn_str, hide_parameters=True, echo=False, isolation_level="AUTOCOMMIT")
-        self.create_table(dummy_df, feature_table, conn)
+        self.create_table(dummy_df, feature_table.name, conn)
+        return json.dumps(jschema)
     except Exception as exception:
       raise exception
 

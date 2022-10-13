@@ -21,6 +21,12 @@ feature_store:
       host: cluster.host.on.aws
       port: 5439
       database: elemeno
+  stream_source:
+    type: Kafka
+    params:
+      bootstrap_servers: localhost:9092
+      topic: topic_name
+
   source:
     type: Elastic
     params:

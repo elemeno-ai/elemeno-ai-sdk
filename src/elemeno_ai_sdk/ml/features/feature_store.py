@@ -16,6 +16,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestio
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
+
 class FeatureStore:
 
   def __init__(self, 
@@ -52,6 +53,8 @@ class FeatureStore:
         self._source = IngestionSourceBuilder().build_elastic()
       elif source_type == IngestionSourceType.REDSHIFT:
         self._source = IngestionSourceBuilder().build_redshift()
+      elif source_type == IngestionSourceType.GCS:
+        self._source = IngestionSourceBuilder().build_gcs()
       else:
         raise Exception("Unsupported source type %s", source_type)
     self._file_sink_type = file_sink_type
@@ -105,6 +108,21 @@ class FeatureStore:
     """
     self._ingest_files(to_ingest)
     self.ingest(feature_table, to_ingest.dataframe, renames, all_columns)
+
+  def staging_ingest(self, to_ingest: pd.DataFrame, name: str) -> None:
+    """ 
+    Ingest the given dataframe into a staging are in the feature store batch persistence
+
+    The ingest data will not be a feature table yet, instead it will be available as 
+    a simple structure in the persistence, and can be later turned into a feature table
+    using the staging_to_feature_table method.
+
+    args:
+    
+    - to_ingest: A dataframe to be ingested
+    - name: The name of the staging area
+    """
+    self._sink.staging_ingest(to_ingest, name)
 
   def ingest(self, feature_table: FeatureTable, 
       to_ingest: pd.DataFrame, renames: Optional[Dict[str, str]] = None,
@@ -204,6 +222,12 @@ class FeatureStore:
       read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
     self.ingest_response(ft, read_response, all_columns=cols)
 
+  def read_all(self) -> pd.DataFrame:
+    """
+    Read all data from the source.
+    """
+    return self._source.read()
+
   def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
     """ Get historical features from the feature store.
     This method allows you to retrieve historical features from the feature store.
@@ -254,11 +278,11 @@ class FeatureStore:
         limit: Optional[int] = None,
         only_most_recent: Optional[bool] = True) -> pd.DataFrame:
     """ 
-    Get the training features for the given feature table.
+    Get the training features for the given feature view.
     
     args:
     
-    - feature_table: FeatureTable object
+    - feature_table: Feature view name
     - features_selected: A list of features to be selected. If None, all features will be selected.
     - date_from: The start date of the training period. If None, the start date of the feature table will be used.
     - date_to: The end date of the training period. If None, the end date of the feature table will be used.

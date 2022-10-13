@@ -22,6 +22,12 @@ class FeatureType:
     Feature value type. Used to define data types in Feature Tables.
     Inherited from Feast
     """
+    
+    @staticmethod
+    def from_feast_to_json_schema_feast(field_type: str) -> str:
+        if field_type.lower() == "struct":
+          return "string"
+        return field_type.lower()
 
     def from_str_to_bq_type(type_in_str: str, format: Optional[str] = None) -> BqType:
         """Converts the string containing the type (JSONSchema types are supported)
@@ -75,7 +81,7 @@ class FeatureType:
         else:
             raise ValueError("Unsupported type in pandas")
 
-    def from_str_to_feature_type(type_in_str: str) -> feast.ValueType:
+    def from_str_to_entity_type(type_in_str: str) -> feast.ValueType:
         """Converts the string containing the type (JSONSchema types are supported)
         to a Feast ValueType to be used in the FeatureStore. Returns a ValueType from feast-sdk
 
@@ -97,6 +103,28 @@ class FeatureType:
         else:
             return feast.ValueType.UNKNOWN
 
+    def from_str_to_feature_type(type_in_str: str) -> feast.ValueType:
+      """Converts the string containing the type (JSONSchema types are supported)
+      to a Feast ValueType to be used in the FeatureStore. Returns a ValueType from feast-sdk
+
+      Keyword arguments:
+      type_in_str -- the type name (JSONSchema)
+      """
+      if type_in_str == "number":
+          return feast.types.PrimitiveFeastType.FLOAT64
+      elif type_in_str == "string":
+          return feast.types.PrimitiveFeastType.STRING
+      elif type_in_str in ["array", "object"]:
+          return feast.types.PrimitiveFeastType.BYTES
+      elif type_in_str == "boolean":
+          return feast.types.PrimitiveFeastType.BOOL
+      elif type_in_str == "integer":
+          return feast.types.PrimitiveFeastType.INT32
+      elif type_in_str == "binary_download":
+          return feast.types.PrimitiveFeastType.STRING
+      else:
+          return feast.types.PrimitiveFeastType.UNKNOWN
+    
     @staticmethod
     def get_dummy_value(dtype: np.dtype) -> Any:
       """

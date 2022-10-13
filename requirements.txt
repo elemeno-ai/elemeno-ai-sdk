@@ -1,15 +1,15 @@
 #-e git+http://github.com/pytorch/pytorch@5a78725#egg=torch
-elemeno-ai-feast[redis,gcp,aws]==0.18.3 
+feast[redis,gcp,aws]==0.26.0
 GitPython==3.1.26
 google_auth_oauthlib==0.4.6
 Jinja2==3.0.3
 mlflow==1.26.1
-numpy==1.21.4
+numpy>=1.22
 omegaconf==2.1.0
 onnx==1.10.2
 pandas>=1.2.4
 pandas_gbq==0.15.0
-protobuf==3.19.4
+protobuf==4.21.7
 setuptools==53.0.0
 sphinx_rtd_theme==1.0.0
 tf2onnx==1.9.3
@@ -17,6 +17,9 @@ tf2onnx==1.9.3
 elasticsearch[async]==8.1.3
 redshift_connector==2.0.904
 sqlalchemy-redshift==0.8.9
+dask[distribute]==2022.1.1
+typer==0.6.1
+psycopg2==2.9.4
 #pip install -i https://test.pypi.org/simple/ onnxruntime==1.8.2.dev20210816004 # do when using mac arm64
 #torch==1.10.2
 # for 3.10 install 1.11

@@ -6,11 +6,13 @@ from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestionSource
 from elemeno_ai_sdk.ml.features.ingest.source.bigquery import BigQueryIngestionSource
 from elemeno_ai_sdk.ml.features.ingest.source.redshift import RedshiftIngestionSource
+from elemeno_ai_sdk.ml.features.ingest.source.gcs import GCSIngestionSource
 
 class IngestionSourceType(str, enum.Enum):
   ELASTIC = "Elastic"
   BIGQUERY = "BigQuery"
   REDSHIFT = "Redshift"
+  GCS = "GCS"
 
 class IngestionSourceBuilder:
 
@@ -18,6 +20,25 @@ class IngestionSourceBuilder:
     """ Builder to create instancces of different types of Source"""
     self._config = Configs.instance()
     self.type = ""
+
+  def build_gcs(self, bucket: Optional[str] = None, folder_prefix: Optional[str]=None) -> GCSIngestionSource:
+    """ Builds a GCS ingestion source instance.
+    
+    args:
+    
+    - bucket: The name of the GCS bucket.
+    - base_query: The base query to be used to query the GCS.
+    
+    return:
+    
+    - A GCS ingestion source instance.
+    """
+    if bucket is None:
+      bucket = self._config.feature_store.source.params.bucket
+    if folder_prefix is None:
+      folder_prefix = self._config.feature_store.source.params.path
+    self.type = IngestionSourceType.GCS
+    return GCSIngestionSource(bucket_name=bucket, folder_prefix=folder_prefix)
 
   def build_elastic(self, host: Optional[str]=None, username: Optional[str]=None, password: Optional[str]=None) -> ElasticIngestionSource:
     """ Builds an Elastic ingestion source instance.

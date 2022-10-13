@@ -25,7 +25,11 @@ class Ingestion(abc.ABC):
       to_ingest[ft.evt_col] = pd.to_datetime('now', utc=True)
 
   @abc.abstractmethod
-  def create_table(self, to_ingest: pd.DataFrame, ft: FeatureTable, engine: Any, **kwargs) -> None:
+  def create_table(self, to_ingest: pd.DataFrame, ft_name: str, engine: Any, **kwargs) -> None:
+    pass
+
+  @abc.abstractmethod
+  def staging_ingest(self, to_ingest: pd.DataFrame, name: str) -> None:
     pass
   
   @abc.abstractmethod
@@ -33,7 +37,7 @@ class Ingestion(abc.ABC):
     pass
   
   @abc.abstractmethod
-  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str, **kwargs) -> None:
+  def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str, **kwargs) -> str:
     pass
   
   @abc.abstractmethod
