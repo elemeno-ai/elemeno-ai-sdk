@@ -126,7 +126,7 @@ class FeatureTable:
       timestamp_field=self.evt_col
     )
     ft_kafka_source = feast.KafkaSource(
-      name="kafka_source_redshift",
+      name=self.name+"_stream",
       kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
       topic=self._elm_config.feature_store.stream_source.params.topic,
       timestamp_field=self.evt_col,
