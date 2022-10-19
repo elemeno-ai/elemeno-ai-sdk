@@ -74,7 +74,7 @@ class MinioIngestionDask(FileIngestion):
     dask_client.upload_file(os.getenv('FEAST_CONFIG_PATH', 'feature_store.yaml'))
   
 
-  def io_batch_ingest(self, to_ingest: List[Dict]):
+  def wio_batch_ingest(self, to_ingest: List[Dict]):
     config = Configs.instance()
     mini_batches = []
     futures = []
@@ -100,7 +100,7 @@ class MinioIngestionDask(FileIngestion):
         errors += 1
         print("error submiting to dask ^")
         continue
-    futures.append(self.dask_client.map(io_batch_dask, mini_batches, pure=False))
+    futures.extend(self.dask_client.map(io_batch_dask, mini_batches, pure=False))
     print("Num of submission errors: " + str(errors))
     print("Client will map to scheduler")
     self.dask_client.gather(futures, errors="skip")
