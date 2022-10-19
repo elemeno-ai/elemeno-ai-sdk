@@ -74,7 +74,7 @@ class MinioIngestionDask(FileIngestion):
     dask_client.upload_file(os.getenv('FEAST_CONFIG_PATH', 'feature_store.yaml'))
   
 
-  def wio_batch_ingest(self, to_ingest: List[Dict]):
+  def io_batch_ingest(self, to_ingest: List[Dict]):
     config = Configs.instance()
     mini_batches = []
     futures = []
