@@ -71,7 +71,7 @@ class MinioIngestionDask(FileIngestion):
     self.dask_client = dask_client
     dask_client.run(install)
     dask_client.upload_file(os.getenv('ELEMENO_CFG_FILE', 'elemeno.yaml'))
-    dask_client.upload_file(os.getenv('FEAST_CONFIG_PATH', 'feature_store.yaml'))
+    dask_client.upload_file(os.path.join(os.getenv('FEAST_CONFIG_PATH', '.'), 'feature_store.yaml'))
   
 
   def io_batch_ingest(self, to_ingest: List[Dict]):
