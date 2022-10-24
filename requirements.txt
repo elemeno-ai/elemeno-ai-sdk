@@ -19,7 +19,7 @@ redshift_connector==2.0.904
 sqlalchemy-redshift==0.8.9
 dask[distribute]==2022.1.1
 typer==0.6.1
-psycopg2==2.9.4
+psycopg2-binary==2.9.4
 pyspark==3.3.0
 #pip install -i https://test.pypi.org/simple/ onnxruntime==1.8.2.dev20210816004 # do when using mac arm64
 #torch==1.10.2
