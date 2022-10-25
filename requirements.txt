@@ -1,15 +1,15 @@
 #-e git+http://github.com/pytorch/pytorch@5a78725#egg=torch
-feast[redis,gcp,aws]==0.21.3
+feast[redis,gcp,aws]==0.26.0
 GitPython==3.1.26
 google_auth_oauthlib==0.4.6
 Jinja2==3.0.3
 mlflow==1.26.1
-numpy>=1.21
+numpy>=1.22
 omegaconf==2.1.0
 onnx==1.10.2
 pandas>=1.2.4
 pandas_gbq==0.15.0
-protobuf>=3.10
+protobuf==4.21.7
 setuptools==53.0.0
 sphinx_rtd_theme==1.0.0
 tf2onnx==1.9.3
