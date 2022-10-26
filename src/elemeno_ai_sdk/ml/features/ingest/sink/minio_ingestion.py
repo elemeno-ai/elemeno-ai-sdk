@@ -20,36 +20,37 @@ def io_batch_dask(params: List['IngestionParams']):
   from elemeno_ai_sdk.config import logging
   
   logging.error("Started batch dask")
-  for p in params:
-    logging.error("Processing {}".format(type(p)))
-    client = MinioClient(host=p.minio_host,
-      access_key=p.minio_user,
-      secret_key=p.minio_pass,
-      use_ssl=p.minio_ssl)
-    headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
-    to_ingest = p.to_ingest
-    media_id = to_ingest[p.media_id_col]
-    media_url = to_ingest[p.media_url_col].replace("\\", "")
-    folder_id = to_ingest[p.dest_folder_col]
-    position = to_ingest['position']
-    media_url = media_url.replace('/{description}.', "/x.")
+  for pbatch in params:
+    for p in pbatch:
+      logging.error("Processing {}".format(type(p)))
+      client = MinioClient(host=p.minio_host,
+        access_key=p.minio_user,
+        secret_key=p.minio_pass,
+        use_ssl=p.minio_ssl)
+      headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
+      to_ingest = p.to_ingest
+      media_id = to_ingest[p.media_id_col]
+      media_url = to_ingest[p.media_url_col].replace("\\", "")
+      folder_id = to_ingest[p.dest_folder_col]
+      position = to_ingest['position']
+      media_url = media_url.replace('/{description}.', "/x.")
 
-    r = requests.get(media_url, headers=headers, stream=True)
-    content_type = r.headers['content-type']
-    logging.error("Will check image")
-    if content_type.startswith('image'):
-        logging.error("Image found")
-        st = io.BytesIO(r.content)
-        media_extension = media_url.split('.')[-1]
-        try:
-            client.put_object('elemeno-cos', f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}", st)
-            logging.error("uploaded path: " + f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}")
-        except Exception as e:
-            logging.error("error uploading file to folder: " + folder_id)
-            logging.error(e)
-    else:
-      logging.error(f'{media_id}: {media_url}')
-      logging.error("Not an image")
+      r = requests.get(media_url, headers=headers, stream=True)
+      content_type = r.headers['content-type']
+      logging.error("Will check image")
+      if content_type.startswith('image'):
+          logging.error("Image found")
+          st = io.BytesIO(r.content)
+          media_extension = media_url.split('.')[-1]
+          try:
+              client.put_object('elemeno-cos', f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}", st)
+              logging.error("uploaded path: " + f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}")
+          except Exception as e:
+              logging.error("error uploading file to folder: " + folder_id)
+              logging.error(e)
+      else:
+        logging.error(f'{media_id}: {media_url}')
+        logging.error("Not an image")
   return True
 
 class IngestionParams:
