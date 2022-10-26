@@ -94,6 +94,8 @@ class MinioIngestionDask(FileIngestion):
           config.feature_store.source.params.binary.dest_folder_col,
           to_ingest=d)
         batch.append(i)
+        print("added one more")
+        print(i)
         within_batch += 1
       except Exception as e:
         print(e)
