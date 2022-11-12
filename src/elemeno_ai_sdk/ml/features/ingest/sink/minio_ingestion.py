@@ -77,11 +77,8 @@ class MinioIngestionDask(FileIngestion):
 
   def io_batch_ingest(self, to_ingest: List[Dict]):
     config = Configs.instance()
-    mini_batches = []
     futures = []
     print("prepare map")
-    errors = 0
-    within_batch = 0
     raw = map(lambda x: IngestionParams(config.cos.host, 
           config.cos.key_id, config.cos.secret, config.cos.use_ssl,
           config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
@@ -89,7 +86,6 @@ class MinioIngestionDask(FileIngestion):
           to_ingest=x), to_ingest)
     bag = db.from_sequence(raw, npartitions=20)
     futures.extend(bag.map_partitions(io_batch_dask))
-    print("Num of submission errors: " + str(errors))
     print("Client will map to scheduler")
     self.dask_client.gather(futures, errors="skip")
     return None
