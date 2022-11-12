@@ -1,9 +1,10 @@
 
 import io
 import numpy as np
+import pandas as pd
 import os
 from typing import Dict, List, Optional, Tuple
-import dask.array as da
+import dask.bag as db
 from dask.distributed import Client
 import requests
 from elemeno_ai_sdk.config import Configs
@@ -81,26 +82,13 @@ class MinioIngestionDask(FileIngestion):
     print("prepare map")
     errors = 0
     within_batch = 0
-    batch = []
-    for d in to_ingest:
-      if within_batch == 0 or within_batch >= 20:
-        mini_batches.append(batch)
-        batch = []
-        within_batch = 0
-      try:
-        i = IngestionParams(config.cos.host, 
+    raw = map(lambda x: IngestionParams(config.cos.host, 
           config.cos.key_id, config.cos.secret, config.cos.use_ssl,
           config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
           config.feature_store.source.params.binary.dest_folder_col,
-          to_ingest=d)
-        batch.append(i)
-        within_batch += 1
-      except Exception as e:
-        print(e)
-        errors += 1
-        print("error submiting to dask ^")
-        continue
-    futures.extend(self.dask_client.map(io_batch_dask, mini_batches, pure=False))
+          to_ingest=x), to_ingest)
+    bag = db.from_sequence(raw, npartitions=20)
+    futures.extend(bag.map_partitions(io_batch_dask))
     print("Num of submission errors: " + str(errors))
     print("Client will map to scheduler")
     self.dask_client.gather(futures, errors="skip")
