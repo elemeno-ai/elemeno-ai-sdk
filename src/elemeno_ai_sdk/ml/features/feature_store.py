@@ -303,7 +303,7 @@ class FeatureStore:
     if features_selected is None:
       columns = "*"
     else:
-      columns = ",".join(features_selected)
+      columns = ",".join(map(lambda x: f"{table_name}.{x}", features_selected))
     join = ""
     if diff_table and diff_join_key:
       left_join_key = join_key if join_key else diff_join_key
@@ -313,12 +313,12 @@ class FeatureStore:
           join += f" AND {diff_table}.{k} = '{v}'"
     where = ""
     if date_from:
-      where += f"WHERE created_timestamp >= '{date_from.isoformat()}'"
+      where += f"WHERE {table_name}.created_timestamp >= '{date_from.isoformat()}'"
     if date_to:
       if where != "":
-        where += f" AND created_timestamp <= '{date_to.isoformat()}'"
+        where += f" AND {table_name}.created_timestamp <= '{date_to.isoformat()}'"
       else:
-        where += f"WHERE created_timestamp <= '{date_to.isoformat()}'"
+        where += f"WHERE {table_name}.created_timestamp <= '{date_to.isoformat()}'"
     if diff_table and where != "":
       where += f" AND {diff_table}.{diff_join_key} is null"
     elif diff_table:
