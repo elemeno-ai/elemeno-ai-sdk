@@ -279,6 +279,7 @@ class FeatureStore:
         only_most_recent: Optional[bool] = True,
         diff_table: Optional[str] = None,
         diff_join_key: Optional[str] = None,
+        join_key: Optional[str] = None,
         diff_where: Optional[Dict] = None) -> pd.DataFrame:
     """ 
     Get the training features for the given feature view.
@@ -305,7 +306,8 @@ class FeatureStore:
       columns = ",".join(features_selected)
     join = ""
     if diff_table and diff_join_key:
-      join = f"JOIN {diff_table} ON {table_name}.{diff_join_key} = {diff_table}.{diff_join_key}"
+      left_join_key = join_key if join_key else diff_join_key
+      join = f"JOIN {diff_table} ON {table_name}.{left_join_key} = {diff_table}.{diff_join_key}"
       if diff_where:
         for k,v in diff_where.items():
           join += f" AND {diff_table}.{k} = '{v}'"
