@@ -276,7 +276,10 @@ class FeatureStore:
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
         limit: Optional[int] = None,
-        only_most_recent: Optional[bool] = True) -> pd.DataFrame:
+        only_most_recent: Optional[bool] = True,
+        diff_table: Optional[str] = None,
+        diff_join_key: Optional[str] = None,
+        diff_where: Optional[Dict] = None) -> pd.DataFrame:
     """ 
     Get the training features for the given feature view.
     
@@ -287,6 +290,9 @@ class FeatureStore:
     - date_from: The start date of the training period. If None, the start date of the feature table will be used.
     - date_to: The end date of the training period. If None, the end date of the feature table will be used.
     - only_most_recent: If True, only the most recent features will be selected. If False, all features will be selected.
+    - diff_table: If not None, the features will be compared with the features in the diff_table. The diff_table should have a column with the same name of the features table in order to compare. This is useful for when you want to filter, at query time, features from the result.
+    - diff_join_key: The join key to be used to compare the features.
+    - diff_where: A dictionary with the where clause to be used to compare the features.
     
     returns:
     
@@ -297,6 +303,12 @@ class FeatureStore:
       columns = "*"
     else:
       columns = ",".join(features_selected)
+    join = ""
+    if diff_table and diff_join_key:
+      join = f"JOIN {diff_table} ON {table_name}.{diff_join_key} = {diff_table}.{diff_join_key}"
+      if diff_where:
+        for k,v in diff_where.items():
+          join += f" AND {diff_table}.{k} = '{v}'"
     where = ""
     if date_from:
       where += f"WHERE created_timestamp >= '{date_from.isoformat()}'"
@@ -305,9 +317,13 @@ class FeatureStore:
         where += f" AND created_timestamp <= '{date_to.isoformat()}'"
       else:
         where += f"WHERE created_timestamp <= '{date_to.isoformat()}'"
+    if diff_table and where != "":
+      where += f" AND {diff_table}.{diff_join_key} is null"
+    elif diff_table:
+      where += f"WHERE {diff_table}.{diff_join_key} is null"
     if limit:
       where += f" LIMIT {limit}"
-    query = f"SELECT {columns} FROM {table_name} {where}"
+    query = f"SELECT {columns} FROM {table_name} {join} {where}"
     df = self._sink.read_table(query)
     if only_most_recent:
       return df.sort_values(by="created_timestamp", ascending=False) \
