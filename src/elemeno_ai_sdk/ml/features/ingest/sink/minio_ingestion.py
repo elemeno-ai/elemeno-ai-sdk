@@ -75,7 +75,7 @@ class IngestionParams:
 class MinioIngestionDask(FileIngestion):
 
   def __init__(self, dask_uri: Optional[str] = None):
-    dask_client = Client(dask_uri, timeout=300)
+    dask_client = Client(dask_uri)
     self.dask_client = dask_client
     dask_client.run(install)
     dask_client.upload_file(os.getenv('ELEMENO_CFG_FILE', 'elemeno.yaml'))
