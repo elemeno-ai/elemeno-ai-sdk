@@ -16,7 +16,7 @@ def install():
   import sys
   os.system("pip install minio")
 
-async def io_batch_dask(params: List['IngestionParams']):
+def io_batch_dask(params: List['IngestionParams']):
   from elemeno_ai_sdk.cos.minio import MinioClient
   from elemeno_ai_sdk.config import logging
   import asyncio
@@ -28,7 +28,7 @@ async def io_batch_dask(params: List['IngestionParams']):
       secret_key=params[0].minio_pass,
       use_ssl=params[0].minio_ssl)
   
-  async def download_file(p: 'IngestionParams'):
+  def download_file(p: 'IngestionParams'):
     logging.error("Processing {}".format(type(p)))
     
     headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
@@ -57,7 +57,7 @@ async def io_batch_dask(params: List['IngestionParams']):
       logging.error("Not an image")
 
   for p in params:
-    await download_file(p)
+    download_file(p)
   return True
 
 class IngestionParams:
@@ -91,7 +91,7 @@ class MinioIngestionDask(FileIngestion):
           config.feature_store.source.params.binary.media_id_col, config.feature_store.source.params.binary.media_url_col,
           config.feature_store.source.params.binary.dest_folder_col,
           to_ingest=x), to_ingest)
-    bag = db.from_sequence(raw, npartitions=20)
+    bag = db.from_sequence(raw, npartitions=600)
     futures.extend(bag.map_partitions(io_batch_dask))
     print("Client will map to scheduler")
     self.dask_client.gather(futures, errors="skip")
