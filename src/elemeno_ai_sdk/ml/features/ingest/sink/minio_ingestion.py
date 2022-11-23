@@ -29,32 +29,36 @@ def io_batch_dask(params: List['IngestionParams']):
       use_ssl=params[0].minio_ssl)
   
   def download_file(p: 'IngestionParams'):
-    logging.error("Processing {}".format(type(p)))
-    
-    headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
-    to_ingest = p.to_ingest
-    media_id = to_ingest[p.media_id_col]
-    media_url = to_ingest[p.media_url_col].replace("\\", "")
-    folder_id = to_ingest[p.dest_folder_col]
-    position = to_ingest['position']
-    media_url = media_url.replace('/{description}.', "/x.")
+    try:
+      logging.error("Processing {}".format(type(p)))
+      
+      headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
+      to_ingest = p.to_ingest
+      media_id = to_ingest[p.media_id_col]
+      media_url = to_ingest[p.media_url_col].replace("\\", "")
+      folder_id = to_ingest[p.dest_folder_col]
+      position = to_ingest['position']
+      media_url = media_url.replace('/{description}.', "/x.")
 
-    r = requests.get(media_url, headers=headers, stream=True)
-    content_type = r.headers['content-type']
-    logging.error("Will check image")
-    if content_type.startswith('image'):
-        logging.error("Image found")
-        st = io.BytesIO(r.content)
-        media_extension = media_url.split('.')[-1]
-        try:
-            client.put_object('elemeno-cos', f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}", st)
-            logging.error("uploaded path: " + f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}")
-        except Exception as e:
-            logging.error("error uploading file to folder: " + folder_id)
-            logging.error(e)
-    else:
-      logging.error(f'{media_id}: {media_url}')
-      logging.error("Not an image")
+      r = requests.get(media_url, headers=headers, stream=True)
+      content_type = r.headers['content-type']
+      logging.error("Will check image")
+      if content_type.startswith('image'):
+          logging.error("Image found")
+          st = io.BytesIO(r.content)
+          media_extension = media_url.split('.')[-1]
+          try:
+              client.put_object('elemeno-cos', f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}", st)
+              logging.error("uploaded path: " + f"binary_data_parallel/{folder_id}/{position}_{media_id}.{media_extension}")
+          except Exception as e:
+              logging.error("error uploading file to folder: " + folder_id)
+              logging.error(e)
+      else:
+        logging.error(f'{media_id}: {media_url}')
+        logging.error("Not an image")
+    except Exception as e:
+      logging.error("Error downloading file, will ignore")
+      logging.error(e)
 
   for p in params:
     download_file(p)
