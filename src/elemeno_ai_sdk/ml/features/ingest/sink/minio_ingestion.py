@@ -16,17 +16,21 @@ def install():
   import sys
   os.system("pip install minio")
 
-def io_batch_dask(params: List['IngestionParams']):
+async def io_batch_dask(params: List['IngestionParams']):
   from elemeno_ai_sdk.cos.minio import MinioClient
   from elemeno_ai_sdk.config import logging
+  import asyncio
   
+  assert len(params) > 0, "No params provided"
   logging.error("Started batch dask")
-  for p in params:
+  client = MinioClient(host=params[0].minio_host,
+      access_key=params[0].minio_user,
+      secret_key=params[0].minio_pass,
+      use_ssl=params[0].minio_ssl)
+  
+  async def download_file(p: 'IngestionParams'):
     logging.error("Processing {}".format(type(p)))
-    client = MinioClient(host=p.minio_host,
-      access_key=p.minio_user,
-      secret_key=p.minio_pass,
-      use_ssl=p.minio_ssl)
+    
     headers = {"user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"}
     to_ingest = p.to_ingest
     media_id = to_ingest[p.media_id_col]
@@ -51,6 +55,9 @@ def io_batch_dask(params: List['IngestionParams']):
     else:
       logging.error(f'{media_id}: {media_url}')
       logging.error("Not an image")
+
+  for p in params:
+    await download_file(p)
   return True
 
 class IngestionParams:
