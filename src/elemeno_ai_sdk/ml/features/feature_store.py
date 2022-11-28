@@ -307,7 +307,7 @@ class FeatureStore:
     join = ""
     if diff_table and diff_join_key:
       left_join_key = join_key if join_key else diff_join_key
-      join = f"JOIN {diff_table} ON {table_name}.{left_join_key} = {diff_table}.{diff_join_key}"
+      join = f"LEFT JOIN {diff_table} ON {table_name}.{left_join_key} = {diff_table}.{diff_join_key}"
       if diff_where:
         for k,v in diff_where.items():
           join += f" AND {diff_table}.{k} = '{v}'"
