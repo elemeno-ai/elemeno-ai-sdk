@@ -12,7 +12,7 @@ from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import FileIngestion
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder \
    import FileIngestionSinkType, IngestionSinkBuilder, IngestionSinkType
-from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestionDask
+from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestion
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
@@ -65,7 +65,7 @@ class FeatureStore:
         logger.warn("Dask URI not specified, will not download files")
       else:
         print("Creating instance of MinioIngestionDask")
-        self. _file_sink = MinioIngestionDask(self._elm_config.dask.uri)
+        self. _file_sink = MinioIngestion(self._elm_config.dask.uri)
     self.config = self._fs.config
     # memory holds a reference for the result of the last data handling method
     self._memory = None
