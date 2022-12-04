@@ -32,9 +32,9 @@ class MinioIngestion(FileIngestion):
           config.feature_store.source.params.binary.dest_folder_col,
           to_ingest=x), to_ingest)
     pool = Pool(cpu_count())
-    download_func = partial(self.download_file_to_remote, raw)
+    download_func = partial(self.download_file_to_remote)
     print("start map for downloading files")
-    pool.map(download_func)
+    pool.map(download_func, raw)
     pool.close()
     pool.join()
     return None
