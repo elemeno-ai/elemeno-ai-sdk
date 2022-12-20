@@ -216,4 +216,4 @@ Next Steps
    :maxdepth: 3
    :caption: Contents:
 
-   featurestore/fs
+   ../featurestore/fs
