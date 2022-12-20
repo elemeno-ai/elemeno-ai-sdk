@@ -208,3 +208,12 @@ The file has the following structure:
       - string
       - elemeno
       - The project id of the BigQuery project.
+
+Next Steps
+*************************
+
+.. toctree::
+   :maxdepth: 3
+   :caption: Contents:
+
+   featurestore/fs
