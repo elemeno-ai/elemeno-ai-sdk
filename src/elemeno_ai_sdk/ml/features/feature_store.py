@@ -280,7 +280,8 @@ class FeatureStore:
         diff_table: Optional[str] = None,
         diff_join_key: Optional[str] = None,
         join_key: Optional[str] = None,
-        diff_where: Optional[Dict] = None) -> pd.DataFrame:
+        diff_where: Optional[Dict] = None,
+        timestamp_column: Optional[str] = "created_timestamp") -> pd.DataFrame:
     """ 
     Get the training features for the given feature view.
     
@@ -294,6 +295,7 @@ class FeatureStore:
     - diff_table: If not None, the features will be compared with the features in the diff_table. The diff_table should have a column with the same name of the features table in order to compare. This is useful for when you want to filter, at query time, features from the result.
     - diff_join_key: The join key to be used to compare the features.
     - diff_where: A dictionary with the where clause to be used to compare the features.
+    - timestamp_column: The timestamp column to be used to filter the features. Valid values are "created_timestamp" and "event_timestamp". Default is "created_timestamp".
     
     returns:
     
@@ -312,20 +314,22 @@ class FeatureStore:
         for k,v in diff_where.items():
           join += f" AND {diff_table}.{k} = '{v}'"
     where = ""
+    if timestamp_column != "created_timestamp" and timestamp_column != "event_timestamp":
+      raise ValueError(f"Invalid timestamp_column: {timestamp_column}. Valid values are 'created_timestamp' and 'event_timestamp'")
     if date_from:
-      where += f"WHERE {table_name}.created_timestamp >= '{date_from.isoformat()}'"
+      where += f"WHERE {table_name}.{timestamp_column} >= '{date_from.isoformat()}'"
     if date_to:
       if where != "":
-        where += f" AND {table_name}.created_timestamp <= '{date_to.isoformat()}'"
+        where += f" AND {table_name}.{timestamp_column} <= '{date_to.isoformat()}'"
       else:
-        where += f"WHERE {table_name}.created_timestamp <= '{date_to.isoformat()}'"
+        where += f"WHERE {table_name}.{timestamp_column} <= '{date_to.isoformat()}'"
     if diff_table and where != "":
       where += f" AND {diff_table}.{diff_join_key} is null"
     elif diff_table:
       where += f"WHERE {diff_table}.{diff_join_key} is null"
     if limit:
       where += f" LIMIT {limit}"
-    query = f"SELECT {columns} FROM {table_name} {join} {where}"
+    query = f"SELECT {columns} FROM {table_name} {join} {where} ORDER BY {table_name}.{timestamp_column} ASC"
     df = self._sink.read_table(query)
     if only_most_recent:
       return df.sort_values(by="created_timestamp", ascending=False) \
