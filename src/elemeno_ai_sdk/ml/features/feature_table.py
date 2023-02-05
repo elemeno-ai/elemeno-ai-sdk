@@ -17,6 +17,7 @@ class FeatureTable:
           entities: typing.List[feast.Entity] = None,
           features: typing.List[feast.Feature] = None,
           ttl_duration_weeks=52,
+          is_streaming=False,
           online=False, event_column: str = "event_timestamp",
           created_column: str = "created_timestamp"):
     self.name = name
@@ -25,6 +26,7 @@ class FeatureTable:
     self._feast_elm = feature_store
     self._duration = ttl_duration_weeks
     self._online = online
+    self.is_streaming = is_streaming
     self._evt_col = event_column
     self._created_col = created_column
     self._table_schema = []
@@ -87,53 +89,50 @@ class FeatureTable:
 
   def _get_ft(self):
     dataset = self._feast_elm.config.offline_store.dataset
+    to_apply = []
     ft_source = feast.BigQuerySource(
       table_ref=f"{dataset}.{self.name}",
       event_timestamp_column=self.evt_col,
       created_timestamp_column=self.created_col
     )
-    ft_kafka_source = feast.KafkaSource(
-      kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
-      topic=self._elm_config.feature_store.stream_source.params.topic,
-      timestamp_field=self.evt_col,
-      created_timestamp_column=self.created_col,
-      message_format=JsonFormat(),
-      batch_source=ft_source,
-    )
     fv = feast.FeatureView(
-        name = self.name+"_stream",
-        entities=self._entities,
-        online=self._online,
-        source=ft_source,
-        tags={}
+      name = self.name+"_stream",
+      entities=self._entities,
+      online=self._online,
+      source=ft_source,
+      tags={}
     )
-    sfv = feast.StreamFeatureView(
+    to_apply.append(fv)
+    
+    if self.is_streaming:
+      ft_kafka_source = feast.KafkaSource(
+        kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
+        topic=self._elm_config.feature_store.stream_source.params.topic,
+        timestamp_field=self.evt_col,
+        created_timestamp_column=self.created_col,
+        message_format=JsonFormat(),
+        batch_source=ft_source,
+      )
+      sfv = feast.StreamFeatureView(
         name = self.name,
         entities=self._entities,
         schema=self._features,
         online=self._online,
         source=ft_kafka_source,
-    )
+      )
+      to_apply.append(sfv)
+
     self._feast_elm.apply(objects=self.entities)
-    self._feast_elm.apply(objects=[fv, sfv])
+    self._feast_elm.apply(objects=to_apply)
     return fv
 
   def _get_ft_rs(self):
+    to_apply = []
     ft_source = feast.RedshiftSource(
       name=self.name,
       table= f"{self.name}",
       created_timestamp_column=self.created_col,
       timestamp_field=self.evt_col
-    )
-    ft_kafka_source = feast.KafkaSource(
-      name=self.name+"_stream",
-      kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
-      topic=self._elm_config.feature_store.stream_source.params.topic,
-      timestamp_field=self.evt_col,
-      created_timestamp_column=self.created_col,
-      message_format=JsonFormat(schema_json=", ".join([str(field['name']+" "+FeatureType.from_feast_to_json_schema_feast(field['type'])) for field in self.table_schema])),
-      batch_source=ft_source,
-      watermark_delay_threshold=datetime.timedelta(hours=72)
     )
     fv = feast.FeatureView(
       name = self.name,
@@ -142,16 +141,30 @@ class FeatureTable:
       source=ft_source,
       tags={}
     )
-    sfv = feast.StreamFeatureView(
-        name = self.name+"_stream",
-        entities=self._entities,
-        schema=self._features,
-        online=self._online,
+    to_apply.append(fv)
+
+    if self.is_streaming:
+      ft_kafka_source = feast.KafkaSource(
+        name=self.name+"_stream",
+        kafka_bootstrap_servers=self._elm_config.feature_store.stream_source.params.bootstrap_servers,
+        topic=self._elm_config.feature_store.stream_source.params.topic,
         timestamp_field=self.evt_col,
-        source=ft_kafka_source,
-    )
+        created_timestamp_column=self.created_col,
+        message_format=JsonFormat(schema_json=", ".join([str(field['name']+" "+FeatureType.from_feast_to_json_schema_feast(field['type'])) for field in self.table_schema])),
+        batch_source=ft_source,
+        watermark_delay_threshold=datetime.timedelta(hours=72)
+      )
+      sfv = feast.StreamFeatureView(
+          name = self.name+"_stream",
+          entities=self._entities,
+          schema=self._features,
+          online=self._online,
+          timestamp_field=self.evt_col,
+          source=ft_kafka_source,
+      )
+      to_apply.append(sfv)
     self._feast_elm.apply(objects=self.entities)
-    self._feast_elm.apply(objects=[fv, sfv])
+    self._feast_elm.apply(objects=to_apply)
 
     return fv
 
