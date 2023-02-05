@@ -159,7 +159,7 @@ class RedshiftIngestion(Ingestion):
         columns[col] = self.rs_types[dtype.name]
 
     if not sqlalchemy.inspect(engine).has_table(ft_name):
-      create = "CREATE TABLE {} (".format(ft_name)
+      create = "CREATE TABLE IF NOT EXISTS \"{}\" (".format(ft_name)
       for col, dtype in columns.items():
         create += "{} {},".format(col, dtype)
       create = create[:-1] + ")"
