@@ -31,7 +31,8 @@ class RedshiftIngestion(Ingestion):
       "Int32": "BIGINT",
       "Float64": "FLOAT",
       "bool": "BOOLEAN",
-      "datetime64[ns]": "TIMESTAMP"
+      "datetime64[ns]": "TIMESTAMP",
+      "datetime64[ns, UTC]": "TIMESTAMP",
     }
     self._schema_dict: typing.Dict = None
 
