@@ -305,31 +305,31 @@ class FeatureStore:
     if features_selected is None:
       columns = "*"
     else:
-      columns = ",".join(map(lambda x: f"{table_name}.{x}", features_selected))
+      columns = ",".join(map(lambda x: f"\"{table_name}\".{x}", features_selected))
     join = ""
     if diff_table and diff_join_key:
       left_join_key = join_key if join_key else diff_join_key
-      join = f"LEFT JOIN {diff_table} ON {table_name}.{left_join_key} = {diff_table}.{diff_join_key}"
+      join = f"LEFT JOIN \"{diff_table}\" ON \"{table_name}\".{left_join_key} = \"{diff_table}\".{diff_join_key}"
       if diff_where:
         for k,v in diff_where.items():
-          join += f" AND {diff_table}.{k} = '{v}'"
+          join += f" AND \"{diff_table}\".{k} = '{v}'"
     where = ""
     if timestamp_column != "created_timestamp" and timestamp_column != "event_timestamp":
       raise ValueError(f"Invalid timestamp_column: {timestamp_column}. Valid values are 'created_timestamp' and 'event_timestamp'")
     if date_from:
-      where += f"WHERE {table_name}.{timestamp_column} >= '{date_from.isoformat()}'"
+      where += f"WHERE \"{table_name}\".{timestamp_column} >= '{date_from.isoformat()}'"
     if date_to:
       if where != "":
-        where += f" AND {table_name}.{timestamp_column} <= '{date_to.isoformat()}'"
+        where += f" AND \"{table_name}\".{timestamp_column} <= '{date_to.isoformat()}'"
       else:
-        where += f"WHERE {table_name}.{timestamp_column} <= '{date_to.isoformat()}'"
+        where += f"WHERE \"{table_name}\".{timestamp_column} <= '{date_to.isoformat()}'"
     if diff_table and where != "":
-      where += f" AND {diff_table}.{diff_join_key} is null"
+      where += f" AND \"{diff_table}\".{diff_join_key} is null"
     elif diff_table:
-      where += f"WHERE {diff_table}.{diff_join_key} is null"
+      where += f"WHERE \"{diff_table}\".{diff_join_key} is null"
     if limit:
       where += f" LIMIT {limit}"
-    query = f"SELECT {columns} FROM {table_name} {join} {where} ORDER BY {table_name}.{timestamp_column} ASC"
+    query = f"SELECT {columns} FROM \"{table_name}\" {join} {where} ORDER BY \"{table_name}\".{timestamp_column} ASC"
     df = self._sink.read_table(query)
     if only_most_recent:
       return df.sort_values(by="created_timestamp", ascending=False) \
