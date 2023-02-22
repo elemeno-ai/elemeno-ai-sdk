@@ -106,8 +106,22 @@ class FeatureStore:
     - renames: A dictionary of column names to be renamed.
     - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
     """
-    self._ingest_files(to_ingest)
+    feature_table.table_schema
+    if self._has_medias(feature_table):
+      self._ingest_files(to_ingest)
     self.ingest(feature_table, to_ingest.dataframe, renames, all_columns)
+
+  def _media_columns(self, feature_table):
+    media_columns = []
+    for k, p in feature_table.table_schema['properties'].items():
+      if p['type'] == 'binary_upload' or p['type'] == 'binary_download':
+        media_columns.append(k)
+    return media_columns
+  
+  def _has_medias(self, feature_table):
+    mcols = self._media_columns(feature_table)
+    return len(mcols) > 0
+
 
   def staging_ingest(self, to_ingest: pd.DataFrame, name: str) -> None:
     """ 
@@ -143,15 +157,22 @@ class FeatureStore:
     - renames: A dictionary of column names to be renamed
     - all_columns: A list of columns to be ingested. If None, all columns will be ingested
     """
+    media_cols = self._media_columns(feature_table)
+    if len(media_cols) > 0:
+      self._ingest_files_from_df(to_ingest, media_cols)
     self._sink.ingest(to_ingest, feature_table, renames, all_columns)
     
+  def _ingest_files_from_df(self, to_ingest: pd.DataFrame, media_cols: List[str]):
+    if self._file_sink_type is None:
+      raise ValueError("File sink type not specified, cannot ingest files")  
+    self._file_sink.io_batch_ingest(to_ingest, media_cols)
+
   def _ingest_files(self, to_ingest: ReadResponse):
-    print("file sink type")
-    print(self._file_sink_type)
-    if self._file_sink_type is not None:
-      medias = json.loads(to_ingest.prepared_medias)
-      print("len of to_ingest.prepared_medias", len(medias))
-      self._file_sink.io_batch_ingest(medias)
+    if self._file_sink_type is None:
+      raise ValueError("File sink type not specified, cannot ingest files")  
+    medias = json.loads(to_ingest.prepared_medias)
+    print("len of to_ingest.prepared_medias", len(medias))
+    self._file_sink.io_batch_ingest(medias)
   
   def ingest_from_query_same_source(self, ft: FeatureTable, query: str):
     """ 

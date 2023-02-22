@@ -96,6 +96,10 @@ The file has the following structure:
       - boolean
       - true
       - Whether to use SSL or not.
+    * - cos.bucket_name
+      - string
+      - elemeno-cos
+      - The name of the bucket to store binary files.
     * - registry
       - object
       - 

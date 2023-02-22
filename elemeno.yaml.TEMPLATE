@@ -8,6 +8,7 @@ cos:
   key_id: elemeno
   secret: minio123
   use_ssl: False
+  bucket: elemeno-cos
 registry:
   tracking_url: http://mlflow.tracking.url:80
 feature_store:
