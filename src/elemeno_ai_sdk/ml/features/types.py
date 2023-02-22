@@ -50,7 +50,7 @@ class FeatureType:
             return BqType.BOOL
         elif type_in_str == "integer":
             return BqType.INTEGER
-        elif type_in_str == "binary_download":
+        elif type_in_str == "binary_download" or type_in_str == "binary_upload":
             return BqType.STRING
         else:
             raise ValueError("Unsupported type in bigquery")
