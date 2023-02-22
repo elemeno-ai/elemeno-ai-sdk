@@ -78,6 +78,8 @@ class FeatureType:
             return np.int32
         elif type_in_str == "binary_download":
             return np.bytes_
+        elif type_in_str == "binary_upload":
+            return np.unicode_
         else:
             raise ValueError("Unsupported type in pandas")
 
@@ -98,7 +100,7 @@ class FeatureType:
             return feast.ValueType.BOOL
         elif type_in_str == "integer":
             return feast.ValueType.INT32
-        elif type_in_str == "binary_download":
+        elif type_in_str == "binary_download" or type_in_str == "binary_upload":
             return feast.ValueType.STRING
         else:
             return feast.ValueType.UNKNOWN
@@ -120,7 +122,7 @@ class FeatureType:
           return feast.types.PrimitiveFeastType.BOOL
       elif type_in_str == "integer":
           return feast.types.PrimitiveFeastType.INT32
-      elif type_in_str == "binary_download":
+      elif type_in_str == "binary_download" or type_in_str == "binary_upload":
           return feast.types.PrimitiveFeastType.STRING
       else:
           return feast.types.PrimitiveFeastType.UNKNOWN
