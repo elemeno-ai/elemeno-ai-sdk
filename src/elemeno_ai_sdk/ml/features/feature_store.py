@@ -113,7 +113,7 @@ class FeatureStore:
 
   def _media_columns(self, feature_table):
     media_columns = []
-    for k, p in feature_table.original_schema.items():
+    for k, p in feature_table.original_schema["properties"].items():
       if p['type'] == 'binary_upload' or p['type'] == 'binary_download':
         media_columns.append(k)
     return media_columns
