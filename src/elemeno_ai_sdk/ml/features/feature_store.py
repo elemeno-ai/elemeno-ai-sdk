@@ -165,7 +165,7 @@ class FeatureStore:
   def _ingest_files_from_df(self, to_ingest: pd.DataFrame, media_cols: List[str]):
     if self._file_sink_type is None:
       raise ValueError("File sink type not specified, cannot ingest files")  
-    self._file_sink.io_batch_ingest(to_ingest, media_cols)
+    self._file_sink.io_batch_ingest_from_df(to_ingest, media_cols)
 
   def _ingest_files(self, to_ingest: ReadResponse):
     if self._file_sink_type is None:
