@@ -65,7 +65,7 @@ class FeatureStore:
         logger.warn("Dask URI not specified, will not download files")
       else:
         print("Creating instance of MinioIngestionDask")
-        self. _file_sink = MinioIngestion(self._elm_config.dask.uri)
+        self. _file_sink = MinioIngestion()
     self.config = self._fs.config
     # memory holds a reference for the result of the last data handling method
     self._memory = None
