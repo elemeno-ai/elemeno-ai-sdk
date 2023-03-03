@@ -29,6 +29,7 @@ class FeatureTable:
     self.is_streaming = is_streaming
     self._evt_col = event_column
     self._created_col = created_column
+    self._original_schema = []
     self._table_schema = []
     self._elm_config = config.Configs.instance()
 
@@ -48,6 +49,10 @@ class FeatureTable:
   @property
   def table_schema(self) -> typing.List[typing.Dict]:
     return self._table_schema
+  
+  @property
+  def original_schema(self) -> typing.List[typing.Dict]:
+    return self._original_schema
 
   @entities.setter
   def entities(self, value):
@@ -64,6 +69,9 @@ class FeatureTable:
 
   def set_table_schema(self, value: typing.List[typing.Dict]) -> None:
     self._table_schema = value
+
+  def set_original_schema(self, value: typing.List[typing.Dict]) -> None:
+    self._original_schema = value
   
   def register_entities(self, *entities: feast.Entity) -> None:
       self.entities.extend(list(entities))

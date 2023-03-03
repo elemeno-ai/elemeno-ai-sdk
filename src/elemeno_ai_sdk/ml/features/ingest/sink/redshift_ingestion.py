@@ -182,6 +182,7 @@ class RedshiftIngestion(Ingestion):
         jschema = json.loads(schema_file.read())
         self._schema_dict = jschema
         feature_table.schema_str = json.dumps(jschema)
+        feature_table.set_original_schema(jschema)
         table_schema = []
         pd_schema = {}
         adjusted_dtypes = {}
