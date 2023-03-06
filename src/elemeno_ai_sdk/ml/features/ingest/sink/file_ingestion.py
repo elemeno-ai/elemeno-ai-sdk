@@ -8,9 +8,15 @@ import pandas as pd
 class FileIngestion(abc.ABC):
 
   @abc.abstractmethod
-  def io_batch_ingest_from_df(self, to_ingest: pd.DataFrame, media_columns: List[str]):
+  def io_batch_ingest_from_df(self, to_ingest: pd.DataFrame, media_columns: List['MediaColumn']):
     pass
 
   @abc.abstractmethod
   def io_batch_ingest(self, to_ingest: List[Dict]):
     pass
+
+class MediaColumn:
+
+  def __init__(self, name: str, is_upload: bool):
+    self.name = name
+    self.is_upload = is_upload

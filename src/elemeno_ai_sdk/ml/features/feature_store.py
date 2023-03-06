@@ -16,6 +16,7 @@ from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestio
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder \
   import IngestionSourceBuilder, IngestionSourceType
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
+from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import MediaColumn
 
 class FeatureStore:
 
@@ -115,7 +116,8 @@ class FeatureStore:
     media_columns = []
     for k, p in feature_table.original_schema["properties"].items():
       if p['type'] == 'binary_upload' or p['type'] == 'binary_download':
-        media_columns.append(k)
+        m = MediaColumn(k, p["type"] == "binary_upload")
+        media_columns.append(m)
     return media_columns
   
   def _has_medias(self, feature_table):
