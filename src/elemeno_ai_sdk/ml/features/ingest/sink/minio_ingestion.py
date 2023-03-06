@@ -40,7 +40,7 @@ class MinioIngestion(FileIngestion):
         dest_folder_name = f"{feature_table_name}_{col}"
         pool = Pool(cpu_count())
         raw = map(lambda x: IngestionParams(config.cos.host, config.cos.key_id, config.cos.secret, config.cos.use_ssl,
-          media_path_col=col, to_ingest=x, dest_folder=dest_folder_name, minio_bucket=config.cos.bucket), df_dict)
+          media_path_col=col.name, to_ingest=x, dest_folder=dest_folder_name, minio_bucket=config.cos.bucket), df_dict)
         upload_func = partial(self.upload_file_to_remote)
         pool.map(upload_func, raw)
         pool.close()
@@ -51,7 +51,7 @@ class MinioIngestion(FileIngestion):
         logging.info("Downloading {} files from media column {} to the remote persistence".format(len(df_dict), col))
         pool = Pool(cpu_count())
         raw = map(lambda x: IngestionParams(config.cos.host, config.cos.key_id, config.cos.secret, config.cos.use_ssl,
-          media_path_col=col, to_ingest=x, dest_folder=dest_folder_name, minio_bucket=config.cos.bucket), df_dict)
+          media_path_col=col.name, to_ingest=x, dest_folder=dest_folder_name, minio_bucket=config.cos.bucket), df_dict)
         pool = Pool(cpu_count())
         download_func = partial(self.download_file_to_remote)
         pool.map(download_func, raw)
