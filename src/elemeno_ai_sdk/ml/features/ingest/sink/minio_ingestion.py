@@ -36,8 +36,8 @@ class MinioIngestion(FileIngestion):
     df_dict = to_ingest.to_dict('records')
     for col in local_path_cols:
       if col and col.is_upload:
-        logging.info("Uploading {} files from media column {}".format(len(df_dict), col))
-        dest_folder_name = f"{feature_table_name}_{col}"
+        logging.info("Uploading {} files from media column {}".format(len(df_dict), col.name))
+        dest_folder_name = f"{feature_table_name}_{col.name}"
         pool = Pool(cpu_count())
         raw = map(lambda x: IngestionParams(config.cos.host, config.cos.key_id, config.cos.secret, config.cos.use_ssl,
           media_path_col=col.name, to_ingest=x, dest_folder=dest_folder_name, minio_bucket=config.cos.bucket), df_dict)
