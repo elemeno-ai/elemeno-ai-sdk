@@ -85,7 +85,7 @@ class MinioIngestion(FileIngestion):
 
     to_ingest = p.to_ingest
     file_path = to_ingest[p.media_path_col]
-    folder_remote = to_ingest[p.dest_folder_col] if p.dest_folder_col else to_ingest[p.dest_folder_col]
+    folder_remote = to_ingest[p.dest_folder_col] if p.dest_folder_col else p.dest_folder
     bucket = p.minio_bucket
     
     try:
