@@ -159,13 +159,13 @@ class FeatureStore:
     """
     media_cols = self._media_columns(feature_table)
     if len(media_cols) > 0:
-      self._ingest_files_from_df(to_ingest, media_cols)
+      self._ingest_files_from_df(feature_table.name, to_ingest, media_cols)
     self._sink.ingest(to_ingest, feature_table, renames, all_columns)
     
-  def _ingest_files_from_df(self, to_ingest: pd.DataFrame, media_cols: List[str]):
+  def _ingest_files_from_df(self, feature_table_name: str, to_ingest: pd.DataFrame, media_cols: List[str]):
     if self._file_sink_type is None:
       raise ValueError("File sink type not specified, cannot ingest files")  
-    self._file_sink.io_batch_ingest_from_df(to_ingest, media_cols)
+    self._file_sink.io_batch_ingest_from_df(feature_table_name, to_ingest, media_cols)
 
   def _ingest_files(self, to_ingest: ReadResponse):
     if self._file_sink_type is None:
