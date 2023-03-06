@@ -90,7 +90,7 @@ class MinioIngestion(FileIngestion):
     
     try:
       with open(file_path, 'rb') as file_data:
-        client.put_object(bucket, f"{folder_remote}/{file_path}", io.BytesIO(file_data))
+        client.put_object(bucket, f"{folder_remote}/{file_path}", file_data)
         logging.debug("Uploaded file {} to bucket {} and folder {}".format(file_path, bucket, folder_remote))
     except Exception as e:
       logging.error(f"error uploading file {file_path} to folder: {folder_remote}")
