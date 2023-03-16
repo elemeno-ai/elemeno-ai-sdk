@@ -21,6 +21,9 @@ _pip-pypi-elemeno: clean
 	python setup.py sdist bdist_wheel
 	twine upload --repository elemeno dist/*.whl
 
+test:
+	pytest
+
 pip-testpypi: clean _pip-testpypi
 
 pip-pypi: clean _pip-pypi
