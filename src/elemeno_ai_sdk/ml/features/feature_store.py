@@ -23,14 +23,28 @@ class FeatureStore:
   def __init__(self, 
     sink_type: Optional[IngestionSinkType] = None,
     file_sink_type: Optional[FileIngestionSinkType] = None,
-    source_type: Optional[IngestionSourceType] = None, **kwargs) -> None:
+    source_type: Optional[IngestionSourceType] = None, 
+    config: Optional[Dict] = None, **kwargs) -> None:
     """ 
     A FeatureStore is the starting point for working with Elemeno feature store via SDK.
     
     Use this class in conjunction with the FeatureTable class to create, read, update, and delete features.
     """
+    
     self._elm_config = Configs.instance()
+    if config is not None:
+      logger.debug("Using provided config via code")
+      self._elm_config = Configs.parse(config)
+    
+    if self._elm_config.is_empty():
+      raise Exception("Missing elemeno.yaml file. Make sure it's in the current directory or in the ELEMENO_CFG_FILE environment variable.")
+    
     self._fs = feast.FeatureStore(repo_path=self._elm_config.feature_store.feast_config_path, )
+
+    self._source_type = source_type
+    self._sink_type = sink_type
+    self._file_sink = file_sink_type
+
     if not sink_type:
       logger.info("No sink type provided, read-only mode will be used")
     else:
@@ -62,11 +76,7 @@ class FeatureStore:
     if not file_sink_type:
       logger.info("File sink type not specified, will not download files when there are binary columns")
     else:
-      if not self._elm_config.dask.uri:
-        logger.warn("Dask URI not specified, will not download files")
-      else:
-        print("Creating instance of MinioIngestionDask")
-        self. _file_sink = MinioIngestion()
+      self. _file_sink = MinioIngestion()
     self.config = self._fs.config
     # memory holds a reference for the result of the last data handling method
     self._memory = None
@@ -76,7 +86,7 @@ class FeatureStore:
 
   def _get_connection_string(self, redshift_params):
     if self._sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
-      return "sqlite:///test.db"
+      return "sqlite:///test.db?mode=rwc"
     user = redshift_params.user
     password = redshift_params.password
     host = redshift_params.host
@@ -114,6 +124,9 @@ class FeatureStore:
 
   def _media_columns(self, feature_table):
     media_columns = []
+    if not feature_table.original_schema:
+      logger.debug("No original schema, assuming no media columns")
+      return media_columns
     for k, p in feature_table.original_schema["properties"].items():
       if p['type'] == 'binary_upload' or p['type'] == 'binary_download':
         m = MediaColumn(k, p["type"] == "binary_upload")

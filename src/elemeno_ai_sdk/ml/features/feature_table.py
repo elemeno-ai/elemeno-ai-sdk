@@ -5,6 +5,7 @@ import datetime
 import feast
 from elemeno_ai_sdk import logger, config
 from feast.data_format import JsonFormat
+import feast.types
 from elemeno_ai_sdk.ml.features.types import FeatureType
 
 class FeatureTable:
@@ -29,7 +30,7 @@ class FeatureTable:
     self.is_streaming = is_streaming
     self._evt_col = event_column
     self._created_col = created_column
-    self._original_schema = []
+    self._original_schema = None
     self._table_schema = []
     self._elm_config = config.Configs.instance()
 
@@ -51,7 +52,7 @@ class FeatureTable:
     return self._table_schema
   
   @property
-  def original_schema(self) -> typing.List[typing.Dict]:
+  def original_schema(self) -> typing.Dict[str, typing.Any]:
     return self._original_schema
 
   @entities.setter
@@ -186,7 +187,7 @@ class FeatureTable:
     fv = feast.FeatureView(
       name = self.name,
       entities=self._entities,
-      features=self._features,
+      schema=[feast.Field(name=f.name, dtype=feast.types.from_value_type(f.dtype)) for f in self._features],
       online=self._online,
       source=ft_source,
       tags={}

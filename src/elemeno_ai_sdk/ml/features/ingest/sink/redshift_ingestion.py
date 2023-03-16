@@ -94,12 +94,6 @@ class RedshiftIngestion(Ingestion):
     - expected_columns: Optional list of columns to check for
     """
     super().ingest(to_ingest, ft, renames, expected_columns)
-    if renames is not None:
-      to_ingest = to_ingest.rename(columns=renames)
-    if expected_columns is None or len(expected_columns) == 0:
-      logger.warning("No expected columns provided. Will ingest all columns.")
-      expected_columns = to_ingest.columns.to_list()
-    to_ingest = to_ingest.filter(expected_columns, axis=1)
     conn = self._conn
     try:
       logger.info("Within RedshiftIngestion.ingest, about to create table {}".format(ft.name))

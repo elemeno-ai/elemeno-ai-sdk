@@ -5,6 +5,7 @@ import feast
 
 import pandas as pd
 from google.cloud import bigquery
+from google.cloud.exceptions import Conflict
 from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.types import FeatureType
@@ -99,7 +100,53 @@ class BigQueryIngestion(Ingestion):
   def get_last_row(self, feature_table: 'FeatureTable', date_from: typing.Optional[datetime] = None, where: typing.Optional[typing.Dict[str, typing.Any]] = None) -> pd.DataFrame:
     raise(NotImplementedError("This method is not implemented yet."))
 
-def create_table(self, to_ingest: pd.DataFrame, ft_name: str, engine: typing.Any):
-  #TODO: implement
-  raise NotImplementedError("BigQueryIngestion.create_table is not implemented.")
+  def create_table(self, to_ingest: pd.DataFrame, table_name: str, project_id: str, dataset_id: str) -> pd.DataFrame:
+    """
+    Creates a table in BigQuery if it does not exist.
+
+    args:
+    
+    - to_ingest: DataFrame to ingest
+    - table_name: name of table to be created
+    - project_id: GCP project ID
+    - dataset_id: ID of the dataset in BigQuery
+
+    return:
+    
+    - DataFrame with columns in the same order as the FeatureTable
+    """
+    to_ingest = to_ingest.convert_dtypes()
+
+    date_cols = ["created_timestamp", "create_timestamp", "event_timestamp", "created_date", "record_date", "updated_date"]
+    
+    columns = {}
+    for col, dtype in to_ingest.dtypes.items():
+        if col == 'media' or 'media' in col.split('_'):
+            columns[f'{col}_status'] = 'BOOLEAN'
+            to_ingest[f'{col}_status'] = False
+        if col in date_cols:
+            columns[col] = "STRING"
+        else:
+            columns[col] = dtype.name
+
+    # create BigQuery client
+    bqclient = bigquery.Client(project=project_id)
+
+    # create dataset if it doesn't exist
+    dataset_ref = bqclient.dataset(dataset_id)
+    dataset = bigquery.Dataset(dataset_ref)
+    try:
+        bqclient.create_dataset(dataset)
+    except Conflict:
+        pass
+
+    # create table if it doesn't exist
+    table_ref = dataset_ref.table(table_name)
+    table = bigquery.Table(table_ref, schema=[bigquery.SchemaField(col, columns[col]) for col in columns])
+    try:
+        bqclient.create_table(table)
+    except Conflict:
+        pass
+
+    return to_ingest
 

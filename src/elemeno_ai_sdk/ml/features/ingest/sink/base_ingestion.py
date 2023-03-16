@@ -23,9 +23,15 @@ class Ingestion(abc.ABC):
     if ft.evt_col not in to_ingest.columns:
       logger.warn("Could not find event_timestamp column in dataframe. Adding it now with default value.")
       to_ingest[ft.evt_col] = pd.to_datetime('now', utc=True)
+    if renames is not None:
+      to_ingest = to_ingest.rename(columns=renames)
+    if expected_columns is None or len(expected_columns) == 0:
+      logger.warning("No expected columns provided. Will ingest all columns.")
+      expected_columns = to_ingest.columns.to_list()
+    to_ingest = to_ingest.filter(expected_columns, axis=1)
 
   @abc.abstractmethod
-  def create_table(self, to_ingest: pd.DataFrame, ft_name: str, engine: Any, **kwargs) -> None:
+  def create_table(self, to_ingest: pd.DataFrame, ft_name: str, **kwargs) -> None:
     pass
 
   @abc.abstractmethod
