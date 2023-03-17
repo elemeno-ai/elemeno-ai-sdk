@@ -138,9 +138,10 @@ class MinioIngestion(FileIngestion):
     
     to_digest = p.to_digest
     file_path = to_digest[p.media_path_col]
+    file_path = os.path.normpath(file_path)
     folder_remote = to_digest[p.remote_folder_col] if p.remote_folder_col else p.remote_folder
     # remove ./ from the file name when it's present
-    folder_remote = folder_remote.replace("\.\/", "")
+    folder_remote = os.path.normpath(folder_remote)
     bucket = p.minio_bucket
 
     # check if bucket exists on minio
@@ -151,7 +152,7 @@ class MinioIngestion(FileIngestion):
       local_folder = ".binaries"
       if not os.path.exists(local_folder):
         os.makedirs(local_folder)
-      local_file_path = os.path.join(local_folder, file_path)
+      local_file_path = os.path.join(local_folder, folder_remote, file_path)
 
       client.get_object(bucket, f"{folder_remote}/{file_path}", local_file_path)
       logging.debug("Downloaded file {} from bucket {} and folder {}".format(file_path, bucket, folder_remote))
@@ -165,9 +166,9 @@ class MinioIngestion(FileIngestion):
 
     to_ingest = p.to_ingest
     file_path = to_ingest[p.media_path_col]
-    file_path = file_path.replace("\.\/", "")
+    file_path = os.path.normpath(file_path)
     folder_remote = to_ingest[p.dest_folder_col] if p.dest_folder_col else p.dest_folder
-    folder_remote = folder_remote.replace("\.\/", "")
+    folder_remote = os.path.normpath(folder_remote)
     bucket = p.minio_bucket
     
     try:
