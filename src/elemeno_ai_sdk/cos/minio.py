@@ -27,6 +27,9 @@ class MinioClient(CloudObjectStorage):
           secure=use_ssl
       )
     
+    def bucket_exists(self, bucket_name: str) -> bool:
+       return self.client.bucket_exists(bucket_name=bucket_name)
+    
     def list_dir(self, bucket_name: str, prefix: str = "") -> list:
         found = self.client.bucket_exists(bucket_name)
         if not found:

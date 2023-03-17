@@ -32,13 +32,19 @@ class Configs:
     def instance(cls, force_reload=False):
         cfg_path = os.getenv('ELEMENO_CFG_FILE', 'elemeno.yaml')
         try:
+            # check if cfg_path exists
+            if not os.path.exists(cfg_path):
+                logging.warning("Couldn't find a config file at %s, will continue without loading it", cfg_path)
+                props = OmegaConf.create()
+                return props
             if cls._instance is None or force_reload:
                 cls._instance = cls.__new__(cls)
                 cls._props = OmegaConf.load(cfg_path)
             return cls._instance.props
-        except:
-            logging.warning("Couldn't find a config file at %s, will continue without loading it", cfg_path)
-            return OmegaConf.create()
+        except Exception as e:
+            logging.error("Unexpected error when instantiating the config object", e)
+            props = OmegaConf.create()
+            return props
 
     @property
     def props(self):

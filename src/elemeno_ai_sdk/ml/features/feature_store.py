@@ -317,6 +317,7 @@ class FeatureStore:
         diff_join_key: Optional[str] = None,
         join_key: Optional[str] = None,
         diff_where: Optional[Dict] = None,
+        download_binaries: Optional[bool] = False,
         timestamp_column: Optional[str] = "created_timestamp") -> pd.DataFrame:
     """ 
     Get the training features for the given feature view.
@@ -367,6 +368,10 @@ class FeatureStore:
       where += f" LIMIT {limit}"
     query = f"SELECT {columns} FROM \"{table_name}\" {join} {where} ORDER BY \"{table_name}\".{timestamp_column} ASC"
     df = self._sink.read_table(query)
+    
+    if download_binaries and self._has_medias(feature_table=feature_table):
+      self._file_sink.io_batch_digest(feature_table.name, df, self._media_columns(feature_table))
+    
     if only_most_recent:
       return df.sort_values(by="created_timestamp", ascending=False) \
         .groupby(by=[e.name for e in feature_table.entities]) \

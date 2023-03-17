@@ -15,6 +15,9 @@ class FileIngestion(abc.ABC):
   def io_batch_ingest(self, to_ingest: List[Dict]):
     pass
 
+  @abc.abstractmethod
+  def io_batch_digest(self, feature_table_name: str, to_digest: pd.DataFrame, media_columns: List['MediaColumn']):
+    pass
 class MediaColumn:
 
   def __init__(self, name: str, is_upload: bool):
