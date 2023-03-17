@@ -37,15 +37,19 @@ class DigestionParams:
     self.media_name_col = media_name_col
     self.minio_bucket = minio_bucket
     self.to_digest = to_digest
+
+def minio_client():
+  config = Configs.instance()
+  client = MinioClient(host=config.cos.host,
+    access_key=config.cos.key_id,
+    secret_key=config.cos.secret,
+    use_ssl=config.cos.use_ssl,)
+  return client
 class MinioIngestion(FileIngestion):
 
   def __init__(self):
-      config = Configs.instance()
-      self.config = config
-      self.client = MinioClient(host=config.cos.host,
-        access_key=config.cos.key_id,
-        secret_key=config.cos.secret,
-        use_ssl=config.cos.use_ssl,)
+    self.config = Configs.instance()
+    pass
 
   def io_batch_ingest_from_df(self, feature_table_name: str, to_ingest: pd.DataFrame, media_columns: List[MediaColumn]):
     local_path_cols = filter(lambda x: x if "http" not in x.name and "https" not in x.name else None, media_columns)
@@ -89,8 +93,32 @@ class MinioIngestion(FileIngestion):
     pool.join()
     return None
   
+  def _remove_duplicates(self, df_dict, media_columns):
+    """
+    Remove duplicated rows from a list of dictionaries based on the values of
+    the specified media columns.
+    
+    Parameters:
+    - df_dict: a list of dictionaries representing a DataFrame
+    - media_columns: a list of column names to use as the criteria for detecting duplicates
+    
+    Returns:
+    A list of dictionaries with duplicated rows removed based on the specified media columns.
+    """
+    unique_rows = []
+    seen_media = set()
+    for row in df_dict:
+        media = tuple(row[col.name] for col in media_columns)
+        if media not in seen_media:
+            unique_rows.append(row)
+            seen_media.add(media)
+    return unique_rows
+  
   def io_batch_digest(self, feature_table_name: str, to_digest: pd.DataFrame, media_columns: List['MediaColumn']):
+    # guarantee unique values on medias
     df_dict = to_digest.to_dict('records')
+    # remove duplicated records from the dict
+    self._remove_duplicates(df_dict, media_columns)
     for col in media_columns:
       logging.info("Downloading {} files from media column {}".format(len(to_digest), col.name))
       remote_folder_name = f"{feature_table_name}_{col.name}"
@@ -105,15 +133,18 @@ class MinioIngestion(FileIngestion):
 
 
   def download_file_from_remote(self, p: 'DigestionParams'):
+    client = minio_client()
     logging.info("Processing {}".format(type(p)))
     
     to_digest = p.to_digest
     file_path = to_digest[p.media_path_col]
     folder_remote = to_digest[p.remote_folder_col] if p.remote_folder_col else p.remote_folder
+    # remove ./ from the file name when it's present
+    folder_remote = folder_remote.replace("\.\/", "")
     bucket = p.minio_bucket
 
     # check if bucket exists on minio
-    if not self.client.bucket_exists(bucket):
+    if not client.bucket_exists(bucket):
       raise ValueError("The specified bucket does not exists")
 
     try:
@@ -122,23 +153,27 @@ class MinioIngestion(FileIngestion):
         os.makedirs(local_folder)
       local_file_path = os.path.join(local_folder, file_path)
 
-      self.client.get_object(bucket, f"{folder_remote}/{file_path}", local_file_path)
+      client.get_object(bucket, f"{folder_remote}/{file_path}", local_file_path)
       logging.debug("Downloaded file {} from bucket {} and folder {}".format(file_path, bucket, folder_remote))
     except (Exception, S3Error) as e:
       logging.error("Error downloading file {} from bucket {} and folder {}. Error: {}".format(file_path, bucket, folder_remote, e))
     return None
 
   def upload_file_to_remote(self, p: 'IngestionParams'):
+    client = minio_client()
     logging.info("Processing {}".format(type(p)))
 
     to_ingest = p.to_ingest
     file_path = to_ingest[p.media_path_col]
+    file_path = file_path.replace("\.\/", "")
     folder_remote = to_ingest[p.dest_folder_col] if p.dest_folder_col else p.dest_folder
+    folder_remote = folder_remote.replace("\.\/", "")
     bucket = p.minio_bucket
     
     try:
       with open(file_path, 'rb') as file_data:
-        self.client.put_object(bucket, f"{folder_remote}/{file_path}", file_data)
+        file_contents = file_data.read()
+        client.put_object(bucket, f"{folder_remote}/{file_path}", io.BytesIO(file_contents))
         logging.debug("Uploaded file {} to bucket {} and folder {}".format(file_path, bucket, folder_remote))
     except Exception as e:
       logging.error(f"error uploading file {file_path} to folder: {folder_remote}")

@@ -31,23 +31,25 @@ class TestMinioIngestion(unittest.TestCase):
 
       # Mock MinioIngestion
       minio_ingestion = MinioIngestion()
-      minio_ingestion.client = minio_client_mock
 
-      # Define DigestionParams
-      digestion_params = DigestionParams(
-        media_path_col="media_path",
-        to_digest={"media_path": "test_file.txt"},
-        remote_folder="remote_folder"
-      )
+      with patch("elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion.minio_client") as minio_client:
+        minio_client.return_value = minio_client_mock
 
-      # Call the method
-      minio_ingestion.download_file_from_remote(digestion_params)
+        # Define DigestionParams
+        digestion_params = DigestionParams(
+          media_path_col="media_path",
+          to_digest={"media_path": "test_file.txt"},
+          remote_folder="remote_folder"
+        )
 
-      # Assert that the bucket_exists and get_object methods were called
-      minio_client_mock.bucket_exists.assert_called_once_with("elemeno-cos")
-      minio_client_mock.get_object.assert_called_once_with(
-        "elemeno-cos", "remote_folder/test_file.txt", ".binaries/test_file.txt"
-      )
+        # Call the method
+        minio_ingestion.download_file_from_remote(digestion_params)
+
+        # Assert that the bucket_exists and get_object methods were called
+        minio_client_mock.bucket_exists.assert_called_once_with("elemeno-cos")
+        minio_client_mock.get_object.assert_called_once_with(
+          "elemeno-cos", "remote_folder/test_file.txt", ".binaries/test_file.txt"
+        )
 
   def test_download_file_from_remote_invalid_file_path(self):
     # Setup
