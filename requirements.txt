@@ -8,7 +8,7 @@ omegaconf==2.1.0
 onnx==1.10.2
 pandas>=1.2.4
 pandas_gbq==0.15.0
-setuptools==53.0.0
+setuptools>=59.5.0
 sphinx_rtd_theme==1.0.0
 tf2onnx==1.9.3
 #onnxruntime>=1.8.1
