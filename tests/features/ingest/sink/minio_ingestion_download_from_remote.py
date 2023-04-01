@@ -48,7 +48,7 @@ class TestMinioIngestion(unittest.TestCase):
         # Assert that the bucket_exists and get_object methods were called
         minio_client_mock.bucket_exists.assert_called_once_with("elemeno-cos")
         minio_client_mock.get_object.assert_called_once_with(
-          "elemeno-cos", "remote_folder/test_file.txt", ".binaries/test_file.txt"
+          "elemeno-cos", "remote_folder/test_file.txt", ".binaries/remote_folder/test_file.txt"
         )
 
   def test_download_file_from_remote_invalid_file_path(self):
