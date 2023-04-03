@@ -19,6 +19,7 @@ typer==0.6.1
 psycopg2-binary==2.9.4
 pyspark==3.3.0
 asyncio==3.4.3
+minio>=7.1.3
 #pip install -i https://test.pypi.org/simple/ onnxruntime==1.8.2.dev20210816004 # do when using mac arm64
 #torch==1.10.2
 # for 3.10 install 1.11
