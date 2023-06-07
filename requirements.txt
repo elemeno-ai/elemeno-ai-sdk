@@ -1,5 +1,5 @@
 #-e git+http://github.com/pytorch/pytorch@5a78725#egg=torch
-feast[redis,gcp,aws]==0.26.0
+feast[redis,gcp,aws]==0.31.0
 GitPython==3.1.26
 Jinja2==3.0.3
 mlflow==1.26.1
