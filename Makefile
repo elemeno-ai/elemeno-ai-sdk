@@ -24,6 +24,10 @@ _pip-pypi-elemeno: clean
 test:
 	pytest
 
+dev:
+	pip install -r requirements.txt
+	pip install -r requirements-dev.txt
+
 pip-testpypi: clean _pip-testpypi
 
 pip-pypi: clean _pip-pypi
