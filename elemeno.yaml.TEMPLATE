@@ -10,7 +10,9 @@ cos:
   use_ssl: False
   bucket: elemeno-cos
 registry:
+  endpoint_url: http://localhost:9005
   tracking_url: http://mlflow.tracking.url:80
+  ignore_tls: True
 feature_store:
   feast_config_path: .
   registry: gs://elemeno-feature-store/generic_registry
