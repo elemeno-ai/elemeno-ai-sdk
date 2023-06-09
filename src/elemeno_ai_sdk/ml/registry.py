@@ -25,7 +25,6 @@ class ModelRegistry:
 
     def save_model(self, model_file: str, model_name: str, tags: Optional[Dict[str, str]] = None) -> None:
         with mlflow.start_run(tags=tags):
-            mlflow.sklearn.log_model()
             mlflow.pyfunc.log_model(artifact_path=model_file, registered_model_name=model_name)
 
         if tags is not None:
