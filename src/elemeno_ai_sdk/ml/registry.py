@@ -19,7 +19,7 @@ class ModelRegistry:
         mlflow.set_tracking_uri(cfg.registry.tracking_url)
         self.client = mlflow.MlflowClient()
 
-    def set_model_tags(self, model_name: str, tags: Dict[str, str]) -> None:
+    def tag_model(self, model_name: str, tags: Dict[str, str]) -> None:
         for tag_name, tag_value in tags.items():
             self.client.set_registered_model_tag(name=model_name, key=tag_name, value=tag_value)
 
@@ -29,10 +29,10 @@ class ModelRegistry:
             mlflow.pyfunc.log_model(artifact_path=model_file, registered_model_name=model_name)
 
         if tags is not None:
-            self.set_model_tags(model_name=model_name, tags=tags)
+            self.tag_model(model_name=model_name, tags=tags)
 
-    def get_models_by_group(self) -> List[str]:
-        models = self.client.search_registered_models(filter_string="tag.key = 'group'")
+    def get_models_by_tag(self, tag: str) -> List[str]:
+        models = self.client.search_registered_models(filter_string=f"tag.value = {tag}")
         return [model.name for model in models]
 
     def get_latest_model_torch(self, model_name: str, device: str):
