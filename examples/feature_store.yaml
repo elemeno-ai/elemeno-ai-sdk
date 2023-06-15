@@ -1,0 +1,14 @@
+project: elemeno_saas
+registry: s3://feature-view/one_blinc/feature-registry
+provider: aws
+offline_store:
+  type: redshift
+  cluster_id: redshift-cluster-2
+  region: us-east-1
+  user: one_blinc
+  database: one_blinc
+  s3_staging_location: s3://feature-view/one_blinc/feature-staging
+  iam_role: arn:aws:iam::361265061473:role/service-role/AmazonRedshift-CommandsAccessRole-20220215T013010
+online_store:
+  type: dynamodb
+  region: us-east-1
