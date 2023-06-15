@@ -282,6 +282,17 @@ class FeatureStore:
     - A RetrievalJob object.
     """
     return self._fs.get_historical_features(entity_source, feature_refs)
+  
+  def materialize_incremental(self, feature_table: FeatureTable, end_ts: str = datetime.now().replace(microsecond=0).isoformat()):
+    """
+    Materialize the offline data to the online table incrementaly.
+
+    args:
+      feature_table (FeatureTable): The feature table to materialize.
+      end_ts (str, optional): The end timestamp to materialize. Defaults to datetime.now().replace(microsecond=0).isoformat().
+
+    """
+    self._fs.materialize_incremental([feature_table.get_view()], end_ts)
 
   def get_online_features(self, entities: List[Dict[str, Any]],
         requested_features: Optional[List[str]]=None) \
