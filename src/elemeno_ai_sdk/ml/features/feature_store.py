@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import json
-from typing import Optional, Dict, List, Any, Union
+from typing import Optional, Dict, List, Any, Union, Callable
 import pandas as pd
 import feast
 from feast.infra.offline_stores.offline_store import RetrievalJob
@@ -230,6 +230,40 @@ class FeatureStore:
     cols.extend([ft.created_col, ft.evt_col])
     if ignore_when_empty != None:
       read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
+    self.ingest_response(ft, read_response, all_columns=cols)
+
+  def read_transform_and_ingest(self, ft: 'FeatureTable', query: str, binary_cols: List[str], 
+                              transformations: List[Callable[[pd.DataFrame], pd.DataFrame]], 
+                              ignore_when_empty: Optional[List[str]] = None, **kwargs):
+    """
+    Ingest data from a query after applying a pipeline of transformations. Used when the source and the sink are different.
+    
+    It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+    
+    The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
+    args:
+    
+    - ft: The FeatureTable object
+    - query: A SQL query to ingest data from.
+    - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
+    - transformations: A list of transformation functions to be applied on the dataframe
+    - ignore_when_empty: A list of columns that will be ignored when the result is empty.
+    """
+    if not 'index' in kwargs:
+      raise("index must be provided")
+    
+    read_response = self._source.read(query=query, binary_columns=binary_cols, dest_folder_col="id", media_id_col="id", **kwargs)
+    # make sure only the featuretable columns are ingested
+    cols = [e.name for e in ft.entities]
+    cols.extend([f.name for f in ft.features])
+    cols.extend([ft.created_col, ft.evt_col])
+    if ignore_when_empty != None:
+      read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
+    
+    # Apply transformations
+    for transform in transformations:
+        read_response.dataframe = transform(read_response.dataframe)
+
     self.ingest_response(ft, read_response, all_columns=cols)
 
   def read_and_ingest_from_query_after(self, ft: 'FeatureTable', query: str, after: str, binary_cols: Optional[List[str]] = None,
