@@ -25,13 +25,6 @@ feature_store:
         database: "client_oneblinc"
   source:
     type: Redshift
-    # params:
-    #     cluster_name: "default"
-    #     host: "default.030282864380.us-east-1.redshift-serverless.amazonaws.com"
-    #     port: 5439
-    #     user: "dev"
-    #     password: "4v!Nh9Z4BS0G"
-    #     database: "dev"
     params:
         cluster_name: "redshift-cluster-2"
         host: "redshift-cluster-2.cwuptesab6o8.us-east-1.redshift.amazonaws.com"
