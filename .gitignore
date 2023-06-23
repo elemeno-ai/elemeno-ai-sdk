@@ -55,6 +55,8 @@ htmlcov
 *.iml
 *.komodoproject
 .vim
+.ipynb_checkpoints
+.direnv
 
 # Complexity
 output/*.html
