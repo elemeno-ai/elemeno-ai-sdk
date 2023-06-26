@@ -1,6 +1,9 @@
 import logging
 import os
 from omegaconf import OmegaConf
+import json
+import requests
+from typing import Mapping, Iterable
 
 class Configs:
     """
@@ -49,3 +52,20 @@ class Configs:
     @property
     def props(self):
         return self._props
+    
+
+    def auth_fs(self):
+       JWT_TOKEN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jwt_token')
+       
+       with open(Configs.JWT_TOKEN_PATH) as f:
+        JWT_TOKEN =  json.load(f)
+    
+       headers = {'x-token: Bearer {}'.format(JWT_TOKEN)}
+
+       response = requests.get(Configs.SAAS_ADRESS + '/user/settings/sdk/authentication', headers=headers)
+       #globals().update(response)  
+
+       return json.loads(response)
+    
+    def parse_jwt_token(self, jwt_token: Mapping[str, Iterable[str]]):
+        pass
