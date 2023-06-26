@@ -56,13 +56,14 @@ class Configs:
 
     def auth_fs(self):
        JWT_TOKEN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jwt_token')
+       SAAS_ADRESS = 'https://c3po-stg.elemeno.ai/'
        
-       with open(Configs.JWT_TOKEN_PATH) as f:
+       with open(JWT_TOKEN_PATH) as f:
         JWT_TOKEN =  json.load(f)
     
        headers = {'x-token: Bearer {}'.format(JWT_TOKEN)}
 
-       response = requests.get(Configs.SAAS_ADRESS + '/user/settings/sdk/authentication', headers=headers)
+       response = requests.get(SAAS_ADRESS + 'user/settings/sdk/authentication', headers=headers)
        #globals().update(response)  
 
        return json.loads(response)
