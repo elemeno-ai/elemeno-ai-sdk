@@ -1,7 +1,33 @@
 .PHONY: clean docs pip-testpypi wheel
 
-clean:
-	rm -rf dist
+clean: clean-build clean-dev clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+
+clean-build: ## remove build artifacts
+	rm -rf dist/
+	rm -rf .eggs/
+	find . -name '*.egg-info' -exec rm -fr {} +
+	find . -name '*.egg' -exec rm -f {} +
+
+clean-env: ## remove dev environment
+	rm -fr .direnv/
+
+clean-pyc: ## remove Python file artifacts
+	find . -name '*.pyc' -exec rm -f {} +
+	find . -name '*.pyo' -exec rm -f {} +
+	find . -name '*~' -exec rm -f {} +
+	find . -name '__pycache__' -exec rm -fr {} +
+	find . -name '*.ipynb_checkpoints' -exec rm -fr {} +
+
+clean-test: ## remove test and coverage artifacts
+	rm -fr .tox/
+	rm -f .coverage
+	rm -fr htmlcov/
+	rm -fr .pytest_cache
+
+env: 
+	direnv allow
+	pip install --upgrade pip
+	pip install -e .
 
 wheel:
 	python setup.py bdist_wheel

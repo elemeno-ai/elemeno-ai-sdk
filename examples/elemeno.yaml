@@ -1,0 +1,42 @@
+# This file contains the base configuration for the sdk to function properly
+# Elemeno-AI
+
+app:
+  mode: ${oc.env:ELEMENO_MODE,development}
+cos:
+  host: minio.app.elemeno.ai:9000
+  key_id: client_oneblinc
+  secret: m6bD8dUf$8vy
+  use_ssl: False
+  bucket: client-oneblinc
+registry:
+  tracking_url: http://mlflow.elemeno.ai
+feature_store:
+  feast_config_path: .
+  registry: s3://feature-view/client_oneblinc/feature-registry
+  sink:
+    type: Redshift
+    params:
+        cluster_name: "redshift-cluster-2"
+        host: "redshift-cluster-2.cwuptesab6o8.us-east-1.redshift.amazonaws.com"
+        port: 5439
+        user: "REMOVED"
+        password: "REMOVED"
+        database: "REMOVED"
+  source:
+    type: Redshift
+    params:
+        cluster_name: "redshift-cluster-2"
+        host: "redshift-cluster-2.cwuptesab6o8.us-east-1.redshift.amazonaws.com"
+        port: 5439
+        user: "REMOVED"
+        database: "REMOVED"
+        iam_role: "arn:aws:iam::361265061473:role/service-role/AmazonRedshift-CommandsAccessRole-20220215T013010"
+gcp:
+  sa:
+    file: /tmp/gcp-credentials.json
+  appflow:
+    client_secret:
+      file: /tmp/client_secrets.json
+    scopes:
+      - https://www.googleapis.com/auth/bigquery
