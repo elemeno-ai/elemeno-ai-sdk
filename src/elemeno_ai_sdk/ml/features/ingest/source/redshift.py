@@ -3,7 +3,7 @@ import pandas as pd
 
 import redshift_connector
 
-from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource
+from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource, ReadResponse
 
 MAX_LINES_TO_IMPORT = 10000
 
@@ -39,7 +39,7 @@ class RedshiftIngestionSource(BaseSource):
       self.database = database
       self.iam_role = iam_role
 
-    def read(self, base_query: Optional[str]=None, **kwargs) -> pd.DataFrame:
+    def read(self, base_query: Optional[str]=None, **kwargs) -> ReadResponse:
       """ Reads data from the Redshift source.
 
       args:
@@ -65,9 +65,9 @@ class RedshiftIngestionSource(BaseSource):
         with conn.cursor() as cursor:
           conn.autocommit = True
           cursor.execute(self.base_query)
-          return cursor.fetch_dataframe()
+          return ReadResponse(dataframe=cursor.fetch_dataframe())
 
-    def read_after(self, timestamp_str: str, base_query: Optional[str] = None, **kwargs) -> pd.DataFrame:
+    def read_after(self, timestamp_str: str, base_query: Optional[str] = None, **kwargs) -> ReadResponse:
       """ Reads data from the Redshift source after a certain timestamp.
 
       args:
