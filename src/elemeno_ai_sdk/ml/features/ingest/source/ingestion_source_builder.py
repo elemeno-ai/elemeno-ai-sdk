@@ -114,6 +114,7 @@ class IngestionSourceBuilder:
       if hasattr(self._config.feature_store.source.params, "password"):
         password = self._config.feature_store.source.params.password
     if iam_role is None:
-      iam_role = self._config.feature_store.source.params.iam_role
+      if hasattr(self._config.feature_store.source.params, "iam_role"):
+        iam_role = self._config.feature_store.source.params.iam_role
     self.type = IngestionSourceType.REDSHIFT
     return RedshiftIngestionSource(cluster_name=cluster_name, user=user, database=database, base_query=base_query, iam_role=iam_role)

@@ -52,20 +52,35 @@ class RedshiftIngestionSource(BaseSource):
       """
       if base_query is not None:
         self.base_query = base_query
-      with redshift_connector.connect(
-          iam=True,
-          database=self.database,
-          db_user=self.user,
-          password='',
-          user='',
-          cluster_identifier=self.cluster_name,
-          profile='default',
-          preferred_role=self.iam_role,
-      ) as conn:
-        with conn.cursor() as cursor:
-          conn.autocommit = True
-          cursor.execute(self.base_query)
-          return ReadResponse(dataframe=cursor.fetch_dataframe())
+      if self.iam_role is not None:
+        with redshift_connector.connect(
+            iam=True,
+            database=self.database,
+            db_user=self.user,
+            password='',
+            user='',
+            cluster_identifier=self.cluster_name,
+            profile='default',
+            preferred_role=self.iam_role,
+        ) as conn:
+          with conn.cursor() as cursor:
+            conn.autocommit = True
+            cursor.execute(self.base_query)
+            return ReadResponse(dataframe=cursor.fetch_dataframe())
+      else:
+        with redshift_connector.connect(
+            iam=True,
+            database=self.database,
+            db_user=self.user,
+            password=self.password,
+            user=self.user,
+            cluster_identifier=self.cluster_name,
+            profile='default',
+        ) as conn:
+          with conn.cursor() as cursor:
+            conn.autocommit = True
+            cursor.execute(self.base_query)
+            return ReadResponse(dataframe=cursor.fetch_dataframe())
 
     def read_after(self, timestamp_str: str, base_query: Optional[str] = None, **kwargs) -> ReadResponse:
       """ Reads data from the Redshift source after a certain timestamp.
