@@ -55,7 +55,7 @@ class RedshiftIngestionSource(BaseSource):
       with redshift_connector.connect(
           iam=True,
           database=self.database,
-          db_user='awsuser',
+          db_user=self.user,
           password='',
           user='',
           cluster_identifier=self.cluster_name,
