@@ -30,8 +30,9 @@ feature_store:
         host: "redshift-cluster-2.cwuptesab6o8.us-east-1.redshift.amazonaws.com"
         port: 5439
         user: "client_oneblinc"
-        password: "4v!Nh9Z4BS0G"
+        # password: "4v!Nh9Z4BS0G"
         database: "client_oneblinc"
+        iam_role: "arn:aws:iam::361265061473:role/service-role/AmazonRedshift-CommandsAccessRole-20220215T013010"
 gcp:
   sa:
     file: /tmp/gcp-credentials.json
