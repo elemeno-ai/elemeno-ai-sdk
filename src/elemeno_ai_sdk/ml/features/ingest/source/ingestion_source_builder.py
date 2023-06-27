@@ -108,9 +108,11 @@ class IngestionSourceBuilder:
     if port is None:
       port = self._config.feature_store.source.params.port
     if user is None:
-      user = self._config.feature_store.source.params.user
+      if hasattr(self._config.feature_store.source.params, "user"):
+        user = self._config.feature_store.source.params.user
     if password is None:
-      password = self._config.feature_store.source.params.password
+      if hasattr(self._config.feature_store.source.params, "password"):
+        password = self._config.feature_store.source.params.password
     if iam_role is None:
       iam_role = self._config.feature_store.source.params.iam_role
     self.type = IngestionSourceType.REDSHIFT
