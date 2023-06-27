@@ -20,18 +20,17 @@ feature_store:
         cluster_name: "redshift-cluster-2"
         host: "redshift-cluster-2.cwuptesab6o8.us-east-1.redshift.amazonaws.com"
         port: 5439
-        user: "client_oneblinc"
-        password: "4v!Nh9Z4BS0G"
-        database: "client_oneblinc"
+        user: "REMOVED"
+        password: "REMOVED"
+        database: "REMOVED"
   source:
     type: Redshift
     params:
         cluster_name: "redshift-cluster-2"
         host: "redshift-cluster-2.cwuptesab6o8.us-east-1.redshift.amazonaws.com"
         port: 5439
-        user: "client_oneblinc"
-        # password: "4v!Nh9Z4BS0G"
-        database: "client_oneblinc"
+        user: "REMOVED"
+        database: "REMOVED"
         iam_role: "arn:aws:iam::361265061473:role/service-role/AmazonRedshift-CommandsAccessRole-20220215T013010"
 gcp:
   sa:
