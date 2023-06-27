@@ -80,7 +80,8 @@ class IngestionSourceBuilder:
     return BigQueryIngestionSource(gcp_project_id=project_id, base_query=base_query)
 
   def build_redshift(self, cluster_name: Optional[str]=None, host: Optional[str]=None,
-    port: Optional[int]=None, user: Optional[str]=None, password: Optional[str]=None, database: Optional[str]=None, base_query: Optional[str]=None) -> RedshiftIngestionSource:
+    port: Optional[int]=None, user: Optional[str]=None, password: Optional[str]=None, database: Optional[str]=None, base_query: Optional[str]=None,
+    iam_role: Optional[str]=None) -> RedshiftIngestionSource:
     """ Builds a Redshift ingestion source instance.
     
     args:
@@ -92,6 +93,7 @@ class IngestionSourceBuilder:
     - password: The password of the Redshift instance. Not used when cluster_name is specified.
     - database: The name of the Redshift database.
     - base_query: The base query to be used to query the Redshift.
+    - iam_role: The IAM role to be used to query the Redshift. Not used when cluster_name is not specified.
     
     return:
     
@@ -109,5 +111,7 @@ class IngestionSourceBuilder:
       user = self._config.feature_store.source.params.user
     if password is None:
       password = self._config.feature_store.source.params.password
+    if iam_role is None:
+      iam_role = self._config.feature_store.source.params.iam_role
     self.type = IngestionSourceType.REDSHIFT
-    return RedshiftIngestionSource(cluster_name=cluster_name, database=database, base_query=base_query)
+    return RedshiftIngestionSource(cluster_name=cluster_name, database=database, base_query=base_query, iam_role=iam_role)

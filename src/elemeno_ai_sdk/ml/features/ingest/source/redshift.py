@@ -12,7 +12,8 @@ MAX_LINES_TO_IMPORT = 10000
 class RedshiftIngestionSource(BaseSource):
 
     def __init__(self, database: str, cluster_name: Optional[str]=None, base_query: Optional[str]=None,
-      host: Optional[str]=None, port: Optional[int]=None, user: Optional[str]=None, password: Optional[str]=None):
+      host: Optional[str]=None, port: Optional[int]=None, user: Optional[str]=None, password: Optional[str]=None,
+      iam_role: Optional[str]=None):
       """ Initializes a Redshift ingestion source.
       
       args:
@@ -24,6 +25,7 @@ class RedshiftIngestionSource(BaseSource):
       - port: The port of the Redshift instance.
       - user: The username of the Redshift instance.
       - password: The password of the Redshift instance.
+      - iam_role: The IAM role to be used to query the Redshift.
 
       """
       if cluster_name is not None and (host is not None or port is not None or user is not None or password is not None):
@@ -35,6 +37,7 @@ class RedshiftIngestionSource(BaseSource):
       self.cluster_name = cluster_name
       self.base_query = base_query
       self.database = database
+      self.iam_role = iam_role
 
     def read(self, base_query: Optional[str]=None, **kwargs) -> pd.DataFrame:
       """ Reads data from the Redshift source.
@@ -56,7 +59,8 @@ class RedshiftIngestionSource(BaseSource):
           password='',
           user='',
           cluster_identifier=self.cluster_name,
-          profile='default'
+          profile='default',
+          preferred_role=self.iam_role,
       ) as conn:
         with conn.cursor() as cursor:
           conn.autocommit = True
