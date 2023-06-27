@@ -28,8 +28,8 @@ class RedshiftIngestionSource(BaseSource):
       - iam_role: The IAM role to be used to query the Redshift.
 
       """
-      if cluster_name is not None and (host is not None or port is not None or user is not None or password is not None):
-        raise ValueError("When specifying cluster name you cannot specify host, port, user or password")
+      # if cluster_name is not None and (host is not None or port is not None or user is not None or password is not None):
+      #   raise ValueError("When specifying cluster name you cannot specify host, port, user or password")
       self.host = host
       self.port = port
       self.user = user
