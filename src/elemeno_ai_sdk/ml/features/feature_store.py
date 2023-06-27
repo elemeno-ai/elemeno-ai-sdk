@@ -265,11 +265,8 @@ class FeatureStore:
         - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
         - ignore_when_empty: A list of columns that will be ignored when the result is empty.
         """
-        if "index" not in kwargs:
-            raise ("index must be provided")
-
         read_response = self._source.read(
-            query=query,
+            base_query=query,
             binary_columns=binary_cols,
             dest_folder_col="id",
             media_id_col="id",
@@ -308,11 +305,8 @@ class FeatureStore:
         - transformations: A list of transformation functions to be applied on the dataframe
         - ignore_when_empty: A list of columns that will be ignored when the result is empty.
         """
-        if "index" not in kwargs:
-            raise ("index must be provided")
-
         read_response = self._source.read(
-            query=query,
+            base_query=query,
             binary_columns=binary_cols,
             dest_folder_col="id",
             media_id_col="id",
@@ -356,9 +350,6 @@ class FeatureStore:
         - transformations: A list of transformation functions to be applied on the dataframe
         - ignore_when_empty: A list of columns that will be ignored when the result is empty.
         """
-        # if "index" not in kwargs:
-        #     raise ("index must be provided")
-
         cols = [e.name for e in ft.entities]
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
@@ -393,10 +384,8 @@ class FeatureStore:
         - after: A timestamp after which the query will be executed. Use the same date format of the source.
         - binary_cols: A list of binary columns containing references to files to be downloaded to our cloud object storage.
         """
-        if not "index" in kwargs:
-            raise ("index must be provided")
         read_response = self._source.read_after(
-            query=query,
+            base_query=query,
             timestamp_str=after,
             binary_columns=binary_cols,
             media_id_col="id",
