@@ -69,7 +69,7 @@ class RedshiftIngestionSource(BaseSource):
             return ReadResponse(dataframe=cursor.fetch_dataframe())
       else:
         with redshift_connector.connect(
-            iam=True,
+            iam=False,
             database=self.database,
             db_user=self.user,
             password=self.password,
