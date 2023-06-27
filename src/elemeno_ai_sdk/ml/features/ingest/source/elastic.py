@@ -13,14 +13,14 @@ class ElasticIngestionSource(BaseSource):
     self._es = Elasticsearch(hosts=[host],
             http_auth=(username, password))
   
-  def read(self, index: str = "", query: str = "", max_per_page: int = 1000, max_pages: Optional[int] = None, 
+  def read(self, index: str = "", base_query: str = "", max_per_page: int = 1000, max_pages: Optional[int] = None, 
     binary_columns: Optional[List[str]] = None, media_id_col: Optional[str] = None, dest_folder_col: Optional[str] = None) -> ReadResponse:
     """ Reads data from elastic.
 
     args:
     
     - index: The index to read from.
-    - query: The query to use.
+    - base_query: The query to use.
     - max_per_page: The maximum number of records to read per page.
     - binary_columns: A list of columns containing links to binary files (jpeg, pdf, etc) that will be downloaded by a Sink.
     - media_id_col: The column containing the media id.
@@ -82,7 +82,7 @@ class ElasticIngestionSource(BaseSource):
       for bin_col in binary_columns:
         prepared_medias.extend(self.prepare_medias(res['hits']['hits'], bin_col, media_id_col, dest_folder_col))
 
-  def read_after(self, timestamp_str: str, index: str = "", query: str = "", max_per_page: int = 1000, 
+  def read_after(self, timestamp_str: str, index: str = "", base_query: str = "", max_per_page: int = 1000, 
     binary_columns: Optional[List[str]] = None, media_id_col: Optional[str] = None, dest_folder_col: Optional[str] = None) -> ReadResponse:
     """ Read data after a given timestamp. 
     When using this function you can't specify a range filter in the query.
@@ -91,7 +91,7 @@ class ElasticIngestionSource(BaseSource):
     
     - timestamp_str: A string representing a timestamp. It should have the same format used in the source elastic.
     - index: The index to read from.
-    - query: The query to use.
+    - base_query: The query to use.
     - max_per_page: The maximum number of records to read per page.
     - binary_columns: A list of columns containing links to binary files (jpeg, pdf, etc) that will be downloaded by a Sink.
     - media_id_col: The column containing the media id.

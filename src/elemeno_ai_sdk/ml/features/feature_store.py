@@ -220,10 +220,8 @@ class FeatureStore:
     - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
     - ignore_when_empty: A list of columns that will be ignored when the result is empty.
     """
-    if not 'index' in kwargs:
-      raise("index must be provided")
     
-    read_response = self._source.read(query=query, binary_columns=binary_cols, dest_folder_col="id", media_id_col="id", **kwargs)
+    read_response = self._source.read(base_query=query, binary_columns=binary_cols, dest_folder_col="id", media_id_col="id", **kwargs)
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
@@ -252,7 +250,7 @@ class FeatureStore:
     if not 'index' in kwargs:
       raise("index must be provided")
     
-    read_response = self._source.read(query=query, binary_columns=binary_cols, dest_folder_col="id", media_id_col="id", **kwargs)
+    read_response = self._source.read(base_query=query, binary_columns=binary_cols, dest_folder_col="id", media_id_col="id", **kwargs)
     # make sure only the featuretable columns are ingested
     cols = [e.name for e in ft.entities]
     cols.extend([f.name for f in ft.features])
