@@ -64,6 +64,7 @@ class RedshiftIngestionSource(BaseSource):
       ) as conn:
         with conn.cursor() as cursor:
           conn.autocommit = True
+          print(self.base_query)
           cursor.execute(self.base_query)
           return cursor.fetch_dataframe()
 
