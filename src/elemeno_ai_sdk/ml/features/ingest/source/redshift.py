@@ -64,7 +64,7 @@ class RedshiftIngestionSource(BaseSource):
       ) as conn:
         with conn.cursor() as cursor:
           conn.autocommit = True
-          cursor.execute(" {} ".format(self.base_query))
+          cursor.execute(self.base_query)
           return cursor.fetch_dataframe()
 
     def read_after(self, timestamp_str: str, base_query: Optional[str] = None, **kwargs) -> pd.DataFrame:
