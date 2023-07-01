@@ -12,8 +12,9 @@ cos:
 registry:
   tracking_url: http://mlflow.tracking.url:80
 feature_store:
-  feast_config_path: .
   registry: gs://elemeno-feature-store/generic_registry
+  provider: gcs
+  project: project_name
   sink:
     type: Redshift
     params:
@@ -22,6 +23,10 @@ feature_store:
       host: cluster.host.on.aws
       port: 5439
       database: elemeno
+  online_store:
+    type: dynamodb
+    params:
+      region: us-east-1
   stream_source:
     type: Kafka
     params:

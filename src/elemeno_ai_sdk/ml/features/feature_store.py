@@ -13,6 +13,7 @@ from feast.infra.offline_stores.offline_store import RetrievalJob
 
 from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.config import Configs
+from elemeno_ai_sdk.ml.features.config.repo_config import create_repo_config
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import FileIngestion
 from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import MediaColumn
@@ -60,8 +61,9 @@ class FeatureStore:
                 "Missing elemeno.yaml file. Make sure it's in the current directory or in the ELEMENO_CFG_FILE environment variable."
             )
 
+        repo_config = create_repo_config(self._elm_config)
         self._fs = feast.FeatureStore(
-            repo_path=self._elm_config.feature_store.feast_config_path,
+            repo_config=repo_config,
         )
 
         self._source_type = source_type
