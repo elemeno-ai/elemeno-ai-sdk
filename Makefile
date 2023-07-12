@@ -1,6 +1,6 @@
 .PHONY: clean docs pip-testpypi wheel
 
-clean: clean-build clean-dev clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
+clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
 clean-build: ## remove build artifacts
 	rm -rf dist/
