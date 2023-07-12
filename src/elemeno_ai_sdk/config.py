@@ -61,13 +61,17 @@ class Configs:
         
         SAAS_ADRESS = os.getenv("SEMANTIX_API_BASE", 'https://c3po-stg.elemeno.ai/')
 
-        headers = {'X-TOKEN': "Bearer {}".format(SEMANTIX_API_KEY)}
+        headers = {
+          'x-api-secret': 'true',
+          'x-api-key': "{}".format(SEMANTIX_API_KEY)
+          }
 
-        response = requests.get(SAAS_ADRESS + 'user/settings/sdk/authentication', headers=headers)
+        response = requests.get(SAAS_ADRESS + 'user/settings/sdk/credential', headers=headers)
         
         if not str(response.status_code).startswith('2'):
           raise ValueError("Error ({}) retrieving remote config: {}".format(response.status_code,response.text))
-
+        
+        print(response)
         return json.loads(response.data)
       except Exception as e:
         logging.error("Unexpected error when retrieving remote config", e)
