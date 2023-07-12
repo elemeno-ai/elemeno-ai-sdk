@@ -20,53 +20,58 @@ class Configs:
     _props = OmegaConf.create()
 
     def __init__(self):
-        raise RuntimeError("Call instance() instead")
+      raise RuntimeError("Call instance() instead")
 
     @classmethod
     def parse(cls, configdict):
         if cls._props:
-            cls._props = OmegaConf.merge(cls._props, OmegaConf.create(configdict))
+          cls._props = OmegaConf.merge(cls._props, OmegaConf.create(configdict))
         else:
-            cls._props = OmegaConf.create(configdict)
+          cls._props = OmegaConf.create(configdict)
         cls._instance = cls.__new__(cls)
         return cls._instance.props
 
     @classmethod
     def instance(cls, force_reload=False):
-        cfg_path = os.getenv('ELEMENO_CFG_FILE', 'elemeno.yaml')
-        try:
-            # check if cfg_path exists
-            if not os.path.exists(cfg_path):
-                logging.warning("Couldn't find a config file at %s, will continue without loading it", cfg_path)
-                props = OmegaConf.create()
-                return props
-            if cls._instance is None or force_reload:
-                cls._instance = cls.__new__(cls)
-                cls._props = OmegaConf.load(cfg_path)
-            return cls._instance.props
-        except Exception as e:
-            logging.error("Unexpected error when instantiating the config object", e)
-            props = OmegaConf.create()
-            return props
+      try:
+        if cls._instance is None or force_reload:
+          cls._instance = cls.__new__(cls)
+          remote_config = cls.retrieve_remote_config()
+          logging.info("REMOVE ME: remote_config: %s", remote_config)
+          cls._props = OmegaConf.create(obj=remote_config)
+        return cls._instance.props
+      except Exception as e:
+        if "retrieving remote config" in e.args[0]:
+          raise e
+        logging.error("Unexpected error when instantiating the config object", e)
+        cls._instance = None
+        props = OmegaConf.create()
+        return props
 
     @property
     def props(self):
-        return self._props
+      return self._props
     
 
-    def auth_fs(self):
-       JWT_TOKEN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'jwt_token')
-       SAAS_ADRESS = 'https://c3po-stg.elemeno.ai/'
-       
-       with open(JWT_TOKEN_PATH) as f:
-        JWT_TOKEN =  json.load(f)
-    
-       headers = {'x-token: Bearer {}'.format(JWT_TOKEN)}
+    def retrieve_remote_config():
+      try:
+        SEMANTIX_API_KEY = os.getenv('SEMANTIX_API_KEY')
+        if SEMANTIX_API_KEY is None:
+          raise ValueError("SEMANTIX_API_KEY environment variable is not set")
+        
+        SAAS_ADRESS = os.getenv("SEMANTIX_API_BASE", 'https://c3po-stg.elemeno.ai/')
 
-       response = requests.get(SAAS_ADRESS + 'user/settings/sdk/authentication', headers=headers)
-       #globals().update(response)  
+        headers = {'X-TOKEN': "Bearer {}".format(SEMANTIX_API_KEY)}
 
-       return json.loads(response)
+        response = requests.get(SAAS_ADRESS + 'user/settings/sdk/authentication', headers=headers)
+        
+        if not str(response.status_code).startswith('2'):
+          raise ValueError("Error ({}) retrieving remote config: {}".format(response.status_code,response.text))
+
+        return json.loads(response.data)
+      except Exception as e:
+        logging.error("Unexpected error when retrieving remote config", e)
+        raise e
     
     def parse_jwt_token(self, jwt_token: Mapping[str, Iterable[str]]):
         pass
