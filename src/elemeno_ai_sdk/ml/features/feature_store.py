@@ -63,7 +63,7 @@ class FeatureStore:
 
         repo_config = create_repo_config(self._elm_config)
         self._fs = feast.FeatureStore(
-            repo_config=repo_config,
+            config=repo_config,
         )
 
         self._source_type = source_type
