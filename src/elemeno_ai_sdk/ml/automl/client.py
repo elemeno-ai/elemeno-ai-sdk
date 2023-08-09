@@ -1,7 +1,11 @@
 import logging
+from typing import Any
 from typing import Dict
 
 import aiohttp
+
+PROD_URL = "https://c3po.ml.semantixhub.com"
+DEV_URL = "https://c3po-stg.ml.semantixhub.com"
 
 
 class AutoMLClient:
@@ -13,9 +17,9 @@ class AutoMLClient:
     def base_url(self):
         base_url = None
         if self.env == "prod":
-            base_url = "https://c3po.ml.semantixhub.com"
+            base_url = PROD_URL
         elif self.env == "dev":
-            base_url = "https://c3po-stg.ml.semantixhub.com"
+            base_url = DEV_URL
         else:
             raise ValueError("Invalid environment. Please use dev or prod.")
         return base_url
@@ -24,9 +28,9 @@ class AutoMLClient:
     def headers(self):
         return {"Content-Type": "application/json", "x-api-key": self.api_key}
 
-    async def list_jobs(self):
+    async def _get(self, url: str):
         async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.get(url=f"{self.base_url}/automl") as response:
+            async with session.get(url=url) as response:
                 if not response.ok:
                     logging.exception(
                         f"Failed to start automl job with: \n"
@@ -35,7 +39,26 @@ class AutoMLClient:
                     )
                 return await response.json()
 
-    async def run_job(
+    async def _post(self, url: str, body: Dict[str, Any]):
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.post(url=url, json=body) as response:
+                if not response.ok:
+                    logging.exception(
+                        f"Failed to start automl job with: \n"
+                        f"\t status code= {response.status} \n"
+                        f"\t message_body= {body} \n"
+                        f"\t header= {self.headers}"
+                    )
+
+                return await response.json()
+
+    def list_jobs(self):
+        return self._get(url=f"{self.base_url}/automl")
+
+    def get_job(self, job_id: str):
+        return self._get(url=f"{self.base_url}/automl/{job_id}")
+
+    def run_job(
         self,
         experiment_id: str,
         feature_table_name: str,
@@ -60,27 +83,4 @@ class AutoMLClient:
             "numFeatures": num_features,
             "generations": generations,
         }
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(
-                url=f"{self.base_url}/automl", json=body
-            ) as response:
-                if not response.ok:
-                    logging.exception(
-                        f"Failed to start automl job with: \n"
-                        f"\t status code= {response.status} \n"
-                        f"\t message_body= {body} \n"
-                        f"\t header= {self.headers}"
-                    )
-
-                return await response.json()
-
-    async def get_job(self, job_id: str):
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.get(url=f"{self.base_url}/automl/{job_id}") as response:
-                if not response.ok:
-                    logging.exception(
-                        f"Failed to start automl job with: \n"
-                        f"\t status code= {response.status} \n"
-                        f"\t header= {self.headers}"
-                    )
-                return await response.json()
+        return self._post(url=f"{self.base_url}/automl", body=body)
