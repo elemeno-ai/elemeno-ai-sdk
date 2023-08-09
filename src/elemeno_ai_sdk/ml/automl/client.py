@@ -5,21 +5,20 @@ import aiohttp
 
 
 class AutoMLClient:
-    URL = {
-        "dev": "https://c3po-stg.ml.semantixhub.com",
-        "prod": "https://c3po.ml.semantixhub.com",
-    }
-
     def __init__(self, env: str, api_key: str) -> None:
         self.env = env
         self.api_key = api_key
 
     @property
     def base_url(self):
-        try:
-            return self.URL[self.env]
-        except KeyError:
-            logging.exception("Invalid environment. Please use dev or prod.")
+        base_url = None
+        if self.env == "prod":
+            base_url = "https://c3po.ml.semantixhub.com"
+        elif self.env == "dev":
+            base_url = "https://c3po-stg.ml.semantixhub.com"
+        else:
+            raise ValueError("Invalid environment. Please use dev or prod.")
+        return base_url
 
     @property
     def headers(self):
