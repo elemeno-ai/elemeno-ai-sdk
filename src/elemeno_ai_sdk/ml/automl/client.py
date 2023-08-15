@@ -1,8 +1,8 @@
 import logging
-from typing import Any
-from typing import Dict
+from typing import Any, Dict
 
 import aiohttp
+
 
 PROD_URL = "https://c3po.ml.semantixhub.com"
 DEV_URL = "https://c3po-stg.ml.semantixhub.com"

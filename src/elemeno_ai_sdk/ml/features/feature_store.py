@@ -1,11 +1,6 @@
 import json
 from datetime import datetime
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import feast
 import pandas as pd
@@ -15,23 +10,16 @@ from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.ml.features.config.repo_config import create_repo_config
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
-from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import FileIngestion
-from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import MediaColumn
+from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import FileIngestion, MediaColumn
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import (
     FileIngestionSinkType,
-)
-from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import (
     IngestionSinkBuilder,
-)
-from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import (
     IngestionSinkType,
 )
 from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestion
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import (
     IngestionSourceBuilder,
-)
-from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import (
     IngestionSourceType,
 )
 
@@ -103,9 +91,7 @@ class FeatureStore:
                 raise Exception("Unsupported source type %s", source_type)
         self._file_sink_type = file_sink_type
         if not file_sink_type:
-            logger.info(
-                "File sink type not specified, will not download files when there are binary columns"
-            )
+            logger.info("File sink type not specified, will not download files when there are binary columns")
         else:
             self._file_sink = MinioIngestion()
         self.config = self._fs.config
@@ -214,14 +200,10 @@ class FeatureStore:
             self._ingest_files_from_df(feature_table.name, to_ingest, media_cols)
         self._sink.ingest(to_ingest, feature_table, renames, all_columns)
 
-    def _ingest_files_from_df(
-        self, feature_table_name: str, to_ingest: pd.DataFrame, media_cols: List[str]
-    ):
+    def _ingest_files_from_df(self, feature_table_name: str, to_ingest: pd.DataFrame, media_cols: List[str]):
         if self._file_sink_type is None:
             raise ValueError("File sink type not specified, cannot ingest files")
-        self._file_sink.io_batch_ingest_from_df(
-            feature_table_name, to_ingest, media_cols
-        )
+        self._file_sink.io_batch_ingest_from_df(feature_table_name, to_ingest, media_cols)
 
     def _ingest_files(self, to_ingest: ReadResponse):
         if self._file_sink_type is None:
@@ -279,9 +261,7 @@ class FeatureStore:
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
         if ignore_when_empty != None:
-            read_response.dataframe = read_response.dataframe.dropna(
-                subset=ignore_when_empty
-            )
+            read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
         self.ingest_response(ft, read_response, all_columns=cols)
 
     def read_transform_and_ingest(
@@ -319,9 +299,7 @@ class FeatureStore:
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
         if ignore_when_empty != None:
-            read_response.dataframe = read_response.dataframe.dropna(
-                subset=ignore_when_empty
-            )
+            read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
 
         # Apply transformations
         for transform in transformations:
@@ -399,9 +377,7 @@ class FeatureStore:
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
         if ignore_when_empty != None:
-            read_response.dataframe = read_response.dataframe.dropna(
-                subset=ignore_when_empty
-            )
+            read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
         self.ingest_response(ft, read_response, all_columns=cols)
 
     def read_all(self) -> pd.DataFrame:
@@ -410,9 +386,7 @@ class FeatureStore:
         """
         return self._source.read()
 
-    def get_historical_features(
-        self, entity_source: pd.DataFrame, feature_refs: List[str]
-    ) -> RetrievalJob:
+    def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
         """Get historical features from the feature store.
         This method allows you to retrieve historical features from the feature store.
 
@@ -472,9 +446,7 @@ class FeatureStore:
             raise ValueError(
                 "Online store is not configure, make sure to configure the property online_store in the config yaml"
             )
-        return self._fs.get_online_features(
-            features=requested_features, entity_rows=entities
-        )
+        return self._fs.get_online_features(features=requested_features, entity_rows=entities)
 
     def get_training_features(
         self,
@@ -523,10 +495,7 @@ class FeatureStore:
                 for k, v in diff_where.items():
                     join += f" AND \"{diff_table}\".{k} = '{v}'"
         where = ""
-        if (
-            timestamp_column != "created_timestamp"
-            and timestamp_column != "event_timestamp"
-        ):
+        if timestamp_column != "created_timestamp" and timestamp_column != "event_timestamp":
             raise ValueError(
                 f"Invalid timestamp_column: {timestamp_column}. Valid values are 'created_timestamp' and 'event_timestamp'"
             )
@@ -547,9 +516,7 @@ class FeatureStore:
         df = self._sink.read_table(query)
 
         if download_binaries and self._has_medias(feature_table=feature_table):
-            self._file_sink.io_batch_digest(
-                feature_table.name, df, self._media_columns(feature_table)
-            )
+            self._file_sink.io_batch_digest(feature_table.name, df, self._media_columns(feature_table))
 
         if only_most_recent:
             return (
@@ -667,6 +634,4 @@ class FeatureStore:
         ] = None,
         partial: bool = True,
     ):
-        self._fs.apply(
-            objects=objects, objects_to_delete=objects_to_delete, partial=partial
-        )
+        self._fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)

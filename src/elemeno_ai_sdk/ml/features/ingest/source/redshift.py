@@ -1,101 +1,110 @@
 from typing import Optional
-import pandas as pd
 
+import pandas as pd
 import redshift_connector
 
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource, ReadResponse
+
 
 MAX_LINES_TO_IMPORT = 10000
 
 
 # TODO Add sql metadata validation
 class RedshiftIngestionSource(BaseSource):
+    def __init__(
+        self,
+        database: str,
+        cluster_name: Optional[str] = None,
+        base_query: Optional[str] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+        iam_role: Optional[str] = None,
+    ):
+        """Initializes a Redshift ingestion source.
 
-    def __init__(self, database: str, cluster_name: Optional[str]=None, base_query: Optional[str]=None,
-      host: Optional[str]=None, port: Optional[int]=None, user: Optional[str]=None, password: Optional[str]=None,
-      iam_role: Optional[str]=None):
-      """ Initializes a Redshift ingestion source.
-      
-      args:
+        args:
 
-      - database: The name of the database.
-      - cluster_name: The name of the cluster. Used when IAM authentication.
-      - base_query: The base query to be used to query the Redshift.
-      - host: The host of the Redshift instance.
-      - port: The port of the Redshift instance.
-      - user: The username of the Redshift instance.
-      - password: The password of the Redshift instance.
-      - iam_role: The IAM role to be used to query the Redshift.
+        - database: The name of the database.
+        - cluster_name: The name of the cluster. Used when IAM authentication.
+        - base_query: The base query to be used to query the Redshift.
+        - host: The host of the Redshift instance.
+        - port: The port of the Redshift instance.
+        - user: The username of the Redshift instance.
+        - password: The password of the Redshift instance.
+        - iam_role: The IAM role to be used to query the Redshift.
 
-      """
-      # if cluster_name is not None and (host is not None or port is not None or user is not None or password is not None):
-      #   raise ValueError("When specifying cluster name you cannot specify host, port, user or password")
-      self.host = host
-      self.port = port
-      self.user = user
-      self.password = password
-      self.cluster_name = cluster_name
-      self.base_query = base_query
-      self.database = database
-      self.iam_role = iam_role
-
-    def read(self, base_query: Optional[str]=None, **kwargs) -> ReadResponse:
-      """ Reads data from the Redshift source.
-
-      args:
-
-      - base_query: The base query to be used to query the Redshift.
-
-      return:
-
-      - A dataframe containing the data.
-      """
-      if base_query is not None:
+        """
+        # if cluster_name is not None and (host is not None or port is not None or user is not None or password is not None):
+        #   raise ValueError("When specifying cluster name you cannot specify host, port, user or password")
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.cluster_name = cluster_name
         self.base_query = base_query
-      if self.iam_role is not None:
-        with redshift_connector.connect(
-            iam=True,
-            database=self.database,
-            db_user=self.user,
-            password='',
-            user='',
-            cluster_identifier=self.cluster_name,
-            profile='default',
-            preferred_role=self.iam_role,
-        ) as conn:
-          with conn.cursor() as cursor:
-            conn.autocommit = True
-            cursor.execute(self.base_query)
-            return ReadResponse(dataframe=cursor.fetch_dataframe())
-      else:
-        with redshift_connector.connect(
-            iam=False,
-            database=self.database,
-            db_user=self.user,
-            password=self.password,
-            user=self.user,
-            cluster_identifier=self.cluster_name,
-            profile='default',
-        ) as conn:
-          with conn.cursor() as cursor:
-            conn.autocommit = True
-            cursor.execute(self.base_query)
-            return ReadResponse(dataframe=cursor.fetch_dataframe())
+        self.database = database
+        self.iam_role = iam_role
+
+    def read(self, base_query: Optional[str] = None, **kwargs) -> ReadResponse:
+        """Reads data from the Redshift source.
+
+        args:
+
+        - base_query: The base query to be used to query the Redshift.
+
+        return:
+
+        - A dataframe containing the data.
+        """
+        if base_query is not None:
+            self.base_query = base_query
+        if self.iam_role is not None:
+            with redshift_connector.connect(
+                iam=True,
+                database=self.database,
+                db_user=self.user,
+                password="",
+                user="",
+                cluster_identifier=self.cluster_name,
+                profile="default",
+                preferred_role=self.iam_role,
+            ) as conn:
+                with conn.cursor() as cursor:
+                    conn.autocommit = True
+                    cursor.execute(self.base_query)
+                    return ReadResponse(dataframe=cursor.fetch_dataframe())
+        else:
+            with redshift_connector.connect(
+                iam=False,
+                database=self.database,
+                db_user=self.user,
+                password=self.password,
+                user=self.user,
+                cluster_identifier=self.cluster_name,
+                profile="default",
+            ) as conn:
+                with conn.cursor() as cursor:
+                    conn.autocommit = True
+                    cursor.execute(self.base_query)
+                    return ReadResponse(dataframe=cursor.fetch_dataframe())
 
     def read_after(self, timestamp_str: str, base_query: Optional[str] = None, **kwargs) -> ReadResponse:
-      """ Reads data from the Redshift source after a certain timestamp.
+        """Reads data from the Redshift source after a certain timestamp.
 
-      args:
+        args:
 
-      - timestamp_str: The timestamp after which to read data.
-      - base_query: The base query to be used to query the Redshift.
+        - timestamp_str: The timestamp after which to read data.
+        - base_query: The base query to be used to query the Redshift.
 
-      return:
+        return:
 
-      - A dataframe containing the data.
-      """
-      if base_query is not None:
-        self.base_query = base_query
-      self.base_query = " {} WHERE event_timestamp > '{}' ORDER BY event_timestamp ASC LIMIT {}; " \
-          .format(self.base_query, timestamp_str, MAX_LINES_TO_IMPORT)
-      return self.read(base_query)
+        - A dataframe containing the data.
+        """
+        if base_query is not None:
+            self.base_query = base_query
+        self.base_query = " {} WHERE event_timestamp > '{}' ORDER BY event_timestamp ASC LIMIT {}; ".format(
+            self.base_query, timestamp_str, MAX_LINES_TO_IMPORT
+        )
+        return self.read(base_query)

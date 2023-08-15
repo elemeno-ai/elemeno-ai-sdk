@@ -1,9 +1,11 @@
-
-from typing import Any
-from elemeno_ai_sdk.ml.conversion.converter_abc import ConverterABC
 import pickle
+from typing import Any
+
 import skl2onnx
 from skl2onnx.common.data_types import FloatTensorType
+
+from elemeno_ai_sdk.ml.conversion.converter_abc import ConverterABC
+
 
 ConverterABC.register
 
@@ -22,6 +24,7 @@ class SklearnConverter:
     Any
         The onnx model.
     """
+
     def transform(self, path: str) -> Any:
         """
         This function takes a path to a pickled sklearn model and converts it to
@@ -38,9 +41,9 @@ class SklearnConverter:
             The path to the converted onnx model.
         """
         onnx_path = path + ".onnx"
-        with open(path, 'rb') as file:
+        with open(path, "rb") as file:
             model = pickle.load(file)
-            initial_type = [('float_input', FloatTensorType([1, 4]))]
+            initial_type = [("float_input", FloatTensorType([1, 4]))]
             onx = skl2onnx.convert_sklearn(model, initial_types=initial_type)
             with open(onnx_path, "wb") as f:
                 f.write(onx.SerializeToString())

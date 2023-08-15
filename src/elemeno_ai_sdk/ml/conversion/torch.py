@@ -1,6 +1,9 @@
 from typing import Any, Tuple
+
 import torch
+
 from elemeno_ai_sdk.ml.conversion.converter_abc import ConverterABC
+
 
 ConverterABC.register
 
@@ -26,7 +29,7 @@ class TorchConverter:
         :rtype: Any
         """
 
-        onnx_path = path + '.onnx'
+        onnx_path = path + ".onnx"
         model = torch.load(path)
         model.eval()
         dummy_input = torch.randn(*input_dims)
