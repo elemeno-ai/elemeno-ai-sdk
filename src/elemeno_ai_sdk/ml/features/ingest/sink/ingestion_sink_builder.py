@@ -1,6 +1,5 @@
 import enum
 
-from elemeno_ai_sdk.ml.features.ingest.sink.base_ingestion import Ingestion
 from elemeno_ai_sdk.ml.features.ingest.sink.bigquery_ingestion import BigQueryIngestion
 from elemeno_ai_sdk.ml.features.ingest.sink.redshift_ingestion import RedshiftIngestion
 from elemeno_ai_sdk.ml.features.ingest.sink.redshift_test_ingestion import RedshiftTestIngestion

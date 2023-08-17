@@ -64,6 +64,6 @@ class Ingestion(abc.ABC):
         pass
 
     def with_ts_if_not_present(self, dataframe: pd.DataFrame, created_timestamp: str) -> pd.DataFrame:
-        if not created_timestamp in dataframe or len(dataframe[created_timestamp].isna()) == len(dataframe):
+        if created_timestamp not in dataframe or len(dataframe[created_timestamp].isna()) == len(dataframe):
             dataframe[created_timestamp] = pd.to_datetime("now", utc=True)
         return dataframe

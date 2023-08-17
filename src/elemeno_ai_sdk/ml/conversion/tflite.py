@@ -36,7 +36,6 @@ class TFLiteConverter:
         tf.compat.v1.disable_eager_execution()
         onnx_path = path + ".onnx"
         with tf.compat.v1.Session() as sess:
-            interpreter = tf.lite.Interpreter(model_path=path)
             x = tf.compat.v1.placeholder(tf.float32, [2, 3], name="input")
             x_ = tf.add(x, x)
             _ = tf.identity(x_, name="output")

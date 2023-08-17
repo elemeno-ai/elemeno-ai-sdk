@@ -3,7 +3,6 @@ from typing import Dict, List, Optional
 
 import pandas as pd
 from elasticsearch import Elasticsearch
-from typer import Option
 
 from elemeno_ai_sdk import logger
 
@@ -41,12 +40,12 @@ class ElasticIngestionSource(BaseSource):
         - A pandas dataframe.
         """
         binary_prepared: List[Dict] = []
-        count = self._es.count(index=index, query=query)["count"]
+        count = self._es.count(index=index, query=base_query)["count"]
         print("count: {}".format(count))
 
         if count <= max_per_page:
-            res = self._es.search(index=index, query=query, sort=[{"record_date": "asc"}], size=count)
-            if not "hits" in res or not "hits" in res["hits"]:
+            res = self._es.search(index=index, query=base_query, sort=[{"record_date": "asc"}], size=count)
+            if "hits" not in res or "hits" not in res["hits"]:
                 raise Exception("No hits found")
             sources = [hit["_source"] for hit in res["hits"]["hits"]]
             self._add_to_prepard_medias(
@@ -71,7 +70,11 @@ class ElasticIngestionSource(BaseSource):
             logger.info("Reading page %d of %d", page, pages)
             logger.info("Size of page: %d", max_per_page)
             res = self._es.search(
-                index=index, query=query, size=max_per_page, sort=[{"record_date": "asc"}], search_after=[search_after]
+                index=index,
+                query=base_query,
+                size=max_per_page,
+                sort=[{"record_date": "asc"}],
+                search_after=[search_after],
             )
             if "hits" in res and "hits" in res["hits"]:
                 self._add_to_prepard_medias(
@@ -130,19 +133,19 @@ class ElasticIngestionSource(BaseSource):
         - A pandas dataframe with the result.
         """
 
-        if "range" in query:
+        if "range" in base_query:
             raise ValueError("Cannot specify range in query and use read_after, use read instead")
-        if not "bool" in query:
+        if "bool" not in base_query:
             raise ValueError("Query must be a bool query")
-        if not "must" in query["bool"]:
+        if "must" not in base_query["bool"]:
             raise ValueError("Query must be a bool query with a must clause")
-        if type(query["bool"]["must"]) is not list:
-            clause = query["bool"]["must"]
-            query["bool"]["must"] = [clause]
-        query["bool"]["must"].append({"range": {"record_date": {"gte": timestamp_str}}})
+        if type(base_query["bool"]["must"]) is not list:
+            clause = base_query["bool"]["must"]
+            base_query["bool"]["must"] = [clause]
+        base_query["bool"]["must"].append({"range": {"record_date": {"gte": timestamp_str}}})
         print("The query")
-        print(query)
-        return self.read(index, query, max_per_page, 10, binary_columns, media_id_col, dest_folder_col)
+        print(base_query)
+        return self.read(index, base_query, max_per_page, 10, binary_columns, media_id_col, dest_folder_col)
 
     def prepare_medias(self, properties: List[Dict], binary_col: str, media_id_col: str, dest_folder_col: str) -> List:
         for p in properties:

@@ -1,6 +1,6 @@
 from typing import Dict
 
-from elemeno_ai_sdk.ml.features.transform.dsl.functions import *
+from elemeno_ai_sdk.ml.features.transform.dsl.functions.change_shape import ChangeShapeFn
 
 
 class BaseOps:

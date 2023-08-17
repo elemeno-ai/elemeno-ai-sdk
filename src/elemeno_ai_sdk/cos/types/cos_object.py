@@ -27,7 +27,15 @@ class CosObject:
         self.owner = owner
 
     def __str__(self) -> str:
-        return f"bucket_name: {self.bucket_name}, object_path: {self.object_path}, size: {self.size}, last_modified: {self.last_modified}, etag: {self.etag}, storage_class: {self.storage_class}, owner: {self.owner}"
+        return (
+            f"bucket_name: {self.bucket_name}, "
+            f"object_path: {self.object_path}, "
+            f"size: {self.size}, "
+            f"last_modified: {self.last_modified}, "
+            f"etag: {self.etag}, "
+            f"storage_class: {self.storage_class}, "
+            f"owner: {self.owner}"
+        )
 
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, CosObject):

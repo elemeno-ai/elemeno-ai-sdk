@@ -1,10 +1,9 @@
-import asyncio
 from asyncio.log import logger
 from typing import Optional
 
 import aiohttp
 
-from elemeno_ai_sdk.ml.inference.input_space import InputSpace, InputSpaceBuilder
+from elemeno_ai_sdk.ml.inference.input_space import InputSpace
 
 
 class InferenceClient:
@@ -43,10 +42,10 @@ class InferenceClient:
             async with session.post(f"{self.endpoint}", json=input_data.entities) as response:
                 try:
                     return await response.json()
-                except Exception as e:
-                    print("error:", e)
+                except Exception:
+                    logger.exception("Error retrieving date from API.")
                     return await response.text()
-        except:
-            logger.error("Error connecting to server")
+        except Exception:
+            logger.exception("Error connecting to server")
         finally:
             await session.close()

@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, Mock, patch
 from minio.error import S3Error
 from omegaconf import OmegaConf
 
-from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.cos.minio import MinioClient
 from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import DigestionParams, MinioIngestion
 
@@ -83,7 +82,8 @@ class TestMinioIngestion(unittest.TestCase):
 
             # Assert
             log_error_mock.assert_called_with(
-                f"Error downloading file non_existent.txt from bucket elemeno-cos and folder test_folder. Error: S3 operation failed; code: NoSuchKey, message: Object not found, resource: non_existent.txt, request_id: 12345, host_id: 12345"
+                "Error downloading file non_existent.txt from bucket elemeno-cos and folder test_folder. Error: S3 operation failed; code: NoSuchKey, "
+                "message: Object not found, resource: non_existent.txt, request_id: 12345, host_id: 12345"
             )
 
     def test_download_file_from_remote_invalid_bucket(self):

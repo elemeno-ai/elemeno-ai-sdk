@@ -10,16 +10,10 @@ from mock import patch
 
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
-from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import IngestionSinkType
 from elemeno_ai_sdk.ml.features.ingest.sink.redshift_ingestion import RedshiftIngestion
 from elemeno_ai_sdk.ml.features.ingest.source.elastic import ElasticIngestionSource
-from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import (
-    IngestionSourceBuilder,
-    IngestionSourceType,
-)
-
-from ..fixtures import feature_store, feature_table
+from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import IngestionSourceType
 
 
 @patch("elasticsearch.Elasticsearch")
@@ -94,8 +88,8 @@ def test_read_from_elastic(mocked_elastic, fs_fixture, feature_table):
     feature_store = fs_fixture[0]
     elastic_mock = fs_fixture[1]
     query = {"query": {"match_all": {}}}
-    with mock.patch("elasticsearch.Elasticsearch") as elastic_module:
-        r = feature_store.read_and_ingest_from_query(feature_table, query, max_per_page=10, index="test-index")
+    with mock.patch("elasticsearch.Elasticsearch"):
+        feature_store.read_and_ingest_from_query(feature_table, query, max_per_page=10, index="test-index")
         elastic_mock.read.assert_called_once_with(query=query, index="test-index", max_per_page=10)
         pass
 

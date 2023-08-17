@@ -43,7 +43,7 @@ class FeatureType:
         if type_in_str == "number":
             return BqType.FLOAT
         elif type_in_str == "string":
-            if format != None and format == "date-time":
+            if format is not None and format == "date-time":
                 return BqType.TIMESTAMP
             return BqType.STRING
         elif type_in_str == "array":
@@ -69,7 +69,7 @@ class FeatureType:
         if type_in_str == "number":
             return np.float64
         elif type_in_str == "string":
-            if format != None and format == "date-time":
+            if format is not None and format == "date-time":
                 return np.datetime64("2002-02-03T13:56:03.172")
             return np.unicode_
         elif type_in_str == "array":

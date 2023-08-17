@@ -1,7 +1,5 @@
 import logging
 import typing
-from datetime import datetime
-from typing import Optional
 
 import pandas as pd
 
@@ -48,7 +46,7 @@ class Query:
             if c not in input_cols:
                 raise ValueError(f"Invalid input. The column {c} is missing from the where object")
             source_entity[c] = entities_where[c]
-        if not ft.evt_col in input_cols:
+        if ft.evt_col not in input_cols:
             raise ValueError("Missing the event timestamp column in input")
         source_entity[ft.evt_col] = entities_where[ft.evt_col]
         # features = []

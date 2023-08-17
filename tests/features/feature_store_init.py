@@ -2,7 +2,10 @@ import unittest
 from unittest.mock import patch
 
 from elemeno_ai_sdk.ml.features.feature_store import FeatureStore
-from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import FileIngestionSinkType, IngestionSinkType
+from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import (
+    FileIngestionSinkType,
+    IngestionSinkType,
+)
 from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import IngestionSourceType
 
 

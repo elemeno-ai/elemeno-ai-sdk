@@ -2,8 +2,7 @@ import asyncio
 import io
 import itertools
 import logging
-from multiprocessing.connection import wait
-from typing import Dict, List
+from typing import Dict
 
 import requests
 from dask.distributed import Client
@@ -19,15 +18,13 @@ def install():
 
 
 def get_and_upload_dask(to_get: Dict) -> None:
-    import os
-
     from minio import Minio
 
     logging.basicConfig(level=logging.INFO)
     client = Minio("minio.minio:9000", access_key="elemeno", secret_key="minio123", secure=False)
     logging.error("Starting logic")
     logging.error(to_get)
-    if not "_source" in to_get:
+    if "_source" not in to_get:
         logging.error("Failed to process, missing _source in dict")
         raise Exception("Failure when reading _source")
     offer_id = to_get["_source"]["id"]
@@ -51,7 +48,7 @@ def get_and_upload_dask(to_get: Dict) -> None:
                     if len(list(existing)) == 0:
                         raise ValueError("list_dir didn't throw exception but content was 0")
                     # print("Will skip offer_id: " + offer_id)
-                except Exception as e:
+                except Exception:
                     logging.error("will upload offer_id: " + offer_id)
                     # print(e)
                     client.put_object(
@@ -90,6 +87,6 @@ if __name__ == "__main__":
             f.result()
             print("finished")
         except Exception as e:
-            logging.error(f"Failed getting file URL")
+            logging.error("Failed getting file URL")
             logging.error(e)
             pass

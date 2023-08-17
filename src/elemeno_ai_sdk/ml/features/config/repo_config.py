@@ -3,8 +3,6 @@ from typing import Union
 from feast import RepoConfig
 from omegaconf import DictConfig, ListConfig
 
-from elemeno_ai_sdk.config import Configs
-
 
 online_feast_params = {
     "dynamodb": [

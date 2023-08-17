@@ -1,6 +1,3 @@
-import typing
-
-from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.ingest.sink.redshift_ingestion import RedshiftIngestion
 
 

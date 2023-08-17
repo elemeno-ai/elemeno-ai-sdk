@@ -4,12 +4,9 @@ from unittest import mock
 
 import numpy as np
 import pandas as pd
-import pytest
 import sqlalchemy
 
 from elemeno_ai_sdk.ml.features.ingest.sink.redshift_ingestion import RedshiftIngestion
-
-from ..fixtures import feature_store, feature_table, with_test_row
 
 
 def clean_db():
@@ -24,7 +21,7 @@ def test_get_sink_last_row_happy_path(feature_store, feature_table, with_test_ro
 def test_get_sink_last_row_empty(feature_store, feature_table):
     try:
         assert feature_store.get_training_features(feature_table).empty
-        assert feature_store.get_sink_last_ts(feature_table) == None
+        assert feature_store.get_sink_last_ts(feature_table) is None
     except Exception as e:
         assert False, "Exception was thrown: " + str(e)
     finally:
@@ -53,7 +50,7 @@ def test_create_table_dtypes(feature_store, feature_table):
         has_table_check = mock.Mock()
         sqlalchemy_mock.inspect.return_value = has_table_check
         has_table_check.has_table.return_value = False
-        df = source.create_table(to_ingest, feature_table, engine_mock)
+        source.create_table(to_ingest, feature_table, engine_mock)
         engine_mock.execute.assert_called_once_with("CREATE TABLE test_table (id BIGINT,aggregation_ids SUPER)")
 
 

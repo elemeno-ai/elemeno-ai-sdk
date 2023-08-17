@@ -18,10 +18,8 @@ def test_convert_h5():
 
 
 @pytest.mark.skip(reason="this is breaking in macos with m1 (arm). TODO fix this")
-def test_predict_on_converted():
+def test_predict_on_converted(x_test):
     sess = rt.InferenceSession(f"{base_path}/mnist_classifier.h5.onnx")
     input_name = sess.get_inputs()[0].name
-    print(input_name)
     label = sess.get_outputs()[0].name
-    print(label)
-    pred_onx = sess.run([label], {input_name: numpy.array(X_test).astype(numpy.float32)})
+    sess.run(output_names=[label], input_feed={input_name: numpy.array(x_test).astype(numpy.float32)})

@@ -1,6 +1,5 @@
 from typing import Optional
 
-import pandas as pd
 import redshift_connector
 
 from elemeno_ai_sdk.ml.features.ingest.source.base_source import BaseSource, ReadResponse

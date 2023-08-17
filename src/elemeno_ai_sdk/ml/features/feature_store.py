@@ -10,7 +10,7 @@ from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.ml.features.config.repo_config import create_repo_config
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
-from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import FileIngestion, MediaColumn
+from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import MediaColumn
 from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import (
     FileIngestionSinkType,
     IngestionSinkBuilder,
@@ -216,7 +216,8 @@ class FeatureStore:
         """
         Ingest data from a query. Used when the source and the sink are the same.
 
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
+        with the correct timestamp types of the source of choice.
 
         The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
 
@@ -238,7 +239,8 @@ class FeatureStore:
         """
         Ingest data from a query. Used when the source and the sink are different.
 
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
+        with the correct timestamp types of the source of choice.
 
         The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
 
@@ -260,7 +262,7 @@ class FeatureStore:
         cols = [e.name for e in ft.entities]
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty != None:
+        if ignore_when_empty is not None:
             read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
         self.ingest_response(ft, read_response, all_columns=cols)
 
@@ -276,7 +278,8 @@ class FeatureStore:
         """
         Ingest data from a query after applying a pipeline of transformations. Used when the source and the sink are different.
 
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
+        with the correct timestamp types of the source of choice.
 
         The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
         args:
@@ -298,7 +301,7 @@ class FeatureStore:
         cols = [e.name for e in ft.entities]
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty != None:
+        if ignore_when_empty is not None:
             read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
 
         # Apply transformations
@@ -320,7 +323,8 @@ class FeatureStore:
         """
         Ingest data from a query after applying a pipeline of transformations. Used when the source and the sink are different.
 
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
+        with the correct timestamp types of the source of choice.
 
         The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
         args:
@@ -333,7 +337,7 @@ class FeatureStore:
         cols = [e.name for e in ft.entities]
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty != None:
+        if ignore_when_empty is not None:
             response = response.dropna(subset=ignore_when_empty)
 
         # Apply transformations
@@ -354,7 +358,8 @@ class FeatureStore:
         """
         Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
 
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp) with the correct timestamp types of the source of choice.
+        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
+        with the correct timestamp types of the source of choice.
 
         The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
 
@@ -376,7 +381,7 @@ class FeatureStore:
         cols = [e.name for e in ft.entities]
         cols.extend([f.name for f in ft.features])
         cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty != None:
+        if ignore_when_empty is not None:
             read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
         self.ingest_response(ft, read_response, all_columns=cols)
 
@@ -473,10 +478,13 @@ class FeatureStore:
         - date_from: The start date of the training period. If None, the start date of the feature table will be used.
         - date_to: The end date of the training period. If None, the end date of the feature table will be used.
         - only_most_recent: If True, only the most recent features will be selected. If False, all features will be selected.
-        - diff_table: If not None, the features will be compared with the features in the diff_table. The diff_table should have a column with the same name of the features table in order to compare. This is useful for when you want to filter, at query time, features from the result.
+        - diff_table: If not None, the features will be compared with the features in the diff_table.
+                    The diff_table should have a column with the same name of the features table in order to compare.
+                    This is useful for when you want to filter, at query time, features from the result.
         - diff_join_key: The join key to be used to compare the features.
         - diff_where: A dictionary with the where clause to be used to compare the features.
-        - timestamp_column: The timestamp column to be used to filter the features. Valid values are "created_timestamp" and "event_timestamp". Default is "created_timestamp".
+        - timestamp_column: The timestamp column to be used to filter the features.
+                        Valid values are "created_timestamp" and "event_timestamp". Default is "created_timestamp".
 
         returns:
 

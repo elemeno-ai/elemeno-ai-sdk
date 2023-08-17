@@ -6,7 +6,7 @@ from botocore.client import ClientError
 from elemeno_ai_sdk import logger
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.cos.base_cos import CloudObjectStorage
-from elemeno_ai_sdk.cos.types import *
+from elemeno_ai_sdk.cos.types.cos_object import CosObject
 
 
 class S3Client(CloudObjectStorage):

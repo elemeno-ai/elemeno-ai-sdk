@@ -3,11 +3,9 @@ import typing
 
 import feast
 import feast.types
-import pandas as pd
 from feast.data_format import JsonFormat
-from google.protobuf.duration_pb2 import Duration
 
-from elemeno_ai_sdk import config, logger
+from elemeno_ai_sdk import config
 from elemeno_ai_sdk.ml.features.types import FeatureType
 
 

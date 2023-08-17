@@ -1,5 +1,5 @@
 import enum
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 
 class FeatureMeaning(enum.Enum):
@@ -12,7 +12,7 @@ class FeatureMeaning(enum.Enum):
   Valid meaning values are:
     - SEARCH_KEY - to be used as the key when Elemeno search for your features in the feature store
     - FEATURE - the name of features to be found using the SEARCH_KEY specified
-    - BODY_FEATURE - a dynamic feature that will not be retrieved from the feature store, 
+    - BODY_FEATURE - a dynamic feature that will not be retrieved from the feature store,
     it will be added to the request body instead
   """
 

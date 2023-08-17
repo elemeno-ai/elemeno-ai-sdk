@@ -1,6 +1,5 @@
 import abc
-import pickle
-from typing import Any, Tuple
+from typing import Tuple
 
 
 class ConverterABC(abc.ABC):

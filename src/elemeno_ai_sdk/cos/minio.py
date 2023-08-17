@@ -1,11 +1,10 @@
 from typing import Any, Optional
 
 from minio import Minio
-from minio.error import S3Error
 
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.cos.base_cos import CloudObjectStorage
-from elemeno_ai_sdk.cos.types import *
+from elemeno_ai_sdk.cos.types.cos_object import CosObject
 
 
 class MinioClient(CloudObjectStorage):

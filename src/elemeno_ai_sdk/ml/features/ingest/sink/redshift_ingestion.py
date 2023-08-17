@@ -1,16 +1,13 @@
 import json
 import typing
 from datetime import datetime
-from xmlrpc.client import Boolean
 
 import feast
 import pandas as pd
 import sqlalchemy
 from sqlalchemy import VARCHAR, create_engine
-from sqlalchemy.sql import text
 
 from elemeno_ai_sdk import logger
-from elemeno_ai_sdk.cos.minio import MinioClient
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 from elemeno_ai_sdk.ml.features.ingest.sink.base_ingestion import Ingestion
 from elemeno_ai_sdk.ml.features.types import FeatureType
@@ -245,7 +242,6 @@ class RedshiftIngestion(Ingestion):
                 if len(adjusted_dtypes) == 0:
                     adjusted_dtypes = None
                 dummy_df = dummy_df.append(dummy_row, ignore_index=True)  # we don't need to append the dummy row here
-                # TODO Bruno - When there's any column with type binary_download in the schema, create an auxiliary feature_table with the list of files to download for each entity
                 conn = create_engine(self._conn_str, hide_parameters=True, echo=False, isolation_level="AUTOCOMMIT")
                 self.create_table(dummy_df, feature_table.name, conn)
                 return json.dumps(jschema)
@@ -260,9 +256,9 @@ class RedshiftIngestion(Ingestion):
     ) -> pd.DataFrame:
         conn = create_engine(self._conn_str, hide_parameters=False, isolation_level="AUTOCOMMIT")
         _where = ""
-        if date_from != None:
+        if date_from is not None:
             _where = "WHERE {} > '{}'".format(feature_table.evt_col, date_from.strftime("%Y-%m-%d %H:%M:%S"))
-        if where != None:
+        if where is not None:
             if _where != "":
                 _where += " AND "
             else:

@@ -1,9 +1,6 @@
 import unittest
 from importlib import reload
-from io import StringIO
 from unittest.mock import patch
-
-import pytest
 
 import elemeno_ai_sdk.config
 

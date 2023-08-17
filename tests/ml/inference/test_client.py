@@ -4,7 +4,7 @@ import aiohttp
 import pytest
 
 from elemeno_ai_sdk.ml.inference.client import InferenceClient
-from elemeno_ai_sdk.ml.inference.input_space import InputSpace, InputSpaceBuilder
+from elemeno_ai_sdk.ml.inference.input_space import InputSpaceBuilder
 
 
 ENDPOINT = "/v0/inference"
