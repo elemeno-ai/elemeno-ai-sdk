@@ -10,5 +10,6 @@ Why does this file exist, and why __main__? For more info, read:
 """
 from elemeno_ai_sdk.cli import main
 
+
 if __name__ == "__main__":
     main()

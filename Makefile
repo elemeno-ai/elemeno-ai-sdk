@@ -4,6 +4,7 @@ clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and 
 
 clean-build: ## remove build artifacts
 	rm -rf dist/
+	rm -rf build/
 	rm -rf .eggs/
 	find . -name '*.egg-info' -exec rm -fr {} +
 	find . -name '*.egg' -exec rm -f {} +
@@ -27,7 +28,8 @@ clean-test: ## remove test and coverage artifacts
 env: 
 	direnv allow
 	pip install --upgrade pip
-	pip install -e .
+	pip install poetry 
+	poetry install
 
 wheel:
 	python setup.py bdist_wheel
@@ -48,7 +50,18 @@ _pip-pypi-elemeno: clean
 	twine upload --repository elemeno dist/*.whl
 
 test:
-	pytest
+	poetry run pytest
+
+lint/flake8: ## check style with flake8
+	poetry run flake8 .
+
+lint/isort: ## check import style with isort
+	poetry run isort .
+
+lint/black: ## check style with black
+	poetry run black .
+
+lint: lint/flake8 lint/isort lint/black ## check style
 
 pip-testpypi: clean _pip-testpypi
 
