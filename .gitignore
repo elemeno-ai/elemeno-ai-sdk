@@ -88,3 +88,4 @@ data
 tests/**/*.onnx
 
 .other
+.aider*

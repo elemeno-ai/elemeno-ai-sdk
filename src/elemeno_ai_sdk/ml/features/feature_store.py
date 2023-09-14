@@ -1,4 +1,5 @@
 import json
+
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -7,6 +8,7 @@ import pandas as pd
 from feast.infra.offline_stores.offline_store import RetrievalJob
 
 from elemeno_ai_sdk import logger
+
 from elemeno_ai_sdk.config import Configs
 from elemeno_ai_sdk.ml.features.config.repo_config import create_repo_config
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
@@ -38,15 +40,11 @@ class FeatureStore:
 
         Use this class in conjunction with the FeatureTable class to create, read, update, and delete features.
         """
-
-        self._elm_config = Configs.instance()
-        if config is not None:
-            logger.debug("Using provided config via code")
-            self._elm_config = Configs.parse(config)
+        self._elm_config = Configs().load_config(config)
 
         if self._elm_config.is_empty():
             raise Exception(
-                "Missing elemeno.yaml file. Make sure it's in the current directory or in the ELEMENO_CFG_FILE environment variable."
+                "Missing feature store configuration. If you specified a config variable when creating the FeatureStore, your config has issues. Otherwise there's a problem with your account. Please contact support."
             )
 
         repo_config = create_repo_config(self._elm_config)

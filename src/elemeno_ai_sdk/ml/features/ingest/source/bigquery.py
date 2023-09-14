@@ -23,7 +23,7 @@ class BigQueryIngestionSource(BaseSource):
         """
         if base_query is not None:
             self.base_query = base_query
-        cfg = Configs.instance()
+        cfg = Configs().load_config()
         self.project_id = cfg.feature_store.source.params.project_id
         if gcp_project_id is not None:
             self.project_id = gcp_project_id

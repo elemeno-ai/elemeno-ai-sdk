@@ -1,62 +1,43 @@
 import logging
+import aiohttp
+from elemeno_ai_sdk.utils import mlhub_auth, MLHubRemote
 from typing import Any, Dict
 
-import aiohttp
-
-
-PROD_URL = "https://c3po.ml.semantixhub.com"
-DEV_URL = "https://c3po-stg.ml.semantixhub.com"
-
-
 class AutoMLClient:
-    def __init__(self, env: str, api_key: str) -> None:
+    def __init__(self, env: str = "prod") -> None:
         self.env = env
-        self.api_key = api_key
 
-    @property
-    def base_url(self):
-        base_url = None
-        if self.env == "prod":
-            base_url = PROD_URL
-        elif self.env == "dev":
-            base_url = DEV_URL
-        else:
-            raise ValueError("Invalid environment. Please use dev or prod.")
-        return base_url
+    @mlhub_auth
+    async def _get(self, url: str, session: aiohttp.ClientSession = None):
+        async with session.get(url=url) as response:
+            if not response.ok:
+                logging.exception(
+                    f"Failed to start automl job with: \n"
+                    f"\t status code= {response.status} \n"
+                    f"\t header= {self.headers}"
+                )
+            return await response.json()
 
-    @property
-    def headers(self):
-        return {"Content-Type": "application/json", "x-api-key": self.api_key}
+    @mlhub_auth
+    async def _post(self, url: str, body: Dict[str, Any], session: aiohttp.ClientSession = None):
+        async with session.post(url=url, json=body) as response:
+            if not response.ok:
+                logging.exception(
+                    f"Failed to start automl job with: \n"
+                    f"\t status code= {response.status} \n"
+                    f"\t message_body= {body} \n"
+                    f"\t header= {self.headers}"
+                )
 
-    async def _get(self, url: str):
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.get(url=url) as response:
-                if not response.ok:
-                    logging.exception(
-                        f"Failed to start automl job with: \n"
-                        f"\t status code= {response.status} \n"
-                        f"\t header= {self.headers}"
-                    )
-                return await response.json()
-
-    async def _post(self, url: str, body: Dict[str, Any]):
-        async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(url=url, json=body) as response:
-                if not response.ok:
-                    logging.exception(
-                        f"Failed to start automl job with: \n"
-                        f"\t status code= {response.status} \n"
-                        f"\t message_body= {body} \n"
-                        f"\t header= {self.headers}"
-                    )
-
-                return await response.json()
+            return await response.json()
 
     def list_jobs(self):
-        return self._get(url=f"{self.base_url}/automl")
+        base_url = MLHubRemote(env=self.env).base_url
+        return self._get(url=f"{base_url}/automl")
 
     def get_job(self, job_id: str):
-        return self._get(url=f"{self.base_url}/automl/{job_id}")
+        base_url = MLHubRemote(env=self.env).base_url
+        return self._get(url=f"{base_url}/automl/{job_id}")
 
     def run_job(
         self,
