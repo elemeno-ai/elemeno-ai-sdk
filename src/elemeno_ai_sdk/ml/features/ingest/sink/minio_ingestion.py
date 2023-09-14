@@ -50,7 +50,7 @@ class DigestionParams:
 
 
 def minio_client():
-    config = Configs.instance()
+    config = Configs().load_config()
     client = MinioClient(
         host=config.cos.host,
         access_key=config.cos.key_id,
@@ -62,7 +62,7 @@ def minio_client():
 
 class MinioIngestion(FileIngestion):
     def __init__(self):
-        self.config = Configs.instance()
+        self.config = Configs().load_config()
         pass
 
     def io_batch_ingest_from_df(

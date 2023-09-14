@@ -38,7 +38,7 @@ class FeatureTable:
         self._created_col = created_column
         self._original_schema = None
         self._table_schema = []
-        self._elm_config = config.Configs.instance()
+        self._elm_config = config.Configs().load_config()
 
     @property
     def entities(self) -> typing.List[feast.Entity]:
