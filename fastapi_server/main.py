@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, Depends
+from fastapi.security import APIKeyHeader
+from .auth import api_key_auth
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 
@@ -17,13 +19,13 @@ class IngestRequest(BaseModel):
     all_columns: Optional[List[str]]
 
 @app.post("/ingest")
-def ingest_data(request: IngestRequest):
+def ingest_data(request: IngestRequest, api_key: str = Depends(api_key_auth)):
     feature_table = FeatureTable.from_dict(request.feature_table)
     to_ingest = ReadResponse(pd.DataFrame(request.to_ingest), None)
     renames = request.renames
     all_columns = request.all_columns
 
-    feature_store = FeatureStore()
+    feature_store = FeatureStore(api_key=api_key)
     feature_store.ingest_response(feature_table, to_ingest, renames, all_columns)
 
     return {"message": "Data ingested successfully"}
