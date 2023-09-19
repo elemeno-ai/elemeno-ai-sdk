@@ -8,8 +8,10 @@ from src.elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadRespons
 
 app = FastAPI()
 
+from src.elemeno_ai_sdk.ml.features.feature_table import FeatureTable
+
 class IngestRequest(BaseModel):
-    feature_table: Dict
+    feature_table: FeatureTable
     to_ingest: Dict
     renames: Optional[Dict[str, str]]
     all_columns: Optional[List[str]]
