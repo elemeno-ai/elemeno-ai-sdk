@@ -128,7 +128,7 @@ class FeatureStore:
 
         return [response['data']] + pages
     
-    async def get_online_features(self, feature_table: FeatureTable, entities: Dict[str, str], features: List[str]):
+    async def get_online_features(self, feature_table: FeatureTable, entities: Dict[str, List], features: List[str]):
         endpoint = f"{self._remote_server}/{feature_table.name}/online-features"
 
         qentities = [{"entity": k, "value": v} for k, v in entities.items()]
