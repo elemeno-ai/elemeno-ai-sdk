@@ -93,6 +93,7 @@ bump-dev:
 	@echo "Make sure to push the new tag to GitHub"
 
 bump-preminor:
+	bumpversion minor --verbose
 	bumpversion prerelease --tag --verbose
 	@echo "New version: v$$(python setup.py --version)"
 	@echo "Make sure to push the new tag to GitHub"
