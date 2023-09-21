@@ -13,14 +13,12 @@ class FeatureStore:
     def __init__(self, remote_server: str):
         self._remote_server = remote_server
 
-    @mlhub_auth
     async def ingest(
         self,
         feature_table: FeatureTable,
         to_ingest: pd.DataFrame,
         renames: Optional[Dict[str, str]] = None,
-        all_columns: Optional[List[str]] = None,
-        session: aiohttp.ClientSession = None
+        all_columns: Optional[List[str]] = None
     ) -> None:
         """
         Ingests data into a feature table
@@ -54,7 +52,7 @@ class FeatureStore:
                 "df": data,
                 "to": "online_and_offline"
             }
-            await self._ingest_remote(endpoint, body, session=session)
+            await self._ingest_remote(endpoint, body)
 
     @mlhub_auth
     async def _ingest_remote(self, endpoint, body, session: aiohttp.ClientSession = None):
@@ -91,6 +89,7 @@ class FeatureStore:
 
         - pd.DataFrame
         """
+
         endpoint = f"{self._remote_server}/{feature_table.name}/historical-features"
 
         params = {
