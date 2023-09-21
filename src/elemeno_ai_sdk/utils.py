@@ -39,7 +39,7 @@ def mlhub_auth(func: Callable):
             api_key = os.getenv("MLHUB_API_KEY")
             if api_key is None:
                 raise ValueError("Please set the MLHUB_API_KEY environment variable.")
-            headers = {"Content-Type": "application/json", "x-api-key": api_key}
+            headers = {"Content-Type": "application/json", "x-api-key": api_key, "authorization": f"Bearer {api_key}"}
             async with aiohttp.ClientSession(headers=headers) as session:
                 kwargs["session"] = session
                 return await func(self, *args, **kwargs)
