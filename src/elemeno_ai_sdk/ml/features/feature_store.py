@@ -8,7 +8,7 @@ from typing import Optional, Dict, List
 from elemeno_ai_sdk.utils import mlhub_auth
 from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
 
-class FeatureStoreRef:
+class FeatureStore:
 
     def __init__(self, remote_server: str):
         self._remote_server = remote_server
