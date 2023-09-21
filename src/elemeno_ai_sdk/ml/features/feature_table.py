@@ -18,7 +18,7 @@ class FeatureTable:
     def __init__(
         self,
         name: str,
-        feature_store: feast.FeatureStore,
+        feature_store: feast.FeatureStore = None,
         entities: typing.List[feast.Entity] = None,
         features: typing.List[feast.Feature] = None,
         ttl_duration_weeks=52,
@@ -38,7 +38,7 @@ class FeatureTable:
         self._created_col = created_column
         self._original_schema = None
         self._table_schema = []
-        self._elm_config = config.Configs().load_config()
+        #self._elm_config = config.Configs().load_config()
 
     @property
     def entities(self) -> typing.List[feast.Entity]:
