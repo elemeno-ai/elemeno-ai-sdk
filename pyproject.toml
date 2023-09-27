@@ -46,6 +46,7 @@ minio = "^7.1.15"
 torch = ">=2.0.0,!=2.0.1"
 omegaconf = "2.1.0"
 google-cloud-storage = "^2.10.0"
+aiohttp = "^3.8.5"
 
 
 [tool.poetry.group.dev.dependencies]

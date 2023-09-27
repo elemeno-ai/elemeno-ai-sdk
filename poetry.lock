@@ -2188,6 +2188,16 @@ files = [
 ]
 
 [[package]]
+name = "lit"
+version = "17.0.1"
+description = "A Software Testing Tool"
+optional = false
+python-versions = "*"
+files = [
+    {file = "lit-17.0.1.tar.gz", hash = "sha256:44867ae576b5790567b120bc3f0d9f021dac9424d1b0840c75acd85f4610ac04"},
+]
+
+[[package]]
 name = "locket"
 version = "1.0.0"
 description = "File-based locks for Python on Linux and Windows"
