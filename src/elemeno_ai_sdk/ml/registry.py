@@ -10,7 +10,7 @@ from elemeno_ai_sdk.config import Configs
 
 class ModelRegistry:
     def __init__(self):
-        cfg = Configs.instance()
+        cfg = Configs().load_config()
         self._config = cfg
         os.environ["AWS_ACCESS_KEY_ID"] = cfg.cos.key_id
         os.environ["AWS_SECRET_ACCESS_KEY"] = cfg.cos.secret

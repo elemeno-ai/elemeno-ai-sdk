@@ -18,7 +18,7 @@ class IngestionSourceType(str, enum.Enum):
 class IngestionSourceBuilder:
     def __init__(self):
         """Builder to create instancces of different types of Source"""
-        self._config = Configs.instance()
+        self._config = Configs().load_config()
         self.type = ""
 
     def build_gcs(self, bucket: Optional[str] = None, folder_prefix: Optional[str] = None) -> GCSIngestionSource:
