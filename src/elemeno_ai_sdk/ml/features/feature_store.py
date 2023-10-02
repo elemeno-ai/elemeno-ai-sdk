@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import trange
 
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
+from asyncio import Semaphore
 
 
 class FeatureStore:
@@ -86,7 +87,7 @@ class FeatureStore:
         response = await self._retrieve_pages_in_parallel(endpoint, params)
         return pd.DataFrame([row for page in response for row in page])
 
-    async def _retrieve_pages_in_parallel(self, endpoint, params, page_size=100):
+    async def _retrieve_pages_in_parallel(self, endpoint, params, page_size=100, max_concurrent_requests=10):
         # Use aiohttp client session to make the first request and get total pages
         params["page_size"] = page_size
         params["page"] = 1
@@ -96,14 +97,21 @@ class FeatureStore:
         if total_pages == 1:
             return [response["data"]]
 
+        # Create a semaphore to limit the number of concurrent requests
+        semaphore = Semaphore(max_concurrent_requests)
+
         # Fetch all pages in parallel
         tasks = [
-            self._mlhub_client.get(url=endpoint, params={**params, "page": page}) for page in range(2, total_pages + 1)
+            self._fetch_page(semaphore, endpoint, {**params, "page": page}) for page in range(2, total_pages + 1)
         ]
         pages = await asyncio.gather(*tasks)
         pages = [page["data"] for page in pages]
 
         return [response["data"]] + pages
+
+    async def _fetch_page(self, semaphore, url, params):
+        async with semaphore:
+            return await self._mlhub_client.get(url, params)
 
     async def get_online_features(self, feature_table_name: str, entities: Dict[str, List], features: List[str]):
         endpoint = f"{self._remote_server}/{feature_table_name}/online-features"
