@@ -1,5 +1,6 @@
 import asyncio
 import json
+from asyncio import Semaphore
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -7,7 +8,6 @@ import pandas as pd
 from tqdm import trange
 
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
-from asyncio import Semaphore
 
 
 class FeatureStore:
@@ -55,10 +55,10 @@ class FeatureStore:
     async def get_training_features(
         self,
         feature_table_name: str,
-        entities: List[str] = ["*"],
-        features: List[str] = ["*"],
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        entities: List[str] = None,
+        features: List[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> pd.DataFrame:
         """
         Gets training features from a feature table
@@ -78,7 +78,7 @@ class FeatureStore:
 
         endpoint = f"{self._remote_server}/{feature_table_name}/historical-features"
 
-        params = {"initial_date": date_from.strftime("%Y-%m-%d"), "end_date": date_to.strftime("%Y-%m-%d")}
+        params = {"initial_date": date_from, "end_date": date_to}
         if entities is not None:
             params["entities"] = json.dumps(entities)
         if features is not None:
@@ -101,9 +101,7 @@ class FeatureStore:
         semaphore = Semaphore(max_concurrent_requests)
 
         # Fetch all pages in parallel
-        tasks = [
-            self._fetch_page(semaphore, endpoint, {**params, "page": page}) for page in range(2, total_pages + 1)
-        ]
+        tasks = [self._fetch_page(semaphore, endpoint, {**params, "page": page}) for page in range(2, total_pages + 1)]
         pages = await asyncio.gather(*tasks)
         pages = [page["data"] for page in pages]
 
