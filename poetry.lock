@@ -2204,16 +2204,6 @@ files = [
 
 [[package]]
 name = "lit"
-version = "16.0.6"
-description = "A Software Testing Tool"
-optional = false
-python-versions = "*"
-files = [
-    {file = "lit-16.0.6.tar.gz", hash = "sha256:84623c9c23b6b14763d637f4e63e6b721b3446ada40bf7001d8fee70b8e77a9a"},
-]
-
-[[package]]
-name = "lit"
 version = "17.0.1"
 description = "A Software Testing Tool"
 optional = false
@@ -5154,4 +5144,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8.1"
-content-hash = "ce597a7f1e9cf0873e37147e6e0188bee12c616741ade128d27e0c492062efcc"
+content-hash = "45a362c79d06a0c6d2bdb85b1a42711af7e9fe57ef8b1d5c2dcf33a2355754a9"
