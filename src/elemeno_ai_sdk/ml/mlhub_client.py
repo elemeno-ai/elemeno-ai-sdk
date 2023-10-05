@@ -1,14 +1,27 @@
 import json
+import logging
 import os
 from typing import Any, Dict, Optional
 
 import aiohttp
+from tenacity import (
+    AsyncRetrying,
+    RetryError,
+    Retrying,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_fixed,
+)
 
 from elemeno_ai_sdk.utils import mlhub_auth
 
 
 PROD_URL = "https://c3po.ml.semantixhub.com"
 DEV_URL = "https://c3po-stg.ml.semantixhub.com"
+
+# Retry params
+STOP_AFTER_ATTEMPT = 5
+WAIT_FIXED = 5
 
 
 class MLHubRemote:
@@ -37,16 +50,26 @@ class MLHubRemote:
 
     @mlhub_auth
     async def post(self, url: str, body: Dict[str, Any], session: Optional[aiohttp.ClientSession] = None):
-        async with session.post(url=url, data=json.dumps(body)) as response:
-            if not response.ok:
-                raise ValueError(
-                    f"Failed post to {url} with: \n"
-                    f"\t status code= {response.status} \n"
-                    f"\t message_body= {body} \n"
-                    f"\t header= {session.headers}"
-                )
-
-            return await response.json(content_type=response.content_type)
+        try:
+            retry_operator = AsyncRetrying(
+                stop=stop_after_attempt(STOP_AFTER_ATTEMPT),
+                wait=wait_fixed(WAIT_FIXED),
+                retry=retry_if_exception_type(ValueError),
+            )
+            async for attempt in retry_operator:
+                with attempt:
+                    async with session.post(url=url, data=json.dumps(body)) as response:
+                        if not response.ok:
+                            raise ValueError(
+                                f"Failed post to {url} with: \n"
+                                f"\t status code= {response.status} \n"
+                                f"\t message_body= {body} \n"
+                                f"\t header= {session.headers}"
+                            )
+                        return await response.json(content_type=response.content_type)
+        except RetryError:
+            logging.error("Max retries reached")
+            return None
 
     @mlhub_auth
     async def get(
@@ -56,16 +79,27 @@ class MLHubRemote:
         is_binary: bool = False,
         session: Optional[aiohttp.ClientSession] = None,
     ):
-        async with session.get(url=url, params=params) as response:
-            if not response.ok:
-                raise ValueError(
-                    f"Failed to get from {url} with: \n"
-                    f"\t params= {params} \n"
-                    f"\t status code= {response.status} \n"
-                    f"\t header= {session.headers}"
-                )
+        try:
+            retry_operator = AsyncRetrying(
+                stop=stop_after_attempt(STOP_AFTER_ATTEMPT),
+                wait=wait_fixed(WAIT_FIXED),
+                retry=retry_if_exception_type(ValueError),
+            )
+            async for attempt in retry_operator:
+                with attempt:
+                    async with session.get(url=url, params=params) as response:
+                        if not response.ok:
+                            raise ValueError(
+                                f"Failed to get from {url} with: \n"
+                                f"\t params= {params} \n"
+                                f"\t status code= {response.status} \n"
+                                f"\t header= {session.headers}"
+                            )
 
-            if is_binary:
-                return await response.content.read()
+                        if is_binary:
+                            return await response.content.read()
 
-            return await response.json(content_type=response.content_type)
+                        return await response.json(content_type=response.content_type)
+        except RetryError:
+            logging.error("Max retries reached")
+            return None
