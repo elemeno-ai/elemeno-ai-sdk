@@ -21,7 +21,7 @@ DEV_URL = "https://c3po-stg.ml.semantixhub.com"
 
 # Retry params
 STOP_AFTER_ATTEMPT = 5
-WAIT_FIXED = 5
+WAIT_FIXED = 1
 
 
 class MLHubRemote:
