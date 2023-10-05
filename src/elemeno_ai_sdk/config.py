@@ -1,74 +1,31 @@
-import json
-import logging
-import os
-from typing import Iterable, Mapping
+import asyncio
+from typing import Optional
 
-import requests
+import aiohttp
 from omegaconf import OmegaConf
+
+from elemeno_ai_sdk import logger
+from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
+from elemeno_ai_sdk.utils import mlhub_auth
 
 
 class Configs:
-    """
-    Loads the configuration from the elemeno.yaml file. This class looks for the file in the current directory,
-    unless specified with the environment variable ELEMENO_CFG_FILE.
+    def __init__(self, env: Optional[str] = None):
+        if env:
+            self._env = env
 
-    To be able to use environment variables within elemeno.yaml, you need to follow omegaconf specifications. For example:
-    ```
-    feature_store:
-      feast_config_path: ${oc.env:FEAST_CONFIG_PATH}
-    ```
-    """
+    @mlhub_auth
+    async def _retrieve_remote_config(self, session: aiohttp.ClientSession = None):
+        env = self._env if hasattr(self, "_env") else None
+        base_url = MLHubRemote(env=env).base_url
+        async with session.get(url=f"{base_url}/user/settings/sdk/authentication") as response:
+            if not response.ok:
+                logger.exception(f"Failed to retrieve config from remote with: \n" f"\t status code= {response.status}")
+            return await response.json()
 
-    _instance = None
-    _props = OmegaConf.create()
-
-    def __init__(self):
-        raise RuntimeError("Call instance() instead")
-
-    @classmethod
-    def parse(cls, configdict):
-        if cls._props:
-            cls._props = OmegaConf.merge(cls._props, OmegaConf.create(configdict))
+    def load_config(self, config: Optional[dict] = None):
+        if config is not None:
+            logger.debug("Using provided config via code, will not load remote")
         else:
-            cls._props = OmegaConf.create(configdict)
-        cls._instance = cls.__new__(cls)
-        return cls._instance.props
-
-    @classmethod
-    def instance(cls, force_reload=False):
-        cfg_path = os.getenv("ELEMENO_CFG_FILE", "elemeno.yaml")
-        try:
-            # check if cfg_path exists
-            if not os.path.exists(cfg_path):
-                logging.warning("Couldn't find a config file at %s, will continue without loading it", cfg_path)
-                props = OmegaConf.create()
-                return props
-            if cls._instance is None or force_reload:
-                cls._instance = cls.__new__(cls)
-                cls._props = OmegaConf.load(cfg_path)
-            return cls._instance.props
-        except Exception as e:
-            logging.error("Unexpected error when instantiating the config object", e)
-            props = OmegaConf.create()
-            return props
-
-    @property
-    def props(self):
-        return self._props
-
-    def auth_fs(self):
-        JWT_TOKEN_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jwt_token")
-        SAAS_ADRESS = "https://c3po-stg.elemeno.ai/"
-
-        with open(JWT_TOKEN_PATH) as f:
-            JWT_TOKEN = json.load(f)
-
-        headers = {"x-token: Bearer {}".format(JWT_TOKEN)}
-
-        response = requests.get(SAAS_ADRESS + "user/settings/sdk/authentication", headers=headers)
-        # globals().update(response)
-
-        return json.loads(response)
-
-    def parse_jwt_token(self, jwt_token: Mapping[str, Iterable[str]]):
-        pass
+            config = asyncio.run(self._retrieve_remote_config())
+        return OmegaConf.create(config)

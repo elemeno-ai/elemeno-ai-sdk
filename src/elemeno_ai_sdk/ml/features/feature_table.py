@@ -1,11 +1,10 @@
 import datetime
-import typing
+from typing import Any, Dict, List
 
 import feast
 import feast.types
 from feast.data_format import JsonFormat
 
-from elemeno_ai_sdk import config
 from elemeno_ai_sdk.ml.features.types import FeatureType
 
 
@@ -18,9 +17,9 @@ class FeatureTable:
     def __init__(
         self,
         name: str,
-        feature_store: feast.FeatureStore,
-        entities: typing.List[feast.Entity] = None,
-        features: typing.List[feast.Feature] = None,
+        feature_store: feast.FeatureStore = None,
+        entities: List[feast.Entity] = None,
+        features: List[feast.Feature] = None,
         ttl_duration_weeks=52,
         is_streaming=False,
         online=False,
@@ -38,10 +37,9 @@ class FeatureTable:
         self._created_col = created_column
         self._original_schema = None
         self._table_schema = []
-        self._elm_config = config.Configs.instance()
 
     @property
-    def entities(self) -> typing.List[feast.Entity]:
+    def entities(self) -> List[feast.Entity]:
         return self._entities
 
     @property
@@ -53,11 +51,11 @@ class FeatureTable:
         return self._created_col
 
     @property
-    def table_schema(self) -> typing.List[typing.Dict]:
+    def table_schema(self) -> List[Dict]:
         return self._table_schema
 
     @property
-    def original_schema(self) -> typing.Dict[str, typing.Any]:
+    def original_schema(self) -> Dict[str, Any]:
         return self._original_schema
 
     @entities.setter
@@ -72,10 +70,10 @@ class FeatureTable:
     def features(self, value):
         self._features = value
 
-    def set_table_schema(self, value: typing.List[typing.Dict]) -> None:
+    def set_table_schema(self, value: List[Dict]) -> None:
         self._table_schema = value
 
-    def set_original_schema(self, value: typing.List[typing.Dict]) -> None:
+    def set_original_schema(self, value: List[Dict]) -> None:
         self._original_schema = value
 
     def register_entities(self, *entities: feast.Entity) -> None:
@@ -90,7 +88,7 @@ class FeatureTable:
     def register_feature(self, feature: feast.Field) -> None:
         self.features.append(feature)
 
-    def all_columns(self) -> typing.List[str]:
+    def all_columns(self) -> List[str]:
         cols = []
         for e in self._entities:
             cols.append(e.name)

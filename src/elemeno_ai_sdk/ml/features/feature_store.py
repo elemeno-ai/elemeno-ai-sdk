@@ -1,645 +1,128 @@
+import asyncio
 import json
+from asyncio import Semaphore
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-import feast
 import pandas as pd
-from feast.infra.offline_stores.offline_store import RetrievalJob
+from tqdm import trange
 
-from elemeno_ai_sdk import logger
-from elemeno_ai_sdk.config import Configs
-from elemeno_ai_sdk.ml.features.config.repo_config import create_repo_config
-from elemeno_ai_sdk.ml.features.feature_table import FeatureTable
-from elemeno_ai_sdk.ml.features.ingest.sink.file_ingestion import MediaColumn
-from elemeno_ai_sdk.ml.features.ingest.sink.ingestion_sink_builder import (
-    FileIngestionSinkType,
-    IngestionSinkBuilder,
-    IngestionSinkType,
-)
-from elemeno_ai_sdk.ml.features.ingest.sink.minio_ingestion import MinioIngestion
-from elemeno_ai_sdk.ml.features.ingest.source.base_source import ReadResponse
-from elemeno_ai_sdk.ml.features.ingest.source.ingestion_source_builder import (
-    IngestionSourceBuilder,
-    IngestionSourceType,
-)
+from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
 
 
 class FeatureStore:
-    def __init__(
+    def __init__(self, remote_server: str):
+        self._remote_server = remote_server
+        self._mlhub_client = MLHubRemote()
+
+    async def ingest(
         self,
-        sink_type: Optional[IngestionSinkType] = None,
-        file_sink_type: Optional[FileIngestionSinkType] = None,
-        source_type: Optional[IngestionSourceType] = None,
-        config: Optional[Dict] = None,
-        **kwargs,
-    ) -> None:
-        """
-        A FeatureStore is the starting point for working with Elemeno feature store via SDK.
-
-        Use this class in conjunction with the FeatureTable class to create, read, update, and delete features.
-        """
-
-        self._elm_config = Configs.instance()
-        if config is not None:
-            logger.debug("Using provided config via code")
-            self._elm_config = Configs.parse(config)
-
-        if self._elm_config.is_empty():
-            raise Exception(
-                "Missing elemeno.yaml file. Make sure it's in the current directory or in the ELEMENO_CFG_FILE environment variable."
-            )
-
-        repo_config = create_repo_config(self._elm_config)
-        self._fs = feast.FeatureStore(
-            config=repo_config,
-        )
-
-        self._source_type = source_type
-        self._sink_type = sink_type
-        self._file_sink = file_sink_type
-
-        if not sink_type:
-            logger.info("No sink type provided, read-only mode will be used")
-        else:
-            self._sink_type = sink_type
-            if sink_type == IngestionSinkType.BIGQUERY:
-                self._sink = IngestionSinkBuilder().build_bigquery(self._fs)
-            elif sink_type == IngestionSinkType.REDSHIFT:
-                redshift_params = self._elm_config.feature_store.sink.params
-                self._sink = IngestionSinkBuilder().build_redshift(
-                    self._fs, self._get_connection_string(redshift_params)
-                )
-            elif sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
-                redshift_params = self._elm_config.feature_store.sink.params
-                self._sink = IngestionSinkBuilder()._build_redshift_unit_tests(
-                    self._fs, self._get_connection_string(redshift_params)
-                )
-            else:
-                raise Exception("Unsupported sink type %s", sink_type)
-        if not source_type:
-            logger.info("No source type provided, read-only mode will be used")
-        else:
-            if source_type == IngestionSourceType.BIGQUERY:
-                self._source = IngestionSourceBuilder().build_big_query()
-            elif source_type == IngestionSourceType.ELASTIC:
-                self._source = IngestionSourceBuilder().build_elastic()
-            elif source_type == IngestionSourceType.REDSHIFT:
-                self._source = IngestionSourceBuilder().build_redshift()
-            elif source_type == IngestionSourceType.GCS:
-                self._source = IngestionSourceBuilder().build_gcs()
-            else:
-                raise Exception("Unsupported source type %s", source_type)
-        self._file_sink_type = file_sink_type
-        if not file_sink_type:
-            logger.info("File sink type not specified, will not download files when there are binary columns")
-        else:
-            self._file_sink = MinioIngestion()
-        self.config = self._fs.config
-        # memory holds a reference for the result of the last data handling method
-        self._memory = None
-
-    def read_from_query(self, query: str) -> pd.DataFrame:
-        return super().read_from_query(self._source, query)
-
-    def _get_connection_string(self, redshift_params):
-        if self._sink_type == IngestionSinkType._REDSHIFT_UNIT_TESTS:
-            return "sqlite:///test.db?mode=rwc"
-        user = redshift_params.user
-        password = redshift_params.password
-        host = redshift_params.host
-        port = redshift_params.port
-        database = redshift_params.database
-        return f"postgresql://{user}:{password}@{host}:{port}/{database}"
-
-    @property
-    def fs(self) -> feast.FeatureStore:
-        return self._fs
-
-    def ingest_response(
-        self,
-        feature_table: FeatureTable,
-        to_ingest: ReadResponse,
-        renames: Optional[Dict[str, str]] = None,
-        all_columns: Optional[List[str]] = None,
-    ) -> None:
-        """
-        Ingest the given dataframe into the given feature table.
-
-        This method allows you to rename the columns of the dataframe before ingesting.
-
-        You can also filter the columns to be ingested.
-
-        It is required that your dataframe have the timestamp columns (event_timestamp and created_timestamp) with the correct types (pd.DateTime).
-
-        args:
-
-        - feature_table: FeatureTable object
-        - to_ingest: A ReadResponse instance (since base_source.py ReadResponse)
-        - renames: A dictionary of column names to be renamed.
-        - all_columns: A list of columns to be ingested. If None, all columns will be ingested.
-        """
-        if self._has_medias(feature_table):
-            self._ingest_files(to_ingest)
-        self.ingest(feature_table, to_ingest.dataframe, renames, all_columns)
-
-    def _media_columns(self, feature_table):
-        media_columns = []
-        if not feature_table.original_schema:
-            logger.debug("No original schema, assuming no media columns")
-            return media_columns
-        for k, p in feature_table.original_schema["properties"].items():
-            if p["type"] == "binary_upload" or p["type"] == "binary_download":
-                m = MediaColumn(k, p["type"] == "binary_upload")
-                media_columns.append(m)
-        return media_columns
-
-    def _has_medias(self, feature_table):
-        mcols = self._media_columns(feature_table)
-        return len(mcols) > 0
-
-    def staging_ingest(self, to_ingest: pd.DataFrame, name: str) -> None:
-        """
-        Ingest the given dataframe into a staging are in the feature store batch persistence
-
-        The ingest data will not be a feature table yet, instead it will be available as
-        a simple structure in the persistence, and can be later turned into a feature table
-        using the staging_to_feature_table method.
-
-        args:
-
-        - to_ingest: A dataframe to be ingested
-        - name: The name of the staging area
-        """
-        self._sink.staging_ingest(to_ingest, name)
-
-    def ingest(
-        self,
-        feature_table: FeatureTable,
+        feature_table_name: str,
         to_ingest: pd.DataFrame,
         renames: Optional[Dict[str, str]] = None,
         all_columns: Optional[List[str]] = None,
     ) -> None:
         """
-        Ingest the given dataframe into the given feature table.
-
-        This method allows you to rename the columns of the dataframe before ingesting.
-
-        You can also filter the columns to be ingested.
-
-        It is required that your dataframe have the timestamp columns (event_timestamp and created_timestamp) with the correct types (pd.DateTime).
+        Ingests data into a feature table
 
         args:
 
-        - feature_table: FeatureTable object
-        - to_ingest: A pandas dataframe to be ingested
-        - renames: A dictionary of column names to be renamed
-        - all_columns: A list of columns to be ingested. If None, all columns will be ingested
+        - feature_table: FeatureTable instance
+        - to_ingest: Data to ingest
+        - renames: Renames to apply to the data
+        - all_columns: List of columns to ingest
+
+        return:
+
+        - None
         """
-        media_cols = self._media_columns(feature_table)
-        if len(media_cols) > 0:
-            self._ingest_files_from_df(feature_table.name, to_ingest, media_cols)
-        self._sink.ingest(to_ingest, feature_table, renames, all_columns)
+        endpoint = f"{self._remote_server}/{feature_table_name}/push"
 
-    def _ingest_files_from_df(self, feature_table_name: str, to_ingest: pd.DataFrame, media_cols: List[str]):
-        if self._file_sink_type is None:
-            raise ValueError("File sink type not specified, cannot ingest files")
-        self._file_sink.io_batch_ingest_from_df(feature_table_name, to_ingest, media_cols)
+        # adjust the column names
+        if renames is not None:
+            to_ingest = to_ingest.rename(columns=renames)
 
-    def _ingest_files(self, to_ingest: ReadResponse):
-        if self._file_sink_type is None:
-            raise ValueError("File sink type not specified, cannot ingest files")
-        medias = json.loads(to_ingest.prepared_medias)
-        print("len of to_ingest.prepared_medias", len(medias))
-        self._file_sink.io_batch_ingest(medias)
+        # filter the columns
+        if all_columns is not None:
+            to_ingest = to_ingest[all_columns]
 
-    def ingest_from_query_same_source(self, ft: FeatureTable, query: str):
-        """
-        Ingest data from a query. Used when the source and the sink are the same.
+        # paginate the insertion, 500 rows of to_ingest at a time
+        for i in trange(0, len(to_ingest), 500):
+            data = to_ingest.iloc[i : i + 500].to_dict("list")
+            body = {"df": data, "to": "online_and_offline"}
+            await self._mlhub_client.post(url=endpoint, body=body)
 
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
-        with the correct timestamp types of the source of choice.
-
-        The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
-
-        args:
-
-        - ft: The FeatureTable object
-        - query: A SQL query to ingest data from.
-        """
-        self._sink.ingest_from_query(query, ft)
-
-    def read_and_ingest_from_query(
+    async def get_training_features(
         self,
-        ft: "FeatureTable",
-        query: str,
-        binary_cols: List[str],
-        ignore_when_empty: Optional[List[str]] = None,
-        **kwargs,
-    ):
-        """
-        Ingest data from a query. Used when the source and the sink are different.
-
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
-        with the correct timestamp types of the source of choice.
-
-        The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
-
-        args:
-
-        - ft: The FeatureTable object
-        - query: A SQL query to ingest data from.
-        - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
-        - ignore_when_empty: A list of columns that will be ignored when the result is empty.
-        """
-        read_response = self._source.read(
-            base_query=query,
-            binary_columns=binary_cols,
-            dest_folder_col="id",
-            media_id_col="id",
-            **kwargs,
-        )
-        # make sure only the featuretable columns are ingested
-        cols = [e.name for e in ft.entities]
-        cols.extend([f.name for f in ft.features])
-        cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty is not None:
-            read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
-        self.ingest_response(ft, read_response, all_columns=cols)
-
-    def read_transform_and_ingest(
-        self,
-        ft: "FeatureTable",
-        query: str,
-        transformations: List[Callable[[pd.DataFrame], pd.DataFrame]],
-        binary_cols: Optional[List[str]] = None,
-        ignore_when_empty: Optional[List[str]] = None,
-        **kwargs,
-    ):
-        """
-        Ingest data from a query after applying a pipeline of transformations. Used when the source and the sink are different.
-
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
-        with the correct timestamp types of the source of choice.
-
-        The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
-        args:
-
-        - ft: The FeatureTable object
-        - query: A SQL query to ingest data from.
-        - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
-        - transformations: A list of transformation functions to be applied on the dataframe
-        - ignore_when_empty: A list of columns that will be ignored when the result is empty.
-        """
-        read_response = self._source.read(
-            base_query=query,
-            binary_columns=binary_cols,
-            dest_folder_col="id",
-            media_id_col="id",
-            **kwargs,
-        )
-        # make sure only the featuretable columns are ingested
-        cols = [e.name for e in ft.entities]
-        cols.extend([f.name for f in ft.features])
-        cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty is not None:
-            read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
-
-        # Apply transformations
-        for transform in transformations:
-            read_response.dataframe = transform(read_response.dataframe)
-
-        self.ingest_response(ft, read_response, all_columns=cols)
-
-    def transform_and_ingest(
-        self,
-        ft: "FeatureTable",
-        response: pd.DataFrame,
-        transformations: List[Callable[[pd.DataFrame], pd.DataFrame]],
-        all_columns: Optional[List[str]] = None,
-        binary_cols: Optional[List[str]] = None,
-        ignore_when_empty: Optional[List[str]] = None,
-        **kwargs,
-    ):
-        """
-        Ingest data from a query after applying a pipeline of transformations. Used when the source and the sink are different.
-
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
-        with the correct timestamp types of the source of choice.
-
-        The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
-        args:
-
-        - ft: The FeatureTable object
-        - binary_cols: A list of columns that are binary and will be downloaded to cloud object storage.
-        - transformations: A list of transformation functions to be applied on the dataframe
-        - ignore_when_empty: A list of columns that will be ignored when the result is empty.
-        """
-        cols = [e.name for e in ft.entities]
-        cols.extend([f.name for f in ft.features])
-        cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty is not None:
-            response = response.dropna(subset=ignore_when_empty)
-
-        # Apply transformations
-        for transform in transformations:
-            response = transform(response)
-
-        self.ingest(ft, response, all_columns=cols)
-
-    def read_and_ingest_from_query_after(
-        self,
-        ft: "FeatureTable",
-        query: str,
-        after: str,
-        binary_cols: Optional[List[str]] = None,
-        ignore_when_empty: Optional[List[str]] = None,
-        **kwargs,
-    ):
-        """
-        Ingest data from a query after a specific timestamp. Used when the source and the sink are different.
-
-        It's important to notice that your query must return the timestamp columns (event_timestamp and created_timestamp)
-        with the correct timestamp types of the source of choice.
-
-        The query will be executed against the source of data you defined, so make sure query contains a compatible SQL statement.
-
-        args:
-        - ft: The FeatureTable object
-        - query: A SQL query to ingest data from.
-        - after: A timestamp after which the query will be executed. Use the same date format of the source.
-        - binary_cols: A list of binary columns containing references to files to be downloaded to our cloud object storage.
-        """
-        read_response = self._source.read_after(
-            base_query=query,
-            timestamp_str=after,
-            binary_columns=binary_cols,
-            media_id_col="id",
-            dest_folder_col="id",
-            **kwargs,
-        )
-        # make sure only the featuretable columns are ingested
-        cols = [e.name for e in ft.entities]
-        cols.extend([f.name for f in ft.features])
-        cols.extend([ft.created_col, ft.evt_col])
-        if ignore_when_empty is not None:
-            read_response.dataframe = read_response.dataframe.dropna(subset=ignore_when_empty)
-        self.ingest_response(ft, read_response, all_columns=cols)
-
-    def read_all(self) -> pd.DataFrame:
-        """
-        Read all data from the source.
-        """
-        return self._source.read()
-
-    def get_historical_features(self, entity_source: pd.DataFrame, feature_refs: List[str]) -> RetrievalJob:
-        """Get historical features from the feature store.
-        This method allows you to retrieve historical features from the feature store.
-
-        You must specify a dataframe with the entity_id and entity_type columns.
-
-        You must specify a list of feature_refs to retrieve. feature_refs are the name of the features.
-
-        args:
-
-        - entity_source: A dataframe with the entity_id and entity_type columns.
-        - feature_refs: A list of feature_refs to retrieve.
-
-        returns:
-
-        - A RetrievalJob object.
-        """
-        return self._fs.get_historical_features(entity_source, feature_refs)
-
-    def materialize_incremental(
-        self,
-        feature_table: FeatureTable,
-        end_ts: str = datetime.now().replace(microsecond=0).isoformat(),
-    ):
-        """
-        Materialize the offline data to the online table incrementaly.
-
-        args:
-          feature_table (FeatureTable): The feature table to materialize.
-          end_ts (str, optional): The end timestamp to materialize. Defaults to datetime.now().replace(microsecond=0).isoformat().
-
-        """
-        self._fs.materialize_incremental([feature_table.get_view()], end_ts)
-
-    def get_online_features(
-        self,
-        entities: List[Dict[str, Any]],
-        requested_features: Optional[List[str]] = None,
-    ) -> feast.online_response.OnlineResponse:
-        """
-        Get online features from the feature store.
-        This method allows you to retrieve online features from the feature store.
-
-        You must specify a list of entities to retrieve.
-
-        You may specify a list of features to retrieve. If None, all features will be retrieved.
-
-        args:
-
-        - entities: A list of entities to retrieve.
-        - requested_features: Optional list of features to retrieve. If None, all features will be retrieved.
-
-        returns:
-
-        - An OnlineResponse object.
-        """
-        if self._fs.config.online_store is None:
-            raise ValueError(
-                "Online store is not configure, make sure to configure the property online_store in the config yaml"
-            )
-        return self._fs.get_online_features(features=requested_features, entity_rows=entities)
-
-    def get_training_features(
-        self,
-        feature_table: FeatureTable,
-        features_selected: List[str] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        limit: Optional[int] = None,
-        only_most_recent: Optional[bool] = True,
-        diff_table: Optional[str] = None,
-        diff_join_key: Optional[str] = None,
-        join_key: Optional[str] = None,
-        diff_where: Optional[Dict] = None,
-        download_binaries: Optional[bool] = False,
-        timestamp_column: Optional[str] = "created_timestamp",
+        feature_table_name: str,
+        entities: List[str] = None,
+        features: List[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> pd.DataFrame:
         """
-        Get the training features for the given feature view.
+        Gets training features from a feature table
 
         args:
 
-        - feature_table: Feature view name
-        - features_selected: A list of features to be selected. If None, all features will be selected.
-        - date_from: The start date of the training period. If None, the start date of the feature table will be used.
-        - date_to: The end date of the training period. If None, the end date of the feature table will be used.
-        - only_most_recent: If True, only the most recent features will be selected. If False, all features will be selected.
-        - diff_table: If not None, the features will be compared with the features in the diff_table.
-                    The diff_table should have a column with the same name of the features table in order to compare.
-                    This is useful for when you want to filter, at query time, features from the result.
-        - diff_join_key: The join key to be used to compare the features.
-        - diff_where: A dictionary with the where clause to be used to compare the features.
-        - timestamp_column: The timestamp column to be used to filter the features.
-                        Valid values are "created_timestamp" and "event_timestamp". Default is "created_timestamp".
+        - feature_table: FeatureTable instance
+        - entities: List of entity names to select
+        - features: List of feature names to select
+        - date_from: Start date
+        - date_to: End date
 
-        returns:
+        return:
 
-        A dataframe with the training features.
+        - pd.DataFrame
         """
-        table_name = feature_table.name
-        if features_selected is None:
-            columns = "*"
-        else:
-            columns = ",".join(map(lambda x: f'"{table_name}".{x}', features_selected))
-        join = ""
-        if diff_table and diff_join_key:
-            left_join_key = join_key if join_key else diff_join_key
-            join = f'LEFT JOIN "{diff_table}" ON "{table_name}".{left_join_key} = "{diff_table}".{diff_join_key}'
-            if diff_where:
-                for k, v in diff_where.items():
-                    join += f" AND \"{diff_table}\".{k} = '{v}'"
-        where = ""
-        if timestamp_column != "created_timestamp" and timestamp_column != "event_timestamp":
-            raise ValueError(
-                f"Invalid timestamp_column: {timestamp_column}. Valid values are 'created_timestamp' and 'event_timestamp'"
-            )
-        if date_from:
-            where += f"WHERE \"{table_name}\".{timestamp_column} >= '{date_from.isoformat()}'"
-        if date_to:
-            if where != "":
-                where += f" AND \"{table_name}\".{timestamp_column} <= '{date_to.isoformat()}'"
-            else:
-                where += f"WHERE \"{table_name}\".{timestamp_column} <= '{date_to.isoformat()}'"
-        if diff_table and where != "":
-            where += f' AND "{diff_table}".{diff_join_key} is null'
-        elif diff_table:
-            where += f'WHERE "{diff_table}".{diff_join_key} is null'
-        if limit:
-            where += f" LIMIT {limit}"
-        query = f'SELECT {columns} FROM "{table_name}" {join} {where} ORDER BY "{table_name}".{timestamp_column} ASC'
-        df = self._sink.read_table(query)
 
-        if download_binaries and self._has_medias(feature_table=feature_table):
-            self._file_sink.io_batch_digest(feature_table.name, df, self._media_columns(feature_table))
+        endpoint = f"{self._remote_server}/{feature_table_name}/historical-features"
 
-        if only_most_recent:
-            return (
-                df.sort_values(by="created_timestamp", ascending=False)
-                .groupby(by=[e.name for e in feature_table.entities])
-                .tail(1)
-            )
-        else:
-            return df
+        params = {"initial_date": date_from, "end_date": date_to}
+        if entities is not None:
+            params["entities"] = json.dumps(entities)
+        if features is not None:
+            params["feature_refs"] = json.dumps(features)
+        # request all pages, after the first request it will get all the other pages in parallel
+        response = await self._retrieve_pages_in_parallel(endpoint, params)
+        return pd.DataFrame([row for page in response for row in page])
 
-    def ingest_schema(self, feature_table: FeatureTable, schema_file_path: str) -> None:
-        """
-        Ingest the schema of the feature table into the feature store. Useful when you're creating a new feature table.
+    async def _retrieve_pages_in_parallel(self, endpoint, params, page_size=100, max_concurrent_requests=10):
+        # Use aiohttp client session to make the first request and get total pages
+        params["page_size"] = page_size
+        params["page"] = 1
+        response = await self._mlhub_client.get(endpoint, params)
+        total_pages = response["pagination"]["total_pages"]
+        # If there's only one page, return the response immediately
+        if total_pages == 1:
+            return [response["data"]]
 
-        args:
+        # Create a semaphore to limit the number of concurrent requests
+        semaphore = Semaphore(max_concurrent_requests)
 
-        - feature_table: FeatureTable object
-        - schema_file_path: Twhe local path to the schema file.
+        # Fetch all pages in parallel
+        tasks = [self._fetch_page(semaphore, endpoint, {**params, "page": page}) for page in range(2, total_pages + 1)]
+        pages = await asyncio.gather(*tasks)
+        pages = [page["data"] for page in pages]
 
-        The is the first step to create a feature table via SDK, you will need to manually create a json schema file to your table.
-        The schema file syntax uses an extension of JSONSchema. It's basically a JSONSchema file with some additional fields and properties.
-        The additional fields are necessary in order to identify which of the columns are keys and how the timestamps will be identified.
+        return [response["data"]] + pages
 
-        Example of a feature table schema file:
+    async def _fetch_page(self, semaphore, url, params):
+        async with semaphore:
+            return await self._mlhub_client.get(url, params)
 
-        >>> schema_example = {
-          "type": "object",
-          "properties": {
-            "userId": {
-              "isKey": "true",
-              "type": "string"
-            },
-            "address": {
-              "type": "object"
-            },
-            "medianSpent": {
-              "type": "number"
-            }
-            "age": {
-              "type": "integer"
-            },
-            "created_timestamp": {
-              "examples": [
-                "1970-01-01T00:00:00+00:00"
-              ],
-              "format": "date-time",
-              "type": "string"
-            },
-            "event_timestamp": {
-              "examples": [
-                "1970-01-01T00:00:00+00:00"
-              ],
-              "format": "date-time",
-              "type": "string"
-            }
-          }
-        }
-        """
-        self._sink.ingest_schema(feature_table, schema_file_path)
-        # call get_view to force an apply of the schema
-        feature_table.get_view()
+    async def get_online_features(self, feature_table_name: str, entities: Dict[str, List], features: List[str]):
+        endpoint = f"{self._remote_server}/{feature_table_name}/online-features"
 
-    def get_sink_last_ts(
-        self,
-        feature_table: "FeatureTable",
-        date_from: Optional[datetime] = None,
-        where: Optional[Dict[str, Any]] = None,
-    ) -> Any:
-        """
-        Get the last row of the feature table.
-        This is particularly useful when ingesting or reading data,
-        the result of this method could be piped into the date_from
-        of your method to read data from a source.
+        qentities = [{"entity": k, "value": v} for k, v in entities.items()]
+        params = {"entities": json.dumps(qentities), "feature_refs": json.dumps(features)}
+        return await self._mlhub_client.get(endpoint, params)
 
-        args:
+    async def create_feature_table(self, fs_schema: str):
+        endpoint = f"{self._remote_server}/feature-view"
 
-        - feature_table: FeatureTable object
-        - date_from: The start date of the training period. If None, the start date of the feature table will be used.
+        with open(fs_schema, "r") as schema:
+            fs_schema = json.load(schema)
 
-        returns:
-
-        - A timestamp of the same type used in the event_timestamp column
-        """
-        row = self._sink.get_last_row(feature_table, date_from=date_from, where=where)
-        if row is None or row.empty:
-            return None
-        # rename column if the db returned in the format bellow, otherwise no-op
-        row = row.rename(columns={f"{feature_table.evt_col}": "max"})
-        return row["max"][0]
-
-    def apply(
-        self,
-        objects: Union[
-            feast.Entity,
-            feast.FeatureView,
-            feast.OnDemandFeatureView,
-            feast.FeatureService,
-            List[
-                Union[
-                    feast.FeatureView,
-                    feast.OnDemandFeatureView,
-                    feast.Entity,
-                    feast.FeatureService,
-                ]
-            ],
-        ],
-        objects_to_delete: List[
-            Union[
-                feast.FeatureView,
-                feast.OnDemandFeatureView,
-                feast.Entity,
-                feast.FeatureService,
-                None,
-            ]
-        ] = None,
-        partial: bool = True,
-    ):
-        self._fs.apply(objects=objects, objects_to_delete=objects_to_delete, partial=partial)
+        body = {"name": fs_schema["name"], "entities": fs_schema["entities"], "schema": fs_schema["schema"]}
+        return await self._mlhub_client.post(url=endpoint, body=body)

@@ -1,0 +1,24 @@
+{  
+    "name": "creditcard_demo",  
+    "entities": ["id"],  
+    "schema": [  
+        {"name": "v1", "type": "float"},  
+        {"name": "v2", "type": "float"},
+        {"name": "v3", "type": "float"},
+        {"name": "v4", "type": "float"},
+        {"name": "v5", "type": "float"},
+        {"name": "v6", "type": "float"},
+        {"name": "v7", "type": "float"},
+        {"name": "v8", "type": "float"},
+        {"name": "v9", "type": "float"},
+        {"name": "v10", "type": "float"},
+        {"name": "v11", "type": "float"},
+        {"name": "v12", "type": "float"},
+        {"name": "v13", "type": "float"},
+        {"name": "v14", "type": "float"},
+        {"name": "v15", "type": "float"},
+        {"name": "amount", "type": "float"},
+        {"name": "class", "type": "int"},
+        {"name": "event_timestamp", "type": "timestamp"}
+    ]  
+}
