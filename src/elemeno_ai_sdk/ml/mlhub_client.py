@@ -37,8 +37,7 @@ class MLHubRemote:
 
     @mlhub_auth
     async def post(self, url: str, body: Dict[str, Any], session: Optional[aiohttp.ClientSession] = None):
-        headers = {"Content-Type": "application/json"}
-        async with session.post(url=url, data=json.dumps(body), headers=headers) as response:
+        async with session.post(url=url, data=json.dumps(body)) as response:
             if not response.ok:
                 raise ValueError(
                     f"Failed post to {url} with: \n"
@@ -47,11 +46,15 @@ class MLHubRemote:
                     f"\t header= {session.headers}"
                 )
 
-            return await response.text()
+            return await response.json(content_type=response.content_type)
 
     @mlhub_auth
     async def get(
-        self, url: str, params: Optional[Dict[str, Any]] = None, session: Optional[aiohttp.ClientSession] = None
+        self,
+        url: str,
+        params: Optional[Dict[str, Any]] = None,
+        is_binary: bool = False,
+        session: Optional[aiohttp.ClientSession] = None,
     ):
         async with session.get(url=url, params=params) as response:
             if not response.ok:
@@ -61,4 +64,8 @@ class MLHubRemote:
                     f"\t status code= {response.status} \n"
                     f"\t header= {session.headers}"
                 )
-            return await response.json()
+
+            if is_binary:
+                return await response.content.read()
+
+            return await response.json(content_type=response.content_type)

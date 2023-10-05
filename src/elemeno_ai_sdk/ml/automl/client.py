@@ -1,3 +1,5 @@
+import asyncio
+import pickle
 from typing import Dict, Optional
 
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
@@ -41,3 +43,11 @@ class AutoMLClient(MLHubRemote):
             body["featuresSelected"] = features_selected
 
         return self.post(url=f"{self.base_url}/automl", body=body)
+
+    def get_metadata(self, job_id: str):
+        return self.get(url=f"{self.base_url}/automl/{job_id}/metrics")
+
+    async def get_model(self, job_id: str):
+        response = await self.get(url=f"{self.base_url}/automl/{job_id}/modelfile", is_binary=True)
+        with open("./model.pkl", "wb") as model_file:
+            model_file.write(response)
