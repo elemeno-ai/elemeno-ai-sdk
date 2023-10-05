@@ -7,7 +7,6 @@ import aiohttp
 from tenacity import (
     AsyncRetrying,
     RetryError,
-    Retrying,
     retry_if_exception_type,
     stop_after_attempt,
     wait_fixed,
@@ -16,6 +15,7 @@ from tenacity import (
 from elemeno_ai_sdk.utils import mlhub_auth
 
 
+# MLHub urls
 PROD_URL = "https://c3po.ml.semantixhub.com"
 DEV_URL = "https://c3po-stg.ml.semantixhub.com"
 
