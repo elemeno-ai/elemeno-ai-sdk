@@ -51,11 +51,7 @@ class MLHubRemote:
     @mlhub_auth
     async def post(self, url: str, body: Dict[str, Any], session: Optional[aiohttp.ClientSession] = None):
         try:
-            retry_operator = AsyncRetrying(
-                stop=stop_after_attempt(STOP_AFTER_ATTEMPT),
-                wait=wait_fixed(WAIT_FIXED),
-                retry=retry_if_exception_type(ValueError),
-            )
+            retry_operator = AsyncRetrying(stop=stop_after_attempt(STOP_AFTER_ATTEMPT), wait=wait_fixed(WAIT_FIXED))
             async for attempt in retry_operator:
                 with attempt:
                     async with session.post(url=url, data=json.dumps(body)) as response:
@@ -80,11 +76,7 @@ class MLHubRemote:
         session: Optional[aiohttp.ClientSession] = None,
     ):
         try:
-            retry_operator = AsyncRetrying(
-                stop=stop_after_attempt(STOP_AFTER_ATTEMPT),
-                wait=wait_fixed(WAIT_FIXED),
-                retry=retry_if_exception_type(ValueError),
-            )
+            retry_operator = AsyncRetrying(stop=stop_after_attempt(STOP_AFTER_ATTEMPT), wait=wait_fixed(WAIT_FIXED))
             async for attempt in retry_operator:
                 with attempt:
                     async with session.get(url=url, params=params) as response:
