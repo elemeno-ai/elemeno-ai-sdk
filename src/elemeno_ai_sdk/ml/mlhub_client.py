@@ -62,7 +62,7 @@ class MLHubRemote:
                                 f"\t message_body= {body} \n"
                                 f"\t header= {session.headers}"
                             )
-                        return await response.json(content_type=response.content_type)
+                        return await response.text()
         except RetryError:
             logging.error("Max retries reached")
             return None
