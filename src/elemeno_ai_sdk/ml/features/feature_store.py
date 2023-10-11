@@ -1,19 +1,23 @@
 import asyncio
 import json
+import os
 from asyncio import Semaphore
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 import pandas as pd
 from tqdm import trange
 
+from elemeno_ai_sdk.ml.features.utils import get_feature_server_url_from_api_key
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
 
 
-class FeatureStore:
-    def __init__(self, remote_server: str):
-        self._remote_server = remote_server
-        self._mlhub_client = MLHubRemote()
+class FeatureStore(MLHubRemote):
+    def __init__(self, remote_server: Optional[str] = None):
+        if remote_server is None:
+            api_key = os.getenv("MLHUB_API_KEY")
+            self._remote_server = get_feature_server_url_from_api_key(api_key)
+        else:
+            self._remote_server = remote_server
 
     async def ingest(
         self,
@@ -50,7 +54,7 @@ class FeatureStore:
         for i in trange(0, len(to_ingest), 500):
             data = to_ingest.iloc[i : i + 500].to_dict("list")
             body = {"df": data, "to": "online_and_offline"}
-            await self._mlhub_client.post(url=endpoint, body=body)
+            await self.post(url=endpoint, body=body)
 
     async def get_training_features(
         self,
@@ -91,7 +95,7 @@ class FeatureStore:
         # Use aiohttp client session to make the first request and get total pages
         params["page_size"] = page_size
         params["page"] = 1
-        response = await self._mlhub_client.get(endpoint, params)
+        response = await self.get(endpoint, params)
         total_pages = response["pagination"]["total_pages"]
         # If there's only one page, return the response immediately
         if total_pages == 1:
@@ -109,20 +113,11 @@ class FeatureStore:
 
     async def _fetch_page(self, semaphore, url, params):
         async with semaphore:
-            return await self._mlhub_client.get(url, params)
+            return await self.get(url, params)
 
     async def get_online_features(self, feature_table_name: str, entities: Dict[str, List], features: List[str]):
         endpoint = f"{self._remote_server}/{feature_table_name}/online-features"
 
         qentities = [{"entity": k, "value": v} for k, v in entities.items()]
         params = {"entities": json.dumps(qentities), "feature_refs": json.dumps(features)}
-        return await self._mlhub_client.get(endpoint, params)
-
-    async def create_feature_table(self, fs_schema: str):
-        endpoint = f"{self._remote_server}/feature-view"
-
-        with open(fs_schema, "r") as schema:
-            fs_schema = json.load(schema)
-
-        body = {"name": fs_schema["name"], "entities": fs_schema["entities"], "schema": fs_schema["schema"]}
-        return await self._mlhub_client.post(url=endpoint, body=body)
+        return await self.get(endpoint, params)
