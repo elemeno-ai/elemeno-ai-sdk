@@ -20,19 +20,23 @@ class FeatureTable(MLHubRemote):
             self._remote_server = get_feature_server_url_from_api_key(api_key)
         else:
             self._remote_server = remote_server
-        self._table_schema = FeatureTableSchema().load_data(schema_path)
+        self._schema_path = schema_path
 
     @property
     def name(self) -> str:
-        return self._table_schema.get("name")
+        return self.table_schema.get("name")
 
     @property
     def entities(self) -> List[str]:
-        return self._table_schema.get("entities")
+        return self.table_schema.get("entities")
 
     @property
     def features(self) -> List[Dict[str, str]]:
-        return self._table_schema.get("schema")
+        return self.table_schema.get("schema")
+
+    @property
+    def table_schema(self):
+        return FeatureTableSchema().load_data(self._schema_path)
 
     async def create(self) -> None:
         endpoint = f"{self._remote_server}/feature-view"
@@ -45,6 +49,6 @@ class FeatureTable(MLHubRemote):
         response = await self.get(url=endpoint)
         return response["feature_views"]
 
-    async def delete(self) -> None:
-        endpoint = f"{self._remote_server}/{self.ft_name}/delete-feature-view"
-        return await self.post(url=endpoint)
+    async def delete(self, ft_name: str) -> None:
+        endpoint = f"{self._remote_server}/{ft_name}/delete-feature-view"
+        return await self.post(url=endpoint, body={})
