@@ -1,5 +1,5 @@
 {  
-    "name": "creditcard_demo",  
+    "name": "creditcard_demo_v6",  
     "entities": ["id"],  
     "schema": [  
         {"name": "v1", "type": "float"},  

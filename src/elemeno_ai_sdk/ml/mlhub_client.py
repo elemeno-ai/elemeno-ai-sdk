@@ -4,13 +4,7 @@ import os
 from typing import Any, Dict, Optional
 
 import aiohttp
-from tenacity import (
-    AsyncRetrying,
-    RetryError,
-    retry_if_exception_type,
-    stop_after_attempt,
-    wait_fixed,
-)
+from tenacity import AsyncRetrying, RetryError, stop_after_attempt, wait_fixed
 
 from elemeno_ai_sdk.utils import mlhub_auth
 
@@ -62,9 +56,9 @@ class MLHubRemote:
                                 f"\t message_body= {body} \n"
                                 f"\t header= {session.headers}"
                             )
-                        return await response.json(content_type=response.content_type)
+                        return await response.text()
         except RetryError:
-            logging.error("Max retries reached")
+            logging.exception("Max retries reached")
             return None
 
     @mlhub_auth
@@ -93,5 +87,5 @@ class MLHubRemote:
 
                         return await response.json(content_type=response.content_type)
         except RetryError:
-            logging.error("Max retries reached")
+            logging.exception("Max retries reached")
             return None

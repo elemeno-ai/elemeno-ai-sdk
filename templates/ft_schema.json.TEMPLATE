@@ -1,34 +1,12 @@
 {
-  "type": "object",
-  "properties": {
-    "id": {
-      "isKey": "true",
-      "type": "string"
-    },
-    "advertiser": {
-      "type": "string"
-    },
-    "media": {
-      "type": "binary_download",
-      "bucket": "elemeno-cos",
-      "cos_prefix": "bel/binary_data_parallel"
-    },
-    "price": {
-      "type": "number"
-    },
-    "created_timestamp": {
-      "examples": [
-        "1970-01-01T00:00:00+00:00"
-      ],
-      "format": "date-time",
-      "type": "string"
-    },
-    "event_timestamp": {
-      "examples": [
-        "1970-01-01T00:00:00+00:00"
-      ],
-      "format": "date-time",
-      "type": "string"
-    }
-  }
+  "name": "feature_table_name",
+  "entities": ["id"],
+  "schema": [
+    {"name": "feature_1", "type": "int"},
+    {"name": "feature_2", "type": "float"},
+    {"name": "feature_3", "type": "int"},
+    {"name": "feature_4", "type": "float"},
+    {"name": "target", "type": "int"},
+    {"name": "event_timestamp", "type": "timestamp"}
+  ]
 }
