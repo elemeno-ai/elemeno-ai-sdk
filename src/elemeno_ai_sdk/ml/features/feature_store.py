@@ -15,6 +15,8 @@ class FeatureStore(MLHubRemote):
     def __init__(self, remote_server: Optional[str] = None):
         if remote_server is None:
             api_key = os.getenv("MLHUB_API_KEY")
+            if api_key is None:
+                raise ValueError("Please set the MLHUB_API_KEY environment variable.")
             self._remote_server = get_feature_server_url_from_api_key(api_key)
         else:
             self._remote_server = remote_server

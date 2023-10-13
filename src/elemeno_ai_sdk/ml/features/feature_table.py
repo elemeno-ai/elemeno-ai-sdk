@@ -15,6 +15,8 @@ class FeatureTable(MLHubRemote):
     def __init__(self, schema_path: str, remote_server: Optional[str] = None):
         if remote_server is None:
             api_key = os.getenv("MLHUB_API_KEY")
+            if api_key is None:
+                raise ValueError("Please set the MLHUB_API_KEY environment variable.")
             self._remote_server = get_feature_server_url_from_api_key(api_key)
         else:
             self._remote_server = remote_server
@@ -29,7 +31,7 @@ class FeatureTable(MLHubRemote):
         return self._table_schema.get("entities")
 
     @property
-    def features(self):
+    def features(self) -> List[Dict[str, str]]:
         return self._table_schema.get("schema")
 
     async def create(self) -> None:
@@ -43,6 +45,6 @@ class FeatureTable(MLHubRemote):
         response = await self.get(url=endpoint)
         return response["feature_views"]
 
-    async def delete(self):
+    async def delete(self) -> None:
         endpoint = f"{self._remote_server}/{self.ft_name}/delete-feature-view"
         return await self.post(url=endpoint)
