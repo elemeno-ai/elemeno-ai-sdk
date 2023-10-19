@@ -20,6 +20,7 @@ jobs:
         with:
           python-version: 3.8
           architecture: x64
+      - run: pip install poetry
       - run: pip install -r requirements-dev.txt
       - name: Publish to pypi
         env:
