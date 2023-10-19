@@ -1,4 +1,4 @@
-.PHONY: clean docs pip-testpypi wheel
+.PHONY: clean docs pip-pypi wheel
 
 clean: clean-build clean-pyc clean-test ## remove all build, test, coverage and Python artifacts
 
@@ -31,23 +31,18 @@ env:
 	pip install poetry 
 	poetry install
 
-wheel:
-	python setup.py bdist_wheel
+requirements:
+	poetry export --output requirements.txt
+
+requirements-dev:
+	poetry export --output requirements-dev.txt --only dev
 
 docs:
 	@MAKE html -C docs
 
-_pip-testpypi: clean
-	python setup.py sdist bdist_wheel
-	twine upload --repository testpypi dist/*.whl
-
-_pip-pypi: clean
+_pip-pypi: clean requirements
 	python setup.py sdist bdist_wheel
 	twine upload --non-interactive dist/*.whl
-
-_pip-pypi-elemeno: clean
-	python setup.py sdist bdist_wheel
-	twine upload --repository elemeno dist/*.whl
 
 test:
 	poetry run pytest
@@ -63,11 +58,7 @@ lint/black: ## check style with black
 
 lint: lint/flake8 lint/isort lint/black ## check style
 
-pip-testpypi: clean _pip-testpypi
-
 pip-pypi: clean _pip-pypi
-
-pip-pypi-elemeno: clean _pip-pypi-elemeno
 
 bump-custom:
 	bumpversion --new-version $(version) patch --verbose
