@@ -32,10 +32,10 @@ env:
 	poetry install
 
 requirements:
-	poetry export --output requirements.txt
+	poetry export --output requirements.txt --without-hashes --without-urls
 
 requirements-dev:
-	poetry export --output requirements-dev.txt --only dev
+	poetry export --output requirements-dev.txt --only dev --without-hashes --without-urls
 
 docs:
 	@MAKE html -C docs
