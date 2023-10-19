@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "elemeno-ai-sdk"
-version = "0.6.9"
+version = "0.6.10"
 description = "A set of glue code and utilities to make using elemeno AI platform a smooth experience"
 authors = ["Semantix Dev team <dev@semantix.ai>"]
 license = "Apache-2.0"
