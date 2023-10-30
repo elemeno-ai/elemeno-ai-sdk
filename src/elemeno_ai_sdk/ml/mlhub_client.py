@@ -1,11 +1,11 @@
 import json
-import logging
 import os
 from typing import Any, Dict, Optional
 
 import aiohttp
 from tenacity import AsyncRetrying, RetryError, stop_after_attempt, wait_fixed
 
+from elemeno_ai_sdk.logger import logger
 from elemeno_ai_sdk.utils import mlhub_auth
 
 
@@ -58,7 +58,7 @@ class MLHubRemote:
                             )
                         return await response.text()
         except RetryError:
-            logging.exception("Max retries reached")
+            logger.exception("Max retries reached")
             return None
 
     @mlhub_auth
@@ -87,5 +87,5 @@ class MLHubRemote:
 
                         return await response.json(content_type=response.content_type)
         except RetryError:
-            logging.exception("Max retries reached")
+            logger.exception("Max retries reached")
             return None
