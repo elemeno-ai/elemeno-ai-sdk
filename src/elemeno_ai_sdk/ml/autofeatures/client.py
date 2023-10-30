@@ -1,6 +1,8 @@
 
 from typing import Dict, Optional
 
+import pandas as pd
+
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
 
 
@@ -14,7 +16,7 @@ class AutoFeaturesClient(MLHubRemote):
         ml_task: str = None,
         target_column: str = None,
         ignore_columns: str = None,
-    ) -> Dict:
+    ) -> 'pd.DataFrame' :
         body = {
             "data": df.to_json(),
             "ml_task": ml_task if ml_task is not None else "",
@@ -22,4 +24,5 @@ class AutoFeaturesClient(MLHubRemote):
             "ignore_columns": ignore_columns if ignore_columns is not None else "",
         }
 
-        return self.post(url=f"{self.base_url}/autofeatures", body=body)
+        response = self.post(url=f"{self.base_url}/autofeatures", body=body)
+        return pd.DataFrame(response["data"])
