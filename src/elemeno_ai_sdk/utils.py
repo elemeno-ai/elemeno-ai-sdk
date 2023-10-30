@@ -1,9 +1,10 @@
-import logging
 import os
 from functools import wraps
 from typing import Callable, Optional
 
 import aiohttp
+
+from elemeno_ai_sdk.logger import logger
 
 
 def mlhub_auth(func: Callable):
@@ -18,7 +19,7 @@ def mlhub_auth(func: Callable):
                 kwargs["session"] = session
                 return await func(self, *args, **kwargs)
         else:
-            logging.warning(
+            logger.warning(
                 "Calling a method anottated with with_auth and passing a session object is not recommended in production."
             )
             kwargs["session"] = session
