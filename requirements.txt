@@ -5,6 +5,7 @@ Jinja2==3.0.3
 mlflow==1.26.1
 numpy>=1.22
 omegaconf>=2.1.0
+skl2onnx==1.15.0
 #onnx>=1.8.1
 pandas>=1.2.4
 pandas_gbq==0.15.0
