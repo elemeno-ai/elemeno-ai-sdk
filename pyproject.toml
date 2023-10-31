@@ -48,6 +48,7 @@ bumpversion = "^0.6.0"
 tenacity = "^8.2.3"
 pyjwt = {extras = ["crypto"], version = "^2.8.0"}
 marshmallow = "^3.20.1"
+skl2onnx = "^1.15.0"
 
 
 [tool.poetry.group.dev.dependencies]
