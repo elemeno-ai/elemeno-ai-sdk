@@ -1,28 +1,49 @@
+from typing import Any, Dict, Optional
 
-from typing import Dict, Optional
-
-import pandas as pd
+import aiohttp
 
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
+from elemeno_ai_sdk.utils import mlhub_auth
 
 
 class AutoFeaturesClient(MLHubRemote):
+    auto_features_ref = "YWktZmVhdHVyZS1lbmdpbmVlcmluZw=="
+    
     def __init__(self, env: Optional[str] = None) -> None:
         super().__init__(env=env)
 
-    def run_job(
-        self,
-        df: 'pd.DataFrame',
-        ml_task: str = None,
-        target_column: str = None,
-        ignore_columns: str = None,
-    ) -> 'pd.DataFrame' :
-        body = {
-            "data": df.to_json(),
-            "ml_task": ml_task if ml_task is not None else "",
-            "target_column": target_column if target_column is not None else "",
-            "ignore_columns": ignore_columns if ignore_columns is not None else "",
-        }
+    async def get_job(self, job_id: str):
+        url = f"{self.base_url}/script-runner/{job_id}"
+        response = await self.get(url=url)
+        return response
 
-        response = self.post(url=f"{self.base_url}/autofeatures", body=body)
-        return pd.DataFrame(response["data"])
+    async def list_jobs(self):
+        url = f"{self.base_url}/script-runner?ref={self.auto_features_ref}"
+        return await self.get(url=url)
+
+    async def run_job(self, filepath: str):
+        url = f"{self.base_url}/script-runner/{self.auto_features_ref}"
+
+        data = aiohttp.FormData()
+        file = open(filepath, "rb")
+        data.add_field(
+            'dataset',
+            file,
+            content_type='multipart/form-data',
+            )
+
+        response = await self.post_file(url=url, body=data)
+        file.close()
+        return response.status
+
+    async def get_result():
+        raise NotImplementedError
+    
+    @mlhub_auth
+    async def post_file(
+        self,
+        url: str, 
+        body: Dict[str, Any], 
+        session: Optional[aiohttp.ClientSession] = None,
+        ):
+        return await session.post(url, data=body)
