@@ -18,11 +18,11 @@ class AutoFeaturesClient(MLHubRemote):
         return response
 
     async def list_jobs(self):
-        url = f"{self.base_url}/script-runner?ref={self.auto_features_ref}"
+        url = f"{self.base_url}/script-runner?ref={self.AUTO_FEATURES_REF}"
         return await self.get(url=url)
 
     async def run_job(self, filepath: str):
-        url = f"{self.base_url}/script-runner/{self.auto_features_ref}"
+        url = f"{self.base_url}/script-runner/{self.AUTO_FEATURES_REF}"
 
         data = aiohttp.FormData()
         file = open(filepath, "rb")
