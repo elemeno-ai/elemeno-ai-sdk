@@ -7,7 +7,7 @@ from elemeno_ai_sdk.utils import mlhub_auth
 
 
 class AutoFeaturesClient(MLHubRemote):
-    auto_features_ref = "YWktZmVhdHVyZS1lbmdpbmVlcmluZw=="
+    AUTO_FEATURES_REF = "YWktZmVhdHVyZS1lbmdpbmVlcmluZw=="
     
     def __init__(self, env: Optional[str] = None) -> None:
         super().__init__(env=env)
