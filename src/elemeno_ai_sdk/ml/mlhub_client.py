@@ -43,12 +43,26 @@ class MLHubRemote:
         return base_url
 
     @mlhub_auth
-    async def post(self, url: str, body: Dict[str, Any], session: Optional[aiohttp.ClientSession] = None):
+    async def post(
+        self,
+        url: str, 
+        body: Dict[str, Any] = None, 
+        session: Optional[aiohttp.ClientSession] = None,
+        file = None,
+        ):
+
+        if file is not None and body is not None:
+            raise ValueError("Either body or file can be sent, but not both.")
+        elif file is not None:
+            data = file
+        else:
+            data = json.dumps(body)
+        
         try:
             retry_operator = AsyncRetrying(stop=stop_after_attempt(STOP_AFTER_ATTEMPT), wait=wait_fixed(WAIT_FIXED))
             async for attempt in retry_operator:
                 with attempt:
-                    async with session.post(url=url, data=json.dumps(body)) as response:
+                    async with session.post(url=url, data=data) as response:
                         if not response.ok:
                             raise ValueError(
                                 f"Failed post to {url} with: \n"
