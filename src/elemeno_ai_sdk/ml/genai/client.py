@@ -42,15 +42,16 @@ class GenAI(MLHubRemote):
         raise NotImplementedError
 
     #TODO: Get a non streamed version of status
-    def stream_server_status(self, server_ids: Union[str, List[str]]):
-        url = f"{self.base_url}/inference_server/status"
+    def server_status(self, server_ids: Union[str, List[str]]):
+        raise NotImplementedError
+        ### url = f"{self.base_url}/inference_server/status"
 
-        if isinstance(server_ids, str):
-            server_ids = [server_ids]
-        return requests.post(
-            url=url,
-            data={"inferenceServerIDS":server_ids},
-            headers=self.auth_header)
+        ### if isinstance(server_ids, str):
+            ### server_ids = [server_ids]
+        ### return requests.post(
+            ### url=url,
+            ### data={"inferenceServerIDS":server_ids},
+            ### headers=self.auth_header)
 
     def request_server(
             self,
