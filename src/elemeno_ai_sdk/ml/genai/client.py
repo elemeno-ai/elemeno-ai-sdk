@@ -1,7 +1,9 @@
-from typing import Any, Dict, Optional, List, Union, BinaryIO
+from typing import Any, Dict, Optional, List, Union, BinaryIO, Tuple
+import io
 import os
 
 import aiohttp
+import pandas as pd
 import requests
 
 from elemeno_ai_sdk.utils import mlhub_auth
@@ -58,7 +60,8 @@ class GenAI(MLHubRemote):
             route = "v0/inference"
             ):
         url = f"http://infserv-{server_id}.app.elemeno.ai/{route}"
-        return requests.post(url=url, data=body, files=file, headers=self.auth_header)
+        headers = self.auth_header | {'accept': 'application/json'}
+        return requests.post(url=url, data=body, files=file, headers=headers)
 
     @mlhub_auth
     async def get(
@@ -77,11 +80,63 @@ class GenAI(MLHubRemote):
 
 class AutoFeatures(GenAI):
 
-    def request_server(
-            self, 
-            server_id: str, 
-            body: Dict[str, str] = None, 
-            file: Dict[str, BinaryIO] = None, 
-            route="csv/",
-            ):
-        return super().request_server(server_id, body, file, route)
+    def featurize(
+            self,
+            server_id: str,
+            filename: str,            
+            ) -> Dict:
+        """
+        Featurize the data in the specified CSV file by sending it to a auto-features service.
+        The function sends the specified CSV file to the remote server identified by 'server_id'
+        and retrieves the featurized data along with additional information and logs.
+
+        Parameters:
+        - server_id (str): The unique identifier of the remote server where the featurization will be performed.
+        - filename (str): The path to the CSV file containing the data to be featurized.
+
+        Returns:
+        - Dict: the server response in dictionary form. 
+
+        Example:
+        ```
+        server_id = "50498772a344a63346c1223d5"
+        filename = "path/to/data.csv"
+        client = AutoFeatures(env="dev")
+        response = client.featurize(server_id, filename)
+        data, output, logs = client.parse(reponse)
+        print("Featurized Data:", data)
+        print("Output:", output)
+        print("Logs:", logs)
+        ```
+        """
+        route = "csv/?filename=df.csv"
+        body = {"history": ''}
+        with open(filename, "rb") as bfile:
+            files = {"file": (filename, bfile)}
+            response = self.request_server(server_id, body, files, route)
+        return response.json() 
+    
+    def parse(self, response) -> Tuple[pd.DataFrame, str, List[str]]:
+        """
+        Helper function to parse the server response into DataFrame, output and logs
+
+        Returns:
+        Tuple: A tuple containing the featurization results.
+            - df (pd.Dataframe): The featurized dataframe obtained from the server.
+            - output (str): Additional output or information related to the featurization process.
+            - logs (str): Logs or messages generated during the featurization process.
+
+        Example:
+        ```
+        server_id = "50498772a344a63346c1223d5"
+        filename = "path/to/data.csv"
+        client = AutoFeatures(env="dev")
+        response = client.featurize(server_id, filename)
+        data, output, logs = client.parse(reponse)
+        print("Featurized Data:", data)
+        print("Output:", output)
+        print("Logs:", logs)
+        ```
+        """
+        df = pd.read_json(io.StringIO(response["data"]))
+        return df, response["output"], response["logs"]
