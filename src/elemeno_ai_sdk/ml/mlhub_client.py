@@ -34,9 +34,9 @@ class MLHubRemote:
     @property
     def base_url(self):
         base_url = None
-        if self.env == "prod":
+        if self._env == "prod":
             base_url = PROD_URL
-        elif self.env == "dev":
+        elif self._env == "dev":
             base_url = DEV_URL
         else:
             raise ValueError("Invalid environment. Please use dev or prod.")
@@ -45,19 +45,18 @@ class MLHubRemote:
     @mlhub_auth
     async def post(
         self,
-        url: str, 
-        body: Dict[str, Any] = None, 
+        url: str,
+        body: Dict[str, Any] = None,
         session: Optional[aiohttp.ClientSession] = None,
-        file = None,
-        ):
-
+        file=None,
+    ):
         if file is not None and body is not None:
             raise ValueError("Either body or file can be sent, but not both.")
         elif file is not None:
             data = file
         else:
             data = json.dumps(body)
-        
+
         try:
             retry_operator = AsyncRetrying(stop=stop_after_attempt(STOP_AFTER_ATTEMPT), wait=wait_fixed(WAIT_FIXED))
             async for attempt in retry_operator:
