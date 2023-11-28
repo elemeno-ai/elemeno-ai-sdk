@@ -1,9 +1,11 @@
-import requests
-
 from typing import Dict, List, BinaryIO, Tuple
 import io
 
+import asyncio
 import pandas as pd
+import requests
+
+from .chat import chat_socket
 
 class InferenceService:
     
@@ -34,6 +36,7 @@ class InferenceService:
 
 
 class AutoFeatures(InferenceService):
+    url = "http://localhost:8080"
 
     def featurize(
             self,
@@ -51,3 +54,20 @@ class AutoFeatures(InferenceService):
     def parse(self, response) -> Tuple[pd.DataFrame, str, List[str]]:
         df = pd.read_json(io.StringIO(response["data"]))
         return df, response["output"], response["logs"]
+    
+    def chat(
+        self,
+        filename: str,
+        route:str = "/chat"
+    ):
+        url = self.url + route
+        url = url.replace("http", "ws")
+        
+        loop = asyncio.get_event_loop()
+        df_bytes = loop.run_until_complete(chat_socket(
+            file_path=filename, 
+            websocket_uri=url,
+            headers=self.auth_header,
+            ))
+        return pd.read_csv(df_bytes)
+
