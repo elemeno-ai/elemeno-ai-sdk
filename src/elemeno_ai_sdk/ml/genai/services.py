@@ -1,4 +1,4 @@
-from typing import Dict, List, BinaryIO, Tuple
+from typing import Dict, List, BinaryIO, Tuple, Any
 import io
 
 import asyncio
@@ -9,7 +9,7 @@ from .chat import chat_socket
 
 class InferenceService:
     
-    def __init__(self, service_id, api_key: str):
+    def __init__(self, service_id: str, api_key: str):
         self._service_id = service_id
         self.base_url = f"http://infserv-{self._service_id}.app.elemeno.ai"
 
@@ -27,10 +27,10 @@ class InferenceService:
 
     def infer(
             self,
-            data:Dict[str,str] = None, 
-            files:Dict[str, BinaryIO] = None, 
-            route = "/v0/inference"
-            ):
+            data: Dict[str,str] = None, 
+            files: Dict[str, BinaryIO] = None, 
+            route: str = "/v0/inference"
+            ) -> Any:
         url = f"{self.base_url}{route}"
         return requests.post(url, data=data, files=files, headers=self.auth_header)
 
@@ -51,15 +51,15 @@ class AutoFeatures(InferenceService):
             response = self.infer(data=data, files=files, route=route)
         return response.json() 
     
-    def parse(self, response) -> Tuple[pd.DataFrame, str, List[str]]:
+    def parse(self, response: str) -> Tuple[pd.DataFrame, str, List[str]]:
         df = pd.read_json(io.StringIO(response["data"]))
         return df, response["output"], response["logs"]
     
     def chat(
         self,
         filename: str,
-        route:str = "/chat"
-    ):
+        route: str = "/chat"
+    ) -> pd.DataFrame:
         url = self.url + route
         url = url.replace("http", "ws")
         
