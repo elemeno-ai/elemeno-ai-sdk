@@ -1,16 +1,16 @@
 from io import BytesIO
-from typing import BinaryIO
+from typing import BinaryIO, Dict
 
 import websockets
 
 
 async def chat_socket(
         file_path,
-        websocket_uri,
-        headers=None,
-        max_size=25000000,
-        ping_interval=60,
-        ping_timeout=None,
+        websocket_uri: str,
+        headers: Dict = None,
+        max_size: int = 25000000,
+        ping_interval: int = 60,
+        ping_timeout: int = None,
     ) -> BinaryIO:
     try: 
         async with websockets.connect(
