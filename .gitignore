@@ -83,7 +83,6 @@ docs/_build
 cpr
 
 # other
-data
 
 tests/**/*.onnx
 
