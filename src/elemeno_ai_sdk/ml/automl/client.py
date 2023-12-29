@@ -32,6 +32,7 @@ class AutoMLClient(MLHubRemote):
         scoring: str,
         num_features: int,
         generations: int,
+        to_balance: bool = False
     ) -> Dict[str, str]:
         body = {
             "featureTableName": feature_table_name,
@@ -43,6 +44,7 @@ class AutoMLClient(MLHubRemote):
             "scoring": scoring,
             "numFeatures": num_features,
             "generations": generations,
+            "toBalance": to_balance
         }
         if features_selected != "":
             body["featuresSelected"] = features_selected
