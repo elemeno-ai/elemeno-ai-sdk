@@ -1,11 +1,22 @@
 import io
+import os
 import json
+import pickle
 from typing import Any, Dict, Optional
 
 import pandas as pd
+from sklearn.metrics import (
+    accuracy_score,
+    balanced_accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
 
 from elemeno_ai_sdk.logger import logger
 from elemeno_ai_sdk.ml.mlhub_client import MLHubRemote
+import matplotlib.pyplot as plt
 
 
 class AutoMLClient(MLHubRemote):
@@ -44,7 +55,7 @@ class AutoMLClient(MLHubRemote):
             "scoring": scoring,
             "numFeatures": num_features,
             "generations": generations,
-            "toBalance": to_balance
+            "toBalance": to_balance,
         }
         if features_selected != "":
             body["featuresSelected"] = features_selected
@@ -58,13 +69,59 @@ class AutoMLClient(MLHubRemote):
     async def get_metadata(self, job_id: str) -> Dict[str, Any]:
         return await self.get(url=f"{self.base_url}/automl/{job_id}/metrics")
 
-    async def get_model(self, job_id: str) -> None:
+    async def get_model(self, job_id: str, save_path: str = ".") -> None:
         response = await self.get(url=f"{self.base_url}/automl/{job_id}/modelfile", is_binary=True)
-        with open("./model.pkl", "wb") as model_file:
+        if not os.path.exists(save_path):
+            os.mkdir(save_path)
+        with open(f"{save_path}/model.pkl", "wb") as model_file:
             model_file.write(response)
 
-    async def get_dataset(self, job_id: str) -> None:
+    async def get_dataset(self, job_id: str, save_path: str = ".") -> None:
         for filetype in ["train", "test"]:
             data_bin = await self.get(url=f"{self.base_url}/automl/{job_id}/dataset/{filetype}", is_binary=True)
             data = pd.read_csv(io.BytesIO(data_bin))
-            data.to_csv(f"./{filetype}_data.csv", index=False)
+            if not os.path.exists(save_path):
+                os.mkdir(save_path)
+            data.to_csv(f"{save_path}/{filetype}_data.csv", index=False, )
+
+    async def thresholds(self, job_id: str) -> None:
+        metadata = await self.get_metadata(job_id=job_id)
+        label_column = metadata["target"] if metadata["target"] is not None else 'class'  # modify endpoint at SaaSBack for return correct target key
+
+        await self.get_model(job_id=job_id, save_path=job_id)
+        model = pickle.load(open(f"{job_id}/model.pkl", "rb"))
+
+        await self.get_dataset(job_id=job_id, save_path=job_id)
+        train_dataset = pd.read_csv(f"{job_id}/train_data.csv")
+        y_true = train_dataset.pop(label_column)
+
+        y_pred_prob = model.predict_proba(train_dataset)
+
+        pred_scores = {}
+        scores = [accuracy_score, balanced_accuracy_score, roc_auc_score]
+        for score in scores:
+            pred_scores[f"{score.__name__}"] = []
+            for i in range(1, 101, 1):
+                y_pred = (y_pred_prob[:, 1] >= i/100).astype(int)
+                pred_scores[f"{score.__name__}"].append(round(score(y_true, y_pred), 4))
+
+        pred_scores["class_eval"] = []
+        for i in range(1, 101, 1):
+            y_pred = (y_pred_prob[:, 1] >= i/100).astype(int)
+            f1 = round(f1_score(y_true, y_pred), 4)
+            recall = round(recall_score(y_true, y_pred), 4)
+            precision = round(precision_score(y_true, y_pred), 4)
+            pred_scores["class_eval"].append([f1, recall, precision])
+
+        return pred_scores
+
+    async def plot_thresholds(self, job_id: str) -> None:
+        thresholds = await self.thresholds(job_id=job_id)
+        fig, axs = plt.subplots(len(thresholds), 1, sharex=True, figsize=(10, 15))
+        for i, key in enumerate(thresholds.keys()):
+            axs[i].plot(range(1, 101, 1), thresholds[key])
+            axs[i].set_ylabel(f'{key} ({max(thresholds[key])})')
+            axs[i].set_xlabel(f'Max {key}: {thresholds[key].index(max(thresholds[key]))/100}')
+            if key == 'class_eval':
+                axs[i].legend(["f1", "recall", "precision"])
+        plt.show()
