@@ -30,7 +30,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "^3.9.1"
 tf2onnx = "^1.14.0"
 onnxruntime = "^1.15.1"
 aiohttp = "^3.8.5"
@@ -39,6 +39,7 @@ tenacity = "^8.2.3"
 pyjwt = {extras = ["crypto"], version = "^2.8.0"}
 marshmallow = "^3.20.1"
 skl2onnx = "^1.15.0"
+matplotlib = "^3.8.2"
 
 
 [tool.poetry.group.dev.dependencies]
